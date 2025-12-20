@@ -1,30 +1,52 @@
-<script setup>
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head } from '@inertiajs/vue3';
-</script>
-
 <template>
-    <Head title="Dashboard" />
+    <SidebarProvider>
+        <admin-layout>
+            <div class="grid grid-cols-12 gap-4 md:gap-6">
+                {{ $page.props.auth.user.name }}
+                <!-- <div class="col-span-12 space-y-6 xl:col-span-7">
+        <ecommerce-metrics />
+        <monthly-target />
+      </div>
+      <div class="col-span-12 xl:col-span-5">
+        <monthly-sale />
+      </div>
 
-    <AuthenticatedLayout>
-        <template #header>
-            <h2
-                class="text-xl font-semibold leading-tight text-gray-800"
-            >
-                Dashboard
-            </h2>
-        </template>
+      <div class="col-span-12">
+        <statistics-chart />
+      </div>
 
-        <div class="py-12">
-            <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                <div
-                    class="overflow-hidden bg-white shadow-sm sm:rounded-lg"
-                >
-                    <div class="p-6 text-gray-900">
-                        You're logged in!
-                    </div>
-                </div>
+      <div class="col-span-12 xl:col-span-5">
+        <customer-demographic />
+      </div>
+
+      <div class="col-span-12 xl:col-span-7">
+        <recent-orders />
+      </div> -->
             </div>
-        </div>
-    </AuthenticatedLayout>
+        </admin-layout></SidebarProvider
+    >
 </template>
+
+<script>
+import AdminLayout from "../components/layout/AdminLayout.vue";
+import SidebarProvider from "../components/layout/SidebarProvider.vue";
+// import EcommerceMetrics from '../components/ecommerce/EcommerceMetrics.vue'
+// import MonthlyTarget from '../components/ecommerce/MonthlySale.vue'
+// import MonthlySale from '../components/ecommerce/MonthlyTarget.vue'
+// import CustomerDemographic from '../components/ecommerce/CustomerDemographic.vue'
+// import StatisticsChart from '../components/ecommerce/StatisticsChart.vue'
+// import RecentOrders from '../components/ecommerce/RecentOrders.vue'
+export default {
+    components: {
+        AdminLayout,
+        SidebarProvider,
+        // EcommerceMetrics,
+        // MonthlyTarget,
+        // MonthlySale,
+        // CustomerDemographic,
+        // StatisticsChart,
+        // RecentOrders,
+    },
+    name: "Ecommerce",
+};
+</script>
