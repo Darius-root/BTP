@@ -260,7 +260,7 @@
 import FullScreenLayout from '@/components/layout/FullScreenLayout.vue'
 import CommonGridShape from '@/components/common/CommonGridShape.vue'
 import { ref } from 'vue'
-import InputError from '@/Components/InputError.vue'
+import InputError from '@/components/InputError.vue'
 
 const showPassword = ref(false)
 const agreeToTerms = ref(false)
