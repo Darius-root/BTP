@@ -13,7 +13,6 @@ import {
   PlugInIcon,
 } from '../../icons'
 
-import SidebarWidget from './SidebarWidget.vue'
 import { useSidebar } from '../../composables/useSidebar'
 
 const page = usePage()
@@ -181,7 +180,6 @@ const isSubmenuOpen = (groupIndex, itemIndex) =>
         </div>
       </nav>
 
-      <SidebarWidget v-if="isExpanded || isHovered || isMobileOpen" />
     </div>
   </aside>
 </template>

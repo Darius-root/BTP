@@ -1,10 +1,13 @@
 <script setup>
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import DeleteUserForm from './Partials/DeleteUserForm.vue';
-import UpdatePasswordForm from './Partials/UpdatePasswordForm.vue';
-import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm.vue';
-import { Head } from '@inertiajs/vue3';
-
+import DeleteUserForm from "./Partials/DeleteUserForm.vue";
+import UpdatePasswordForm from "./Partials/UpdatePasswordForm.vue";
+import UpdateProfileInformationForm from "./Partials/UpdateProfileInformationForm.vue";
+import AdminLayout from "@/components/layout/AdminLayout.vue";
+import SidebarProvider from "@/components/layout/SidebarProvider.vue";
+import PageBreadcrumb from "@/components/common/PageBreadcrumb.vue";
+import { Head } from "@inertiajs/vue3";
+import { ref } from "vue";
+const currentPageTitle = ref("Profile");
 defineProps({
     mustVerifyEmail: {
         type: Boolean,
@@ -17,40 +20,35 @@ defineProps({
 
 <template>
     <Head title="Profile" />
+    <SidebarProvider>
+        <admin-layout>
+            <PageBreadcrumb :pageTitle="currentPageTitle" />
 
-    <AuthenticatedLayout>
-        <template #header>
-            <h2
-                class="text-xl font-semibold leading-tight text-gray-800"
+            <div
+                class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3 lg:p-6"
             >
-                Profile
-            </h2>
-        </template>
+          
 
-        <div class="py-12">
-            <div class="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-                <div
-                    class="bg-white p-4 shadow sm:rounded-lg sm:p-8"
-                >
-                    <UpdateProfileInformationForm
-                        :must-verify-email="mustVerifyEmail"
-                        :status="status"
-                        class="max-w-xl"
-                    />
-                </div>
+                <div class="py-12">
+                    <div class="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
+                        <div class="">
+                            <UpdateProfileInformationForm
+                                :must-verify-email="mustVerifyEmail"
+                                :status="status"
+                                class="max-w-xl"
+                            />
+                        </div>
 
-                <div
-                    class="bg-white p-4 shadow sm:rounded-lg sm:p-8"
-                >
-                    <UpdatePasswordForm class="max-w-xl" />
-                </div>
+                        <div class="mt-6">
+                            <UpdatePasswordForm class="max-w-xl" />
+                        </div>
 
-                <div
-                    class="bg-white p-4 shadow sm:rounded-lg sm:p-8"
-                >
-                    <DeleteUserForm class="max-w-xl" />
+                        <div class="mt-6">
+                            <DeleteUserForm class="max-w-xl" />
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </AuthenticatedLayout>
+        </admin-layout>
+    </SidebarProvider>
 </template>

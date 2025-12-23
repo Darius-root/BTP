@@ -1,20 +1,30 @@
 <template>
     <SidebarProvider>
         <admin-layout>
-            <div class="grid grid-cols-12 gap-4 md:gap-6">
-                {{ $page.props.auth.user.name }}
-                  <Button>Click me</Button> 
-               <Switch />
+            <PageBreadcrumb :pageTitle="currentPageTitle" />
 
-            </div>
-        </admin-layout></SidebarProvider
-    >
+            <div
+                class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3 lg:p-6"
+            >
+                <h3
+                    class="mb-5 text-lg font-semibold text-gray-800 dark:text-white/90 lg:mb-7"
+                >
+                    Profile
+                </h3>
+                <profile-card />
+                <personal-info-card />
+                <address-card />
+            </div> </admin-layout
+    ></SidebarProvider>
 </template>
 
 <script setup lang="ts">
 import AdminLayout from "../components/layout/AdminLayout.vue";
 import SidebarProvider from "../components/layout/SidebarProvider.vue";
-import  {Switch}  from '../components/ui/switch'
-import  {Button}  from '@/components/ui/button'
-
+import PageBreadcrumb from "@/components/common/PageBreadcrumb.vue";
+import { ref } from "vue";
+import ProfileCard from "@/components/profile/ProfileCard.vue";
+import PersonalInfoCard from "@/components/profile/PersonalInfoCard.vue";
+import AddressCard from "@/components/profile/AddressCard.vue";
+const currentPageTitle = ref("User Profile");
 </script>

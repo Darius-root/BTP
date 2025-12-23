@@ -21,6 +21,10 @@
         "vue": "^3.4.0"
     },
     "dependencies": {
+        "@tabler/icons-vue": "^3.36.0",
+        "@tanstack/vue-table": "^8.21.3",
+        "@unovis/ts": "^1.6.2",
+        "@unovis/vue": "^1.6.2",
         "@vueuse/core": "^14.1.0",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
