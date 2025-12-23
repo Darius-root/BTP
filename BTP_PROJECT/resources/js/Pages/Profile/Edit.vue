@@ -27,8 +27,6 @@ defineProps({
             <div
                 class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3 lg:p-6"
             >
-          
-
                 <div class="py-12">
                     <div class="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
                         <div class="">
