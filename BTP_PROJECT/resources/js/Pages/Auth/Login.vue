@@ -140,7 +140,7 @@ import { ref } from 'vue'
 import FullScreenLayout from '@/Components/layout/FullScreenLayout.vue'
 import CommonGridShape from '@/Components/common/CommonGridShape.vue'
 
-import InputError from '@/Components/InputError.vue';
+import InputError from '@/components/InputError.vue';
 
 import { Head, Link, useForm } from '@inertiajs/vue3';
 const showPassword = ref(false)

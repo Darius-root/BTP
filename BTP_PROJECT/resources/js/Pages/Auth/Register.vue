@@ -129,8 +129,10 @@
 </template>
 
 <script setup lang="ts">
-import { Head, Link, useForm } from '@inertiajs/vue3'
-import InputError from '@/Components/InputError.vue'
+import FullScreenLayout from '@/components/layout/FullScreenLayout.vue'
+import CommonGridShape from '@/components/common/CommonGridShape.vue'
+import { ref } from 'vue'
+import InputError from '@/components/InputError.vue'
 
 const form = useForm({
     name: '',

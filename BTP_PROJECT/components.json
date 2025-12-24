@@ -5,7 +5,7 @@
   "tailwind": {
     "config": "",
     "css": "resources/css/app.css",
-    "baseColor": "slate",
+    "baseColor": "neutral",
     "cssVariables": true,
     "prefix": ""
   },
@@ -13,7 +13,7 @@
   "aliases": {
     "components": "@/components",
     "utils": "@/lib/utils",
-    "ui": "@/components/ui/shadcn",
+    "ui": "@/components/ui",
     "lib": "@/lib",
     "composables": "@/composables"
   },
