@@ -28,8 +28,8 @@
 </template>
 
 <script>
-import AdminLayout from "../components/layout/AdminLayout.vue";
-import SidebarProvider from "../components/layout/SidebarProvider.vue";
+import AdminLayout from "../Components/layout/AdminLayout.vue";
+import SidebarProvider from "../Components/layout/SidebarProvider.vue";
 // import EcommerceMetrics from '../components/ecommerce/EcommerceMetrics.vue'
 // import MonthlyTarget from '../components/ecommerce/MonthlySale.vue'
 // import MonthlySale from '../components/ecommerce/MonthlyTarget.vue'
