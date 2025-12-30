@@ -3,6 +3,7 @@
 use App\Http\Controllers\PermissionCrontroller;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\UserController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -34,9 +35,12 @@ Route::middleware(['auth','verified'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Rôles système
+    // Rôles and permissions & système
     Route::resource('roles', RoleController::class);
     Route::get('/permissions', [PermissionCrontroller::class, 'index'])->name('roles.permissions.index');
+   // Utilisateurs
+    Route::resource('users', UserController::class)
+            ->only(['index', 'show']);
 });
 
 

@@ -132,7 +132,7 @@ const deleteRole = (role) => {
                                                                 class="w-4 h-4"
                                                             />
                                                         </Button>
-                                                        <Button
+                                                        <!-- <Button
                                                             size="sm"
                                                             variant="secondary"
                                                             class="text-red-600"
@@ -143,7 +143,7 @@ const deleteRole = (role) => {
                                                             <TrashIcon
                                                                 class="w-4 h-4"
                                                             />
-                                                        </Button>
+                                                        </Button> -->
                                                     </div>
                                                 </TableCell>
                                             </TableRow>
@@ -218,7 +218,7 @@ const deleteRole = (role) => {
                                                                 class="w-4 h-4 text-yellow-600"
                                                             />
                                                         </Button>
-                                                        <Button
+                                                        <!-- <Button
                                                             size="sm"
                                                             variant="secondary"
                                                             @click="
@@ -228,7 +228,7 @@ const deleteRole = (role) => {
                                                             <TrashIcon
                                                                 class="w-4 h-4 text-red-600"
                                                             />
-                                                        </Button>
+                                                        </Button> -->
                                                     </div>
                                                 </TableCell>
                                             </TableRow>
