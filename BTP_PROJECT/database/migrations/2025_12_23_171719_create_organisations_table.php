@@ -13,6 +13,8 @@ return new class extends Migration
     {
      Schema::create('organisations', function (Blueprint $table) {
     $table->id();
+    $table->boolean('is_system')->default(false);
+    $table->string('nom');
     $table->string('raison_sociale');
     $table->string('logo')->nullable();
     $table->text('adresse')->nullable();

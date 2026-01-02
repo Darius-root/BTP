@@ -2,17 +2,20 @@
 
 namespace Database\Seeders;
 
+use App\Models\Organisation;
+use App\Models\User;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use App\Models\User;
-use App\Models\Organisation;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 
-class UserSeeder extends Seeder
+class UserTestSeeder extends Seeder
 {
-
-    public function run(): void
+    /**
+     * Run the database seeds.
+     */
+   public function run(): void
     {
 
         User::factory()->count(10)->create();
@@ -21,8 +24,8 @@ class UserSeeder extends Seeder
         // Créons un utilisateur de test
         $user = User::firstOrCreate(
             [
-                'email' => 'admin@admin.com',
-                'name' => 'SuperAdmin',
+                'email' => 'tester@test.com',
+                'name' => 'user',
                 'password' => Hash::make('password'), // mot de passe hashé
             ]
         );
@@ -30,39 +33,24 @@ class UserSeeder extends Seeder
         // Créons une organisation si elle n'existe pas
         $org = Organisation::firstOrCreate(
             [
-                'is_system' => true,
-                'nom' => 'Système',
-                'raison_sociale' => 'Organisation Système',
+                'is_system' => false,
+                'nom' => 'Test',
+                'raison_sociale' => 'Organisation test',
                 'pays' => 'Bénin',
                 'devise' => 'XOF',
                 'user_id' => $user->id,
             ]
         );
 
-         $orgtest = Organisation::firstOrCreate(
-            [
-                'is_system' => false,
-                'nom' => 'TEST Organisation',
-                'raison_sociale' => 'Test  Organisation',
-                'pays' => 'Bénin',
-                'devise' => 'XOF',
-                'user_id' => $user->id,
-            ]
-        );
+     
 
         // Récupérons tous les rôles
         $roles = Role::all();
 
         foreach ($roles as $role) {
-            if (str_starts_with($role->name, 'SYSTEM_')) {
-                app(PermissionRegistrar::class)->setPermissionsTeamId( $org->id);
-
-                // Attribution des rôles système avec organisation   systeme
-                $user->assignRole($role->name);
-            }
-
+         
             if (str_starts_with($role->name, 'ORG_')) {
-                app(PermissionRegistrar::class)->setPermissionsTeamId($orgtest->id);
+                app(PermissionRegistrar::class)->setPermissionsTeamId($org->id);
 
                 // Attribution des rôles organisationnels avec test organisation
                 //pour les role role organisationnel general

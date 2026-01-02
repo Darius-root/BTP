@@ -34,7 +34,7 @@ const currentPageTitle = ref("Profil");
       <PageBreadcrumb :pageTitle="currentPageTitle" />
 
       <div
-        class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3 lg:p-6"
+        class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-black lg:p-6"
       >
         <Tabs default-value="profile" class="w-full">
           <!-- Onglets -->

@@ -1,23 +1,18 @@
 <script setup lang="ts" generic="TData, TValue">
 import type {
   ColumnDef,
-  ColumnFiltersState,
-  ExpandedState,
   SortingState,
   VisibilityState,
 } from '@tanstack/vue-table'
 import {
   FlexRender,
   getCoreRowModel,
-  getExpandedRowModel,
-  getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   useVueTable,
 } from '@tanstack/vue-table'
-import { h, ref } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import {
   DropdownMenu,
@@ -33,67 +28,105 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { valueUpdater } from './ui/table/utils'
+import { valueUpdater } from '@/components/ui/table/utils'
 
+/* PROPS */
 const props = defineProps<{
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
+  meta: {
+    current_page: number
+    last_page: number
+    total: number
+  }
 }>()
 
-const sorting = ref<SortingState>([])
-const columnFilters = ref<ColumnFiltersState>([])
-const columnVisibility = ref<VisibilityState>({})
-const rowSelection = ref({})
-const expanded = ref<ExpandedState>({})
+/* EVENTS */
+const emit = defineEmits<{
+  (
+    e: 'search',
+    payload: {
+      value: string
+      columns: string[]
+    }
+  ): void
+  (e: 'page-change', page: number): void
+}>()
 
+/* STATE */
+const sorting = ref<SortingState>([])
+const columnVisibility = ref<VisibilityState>({})
+const search = ref('')
+
+/* TABLE */
 const table = useVueTable({
-  get data() { return props.data },
-  get columns() { return props.columns },
+  get data() {
+    return props.data
+  },
+  get columns() {
+    return props.columns
+  },
   getCoreRowModel: getCoreRowModel(),
-  getPaginationRowModel: getPaginationRowModel(),
   getSortedRowModel: getSortedRowModel(),
-  getFilteredRowModel: getFilteredRowModel(),
-  getExpandedRowModel: getExpandedRowModel(),
-  onSortingChange: updaterOrValue => valueUpdater(updaterOrValue, sorting),
-  onColumnFiltersChange: updaterOrValue => valueUpdater(updaterOrValue, columnFilters),
-  onColumnVisibilityChange: updaterOrValue => valueUpdater(updaterOrValue, columnVisibility),
-  onRowSelectionChange: updaterOrValue => valueUpdater(updaterOrValue, rowSelection),
-  onExpandedChange: updaterOrValue => valueUpdater(updaterOrValue, expanded),
+  getPaginationRowModel: getPaginationRowModel(),
+  onSortingChange: updater =>
+    valueUpdater(updater, sorting),
+  onColumnVisibilityChange: updater =>
+    valueUpdater(updater, columnVisibility),
   state: {
-    get sorting() { return sorting.value },
-    get columnFilters() { return columnFilters.value },
-    get columnVisibility() { return columnVisibility.value },
-    get rowSelection() { return rowSelection.value },
-    get expanded() { return expanded.value },
+    get sorting() {
+      return sorting.value
+    },
+    get columnVisibility() {
+      return columnVisibility.value
+    },
   },
 })
+
+/* COLONNES VISIBLES (clé du système) */
+const visibleColumns = computed(() =>
+  table
+    .getAllLeafColumns()
+    .filter(col => col.getIsVisible() && col.getCanHide())
+    .map(col => col.id)
+)
+
+/* SEARCH → BACKEND */
+watch(
+  () => search.value,
+  value => {
+    emit('search', {
+      value,
+      columns: visibleColumns.value,
+    })
+  }
+)
 </script>
 
 <template>
-  <div class="w-full">
-    <!-- Filtres -->
-    <div class="flex items-center py-4">
+  <div class="w-full space-y-4">
+    <!-- Toolbar -->
+    <div class="flex items-center gap-2">
       <Input
+        v-model="search"
         class="max-w-sm"
-        placeholder="Filter..."
-        :model-value="table.getColumn('email')?.getFilterValue() as string"
-        @update:model-value="table.getColumn('email')?.setFilterValue($event)"
+        placeholder="Rechercher..."
       />
+
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
           <Button variant="outline" class="ml-auto">
-            Columns
+            Colonnes
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuCheckboxItem
-            v-for="column in table.getAllColumns().filter(c => c.getCanHide())"
-            :key="column.id"
-            class="capitalize"
-            :model-value="column.getIsVisible()"
-            @update:model-value="val => column.toggleVisibility(!!val)"
-          >
-            {{ column.id }}
+           v-for="column in table.getAllColumns().filter(c => c.getCanHide() && c.id !== 'id')"
+    :key="column.id"
+    :model-value="column.getIsVisible()"
+    @update:model-value="v => column.toggleVisibility(!!v)"
+  >
+    {{ column.id }}
           </DropdownMenuCheckboxItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -102,24 +135,49 @@ const table = useVueTable({
     <!-- Table -->
     <div class="rounded-md border">
       <Table>
-        <TableHeader>
+        <TableHeader class="pl-4 ">
           <TableRow v-for="hg in table.getHeaderGroups()" :key="hg.id">
             <TableHead v-for="header in hg.headers" :key="header.id">
-              <FlexRender v-if="!header.isPlaceholder" :render="header.column.columnDef.header" :props="header.getContext()" />
+              <FlexRender
+                v-if="!header.isPlaceholder"
+                :render="header.column.columnDef.header"
+                :props="header.getContext()"
+              />
             </TableHead>
-          </TableRow>
+          </TableRow><DropdownMenuContent align="end">
+  <DropdownMenuCheckboxItem
+    v-for="column in table.getAllColumns().filter(c => c.getCanHide() && c.id !== 'id')"
+    :key="column.id"
+    :model-value="column.getIsVisible()"
+    @update:model-value="v => column.toggleVisibility(!!v)"
+  >
+    {{ column.id }}
+  </DropdownMenuCheckboxItem>
+</DropdownMenuContent>
         </TableHeader>
+
         <TableBody>
-          <template v-if="table.getRowModel().rows?.length">
-            <TableRow v-for="row in table.getRowModel().rows" :key="row.id">
-              <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id">
-                <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
-              </TableCell>
-            </TableRow>
-          </template>
-          <TableRow v-else>
-            <TableCell :colspan="props.columns.length" class="h-24 text-center">
-              No results.
+          <TableRow
+            v-for="row in table.getRowModel().rows"
+            :key="row.id"
+          >
+            <TableCell
+              v-for="cell in row.getVisibleCells()"
+              :key="cell.id"
+            >
+              <FlexRender
+                :render="cell.column.columnDef.cell"
+                :props="cell.getContext()"
+              />
+            </TableCell>
+          </TableRow>
+
+          <TableRow v-if="!table.getRowModel().rows.length">
+            <TableCell
+              :colspan="columns.length"
+              class="text-center py-8"
+            >
+              Aucun résultat
             </TableCell>
           </TableRow>
         </TableBody>
@@ -127,9 +185,28 @@ const table = useVueTable({
     </div>
 
     <!-- Pagination -->
-    <div class="flex items-center justify-end space-x-2 py-4">
-      <Button variant="outline" size="sm" :disabled="!table.getCanPreviousPage()" @click="table.previousPage()">Previous</Button>
-      <Button variant="outline" size="sm" :disabled="!table.getCanNextPage()" @click="table.nextPage()">Next</Button>
+    <div class="flex items-center justify-end gap-2">
+      <Button
+        variant="outline"
+        size="sm"
+        :disabled="meta.current_page === 1"
+        @click="emit('page-change', meta.current_page - 1)"
+      >
+        Précédent
+      </Button>
+
+      <span class="text-sm text-muted-foreground">
+        Page {{ meta.current_page }} / {{ meta.last_page }}
+      </span>
+
+      <Button
+        variant="outline"
+        size="sm"
+        :disabled="meta.current_page === meta.last_page"
+        @click="emit('page-change', meta.current_page + 1)"
+      >
+        Suivant
+      </Button>
     </div>
   </div>
 </template>

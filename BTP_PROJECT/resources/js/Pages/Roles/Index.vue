@@ -57,7 +57,7 @@ const deleteRole = (role) => {
             <PageBreadcrumb :pageTitle="currentPageTitle" />
            
             <div
-                class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3 lg:p-6"
+                class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-black lg:p-6"
             >
                 <div class="p-6 space-y-6">
                     <Tabs default-value="system" class="w-full">

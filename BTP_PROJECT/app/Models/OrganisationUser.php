@@ -9,7 +9,7 @@ class OrganisationUser extends Model
 {
     use HasFactory;
     protected $table = 'organisation_users';
-    protected $fillable = ['user_id', 'organisation_id'];
+    protected $fillable = ['user_id',  'organisation_id'];
 
 
 

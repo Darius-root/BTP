@@ -4,7 +4,7 @@
             <PageBreadcrumb :pageTitle="currentPageTitle" />
 
             <div
-                class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3 lg:p-6"
+                class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-black lg:p-6"
             >
                 <h3
                     class="mb-5 text-lg font-semibold text-gray-800 dark:text-white/90 lg:mb-7"

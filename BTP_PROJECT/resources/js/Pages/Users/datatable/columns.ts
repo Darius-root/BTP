@@ -1,53 +1,123 @@
-import { ColumnDef } from '@tanstack/vue-table'
+import type { ColumnDef } from '@tanstack/vue-table'
 import { h } from 'vue'
-import DropdownAction from './DatatableDrpd.vue'
+import { Button } from '@/components/ui/button'
+import { Eye, PenBox, Trash2 } from 'lucide-vue-next'
+import { router } from "@inertiajs/vue3";
 
-interface Payment {
-  id: string
-  amount: number
-  status: 'pending' | 'processing' | 'success' | 'failed'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+
+export interface User {
+  id: number
+  name: string
   email: string
+  created_at: string
 }
 
-export const payments: Payment[] = [
-  {
-    id: '728ed52f',
-    amount: 100,
-    status: 'pending',
-    email: 'm@example.com',
-  },
-  {
-    id: '489e1d42',
-    amount: 125,
-    status: 'processing',
-    email: 'example@gmail.com',
-  },
-]
 
-export const columns: ColumnDef<Payment>[] = [
+export const userColumns: ColumnDef<User>[] = [
+/* ID */
+{
+  accessorKey: 'id',
+  header: 'N°',
+  enableSorting: false, // Désactive le tri si nécessaire
+  cell: ({ row, table }) => {
+    const index = table.getState().pagination.pageIndex * table.getState().pagination.pageSize + row.index + 1;
+    return h('span', { class: 'font-medium'}, index);
+  },
+},
+
+
+  /* NAME */
   {
-    accessorKey: 'amount',
-    header: () => h('div', { class: 'text-right' }, 'Amount'),
+    accessorKey: 'name',
+    header: 'Nom',
+    cell: ({ row }) =>
+      h('span', { class: 'font-medium' }, row.getValue('name')),
+  },
+
+  /* EMAIL */
+  {
+    accessorKey: 'email',
+    header: 'Email',
+    cell: ({ row }) =>
+      h('span', { class: 'lowercase text-muted-foreground' }, row.getValue('email')),
+  },
+
+  /* CREATED AT */
+  {
+    accessorKey: 'created_at',
+    header: 'Créé le',
     cell: ({ row }) => {
-      const amount = Number.parseFloat(row.getValue('amount'))
-      const formatted = new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-      }).format(amount)
-
-      return h('div', { class: 'text-right font-medium' }, formatted)
+      const date = new Date(row.getValue('created_at'))
+      return h(
+        'span',
+        { class: 'text-sm text-muted-foreground' },
+        date.toLocaleDateString()
+      )
     },
   },
+
+  /* ACTIONS */
   {
     id: 'actions',
+    header: 'Actions',
     enableHiding: false,
+    enableSorting: false,
     cell: ({ row }) => {
-      const payment = row.original
+      const user = row.original
+
+      const ActionButton = (
+        icon: any,
+        color: string,
+        tooltip: string,
+        onClick: () => void
+      ) =>
+        h(TooltipProvider, {}, () =>
+          h(Tooltip, {}, () => [
+            h(TooltipTrigger, { asChild: true }, () =>
+              h(
+                Button,
+                {
+                  size: 'icon',
+                  variant: 'secondary',
+                  class: color,
+                  onClick,
+                },
+                () => h(icon, { class: 'w-4 h-4' })
+              )
+            ),
+            h(TooltipContent, {}, tooltip),
+          ])
+        )
 
       return h(
         'div',
-        { class: 'relative' },
-        h(DropdownAction, { payment })
+        { class: 'flex items-center gap-1' },
+        [
+          ActionButton(
+            Eye,
+            'text-green-600',
+            'Voir l’utilisateur',
+            () => router.get(`/users/${user.id}`)
+          ),
+          // ActionButton(
+          //   PenBox,
+          //   'text-yellow-600',
+          //   'Modifier l’utilisateur',
+          //   () => console.log('Modifier', user.id)
+          // ),
+          ActionButton(
+            Trash2,
+            'text-red-600',
+            'Supprimer l’utilisateur',
+            () => router.get(`/users/${user.id}`)
+          ),
+        ]
       )
     },
   },

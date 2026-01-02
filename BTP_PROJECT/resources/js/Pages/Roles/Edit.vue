@@ -26,6 +26,7 @@ import { Check, ChevronsUpDown } from "lucide-vue-next";
 import AdminLayout from "@/components/layout/AdminLayout.vue";
 import SidebarProvider from "@/components/layout/SidebarProvider.vue";
 import PageBreadcrumb from "@/components/common/PageBreadcrumb.vue";
+import { PageProps } from "vendor/laravel/breeze/stubs/inertia-react-ts/resources/js/types";
 
 // -----------------------------
 // Types
@@ -42,13 +43,13 @@ interface Role {
     category: "system" | "org";
 }
 
-interface PageProps {
+interface LocalPageProps extends PageProps  {
     role: Role;
     permissions: Permission[];
     flash?: { success?: string };
 }
 
-const page = usePage<PageProps>();
+const page = usePage<LocalPageProps>();
 const popoverOpen = ref(false);
 
 // -----------------------------
@@ -120,7 +121,7 @@ const submit = () => {
     <SidebarProvider>
         <AdminLayout>
             <PageBreadcrumb pageTitle="Modification du rôle" />
-<div class="rounded-2xl border bg-white p-6 dark:bg-white/3">
+<div class="rounded-2xl border bg-white p-6 dark:bg-black">
                 <div class="mb-4">
                     <Button variant="outline" @click="router.visit(route('roles.show', page.props.role.id))">
                         <arrowLeft class="w-4 h-4 ml-2 mb" />

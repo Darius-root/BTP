@@ -42,6 +42,21 @@ const menuGroups = [
             },
         ],
     },
+
+     {
+        title: "Utilisateurs",
+        items: [
+
+            {
+                name: "Utilisateurs",
+                icon: ListIcon,
+                subItems: [
+                    { name: "Liste", path: "/users" },
+                    { name: "Roles", path: "/permissions" },
+                ],
+            },
+        ],
+    },
 ];
 
 const isActive = (path) => page.url === path;

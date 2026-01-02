@@ -56,7 +56,7 @@ const editRole = (role) => {
         <AdminLayout>
             <PageBreadcrumb :pageTitle="`Détails du rôle`" />
 
-            <div class="rounded-2xl border bg-white p-6 dark:bg-white/3">
+            <div class="rounded-2xl border bg-white p-6 dark:bg-black">
                 <div class="mb-4">
                     <Button variant="outline" @click="goBack">
                         <arrowLeft class="w-4 h-4 ml-2 mb" />

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\OrganisationController;
 use App\Http\Controllers\PermissionCrontroller;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
@@ -24,7 +25,7 @@ Route::get('/', function () {
 
 
 
-Route::middleware(['auth','verified'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     // Tableau de bord
     Route::get('/dashboard', function () {
         return Inertia::render('Dashboard');
@@ -37,11 +38,41 @@ Route::middleware(['auth','verified'])->group(function () {
 
     // Rôles and permissions & système
     Route::resource('roles', RoleController::class);
+
     Route::get('/permissions', [PermissionCrontroller::class, 'index'])->name('roles.permissions.index');
-   // Utilisateurs
+
+    // Utilisateurs
     Route::resource('users', UserController::class)
-            ->only(['index', 'show']);
+        ->only(['index', 'show']);
+
+
+
+
+
+
+
+    Route::post('/organisations/{organisation}/activate', [
+        OrganisationController::class,
+        'activate'
+    ])->name('organisations.activate');
+     Route::post('/organisations/{organisation}/deactivate', [
+        OrganisationController::class,
+        'deactivate'
+    ])->name('organisations.deactivate');
+
+    Route::get('/organisations', [OrganisationController::class, 'index'])->name('organisations.index');
+
+    Route::middleware(['organisation.active'])->group(function () {
+
+        Route::get('/organisations/add-user', [OrganisationController::class, 'addUserToOrganisation'])->name('organisations.addUser');
+
+        Route::post('/organisations/store-user', [OrganisationController::class, 'storeUserToOrganisation'])->name('organisations.storeUser');
+
+        // Organisations
+
+        Route::get('/permissions', [PermissionCrontroller::class, 'index'])->name('roles.permissions.index');
+    });
 });
 
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
