@@ -68,12 +68,14 @@
           </svg>
         </button>
         <SearchBar />
+        
       </div>
 
       <div
         :class="[isApplicationMenuOpen ? 'flex' : 'hidden']"
         class="items-center justify-between w-full gap-4 px-5 py-4 shadow-theme-md lg:flex lg:justify-end lg:px-0 lg:shadow-none"
-      >
+      ><div> <Badge variant="secondary">
+         {{ organisation}}</Badge> </div>
         <div class="flex items-center gap-2 2xsm:gap-3">
           <ThemeToggler />
           <NotificationMenu />
@@ -85,14 +87,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref,computed } from 'vue'
 import { useSidebar } from '../../composables/useSidebar'
 import ThemeToggler from '../common/ThemeToggler.vue'
 import SearchBar from './header/SearchBar.vue'
 import HeaderLogo from './header/HeaderLogo.vue'
 import NotificationMenu from './header/NotificationMenu.vue'
 import UserMenu from './header/UserMenu.vue'
+import { Badge } from "@/components/ui/badge";
+import { usePage } from "@inertiajs/vue3";
 
+const page = usePage();
+const organisation = computed(
+    // @ts-ignore
+    () => page.props.session.active_organisation?.nom ||' Aucune organisation active'
+);
 const { toggleSidebar, toggleMobileSidebar, isMobileOpen } = useSidebar()
 
 const handleToggle = () => {

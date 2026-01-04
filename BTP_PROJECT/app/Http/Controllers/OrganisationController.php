@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Organisation;
 use App\Models\OrganisationUser;
 use App\Models\User;
+use App\Services\OrganisationContext;
 use App\Services\OrganisationService;
 use Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
 
@@ -90,7 +92,7 @@ class OrganisationController extends Controller
 
         $user->unsetRelation('roles')->unsetRelation('permissions');
 
-        return back()->with('success', 'Organisation activée');
+        return to_route('organisations.index')->with('success', 'Organisation activée');
     }
 
     public function deactivate()
@@ -104,63 +106,88 @@ class OrganisationController extends Controller
 
         $user->unsetRelation('roles')->unsetRelation('permissions');
 
-        return back()->with('success', 'Organisation désactivée');
+        return to_route('organisations.index')->with('success', 'Organisation désactivée');
     }
+
+
 
     public function addUserToOrganisation()
     {
-        $user = Auth::user();
-        if (! $user->can('checkPermission', [getPermissionsTeamId(), 'ADD_USER_TO_ORGANISATION'])) {
 
-            return redirect()
-                ->back()
-                ->with([
-                    'error' => "Vous n'avez pas la permission d'ajouter un utilisateur à cette organisation."
-                ]);
+        if (OrganisationContext::hasPermission(Auth::user(), getPermissionsTeamId(), 'ORG_ADD_USER_TO_ORGANISATION') === false) {
+            return back()->with('error', "Vous n'avez pas la permission d'ajouter un utilisateur à cette organisation.");
         }
 
-        $roles = Role::where('name', '!=', 'SYSTEM_ADMIN_PLATEFORME');
-        return Inertia::render('Organisations/AddUser', [
-            'organisations' => $user->organisations,
-            'roles' => $roles->get(),
+        $user = Auth::user();
+        $organisationId = getPermissionsTeamId();
+
+        if (! $organisationId) {
+            return back()->with('error', "Aucune organisation active.");
+        }
+
+
+
+        $roles = Role::where('name', 'like', 'ORG_%')->get();
+
+        return Inertia::render('Organisations/Users/AddUser', [
+            'roles' => $roles,
         ]);
     }
-
-
 
     public function storeUserToOrganisation(Request $request)
     {
         $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'organisation_id' => 'required|exists:organisations,id',
+            'email' => ['required', 'email'],
+            'role'  => ['required', 'exists:roles,name'],
         ]);
 
-        $user = User::findOrFail($request->user_id);
-        $organisation = Organisation::findOrFail($request->organisation_id);
+        $organisationId = getPermissionsTeamId();
 
-        // Role par défaut : "view organisation"
-        $defaultRole = Role::where('name', 'view organisation')->first();
-
-        if (!$defaultRole) {
-            return back()->with('error', 'Le rôle par défaut "view organisation" n’existe pas.');
+        if (! $organisationId) {
+            return back()->with('error', "Aucune organisation active.");
         }
 
-        // Vérifier que l’utilisateur n’est pas déjà dans cette organisation
+        $user = User::where('email', $request->email)->first();
+
+        if (! $user) {
+            return back()->with('error', "Utilisateur introuvable. Veuillez l’inviter.");
+        }
+
+        $role = Role::where('name', $request->role)->first();
+
         $exists = OrganisationUser::where('user_id', $user->id)
-            ->where('organisation_id', $organisation->id)
+            ->where('organisation_id', $organisationId)
             ->exists();
 
         if ($exists) {
-            return back()->with('error', 'L’utilisateur est déjà membre de cette organisation.');
+            return back()->with('error', "L’utilisateur est déjà membre de cette organisation.");
         }
 
-        // Ajouter l’utilisateur avec le rôle par défaut
         OrganisationUser::create([
-            'user_id' => $user->id,
-            'organisation_id' => $organisation->id,
-            'role_id' => $defaultRole->id,
+            'user_id'         => $user->id,
+            'organisation_id' => $organisationId,
+            'role_id'         => $role->id,
         ]);
 
-        return back()->with('success', "Utilisateur ajouté à l'organisation avec le rôle par défaut.");
+        return back()->with('success', "Utilisateur ajouté à l’organisation avec succès.");
+    }
+
+
+    public function roleOrganisation()
+    {
+        $user = Auth::user();
+        $user->unsetRelation('roles')->unsetRelation('permissions');
+        
+        $roles = $user->getRoleNames();
+
+        dd($roles);
+        return Inertia::render('Organisations/RoleOrganisation', [
+            'roles' => $roles,
+        ]);
+    }
+
+      public function storeRoleOrganisation()
+    {
+
     }
 }

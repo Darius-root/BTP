@@ -55,14 +55,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         OrganisationController::class,
         'activate'
     ])->name('organisations.activate');
-     Route::post('/organisations/{organisation}/deactivate', [
+    Route::post('/organisations/{organisation}/deactivate', [
         OrganisationController::class,
         'deactivate'
     ])->name('organisations.deactivate');
 
+
     Route::get('/organisations', [OrganisationController::class, 'index'])->name('organisations.index');
 
+
+
     Route::middleware(['organisation.active'])->group(function () {
+
+        Route::get('/organisations/roles', [OrganisationController::class, 'roleOrganisation'])->name('organisations.roleOrganisation');
 
         Route::get('/organisations/add-user', [OrganisationController::class, 'addUserToOrganisation'])->name('organisations.addUser');
 
@@ -70,7 +75,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Organisations
 
-        Route::get('/permissions', [PermissionCrontroller::class, 'index'])->name('roles.permissions.index');
+
     });
 });
 

@@ -17,6 +17,10 @@ class RolePermissionSeeder extends Seeder
             'SYSTEM_USER_CREATE',
             'SYSTEM_USER_DELETE',
             'SYSTEM_ROLE_MANAGE',
+        ];  $systemPermissions = [
+            'SYSTEM_USER_CREATE',
+            'SYSTEM_USER_DELETE',
+            'SYSTEM_ROLE_MANAGE',
         ];
 
         foreach ($systemPermissions as $perm) {

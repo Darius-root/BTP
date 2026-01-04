@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router, usePage } from "@inertiajs/vue3";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import AdminLayout from "@/components/layout/AdminLayout.vue";
 import SidebarProvider from "@/components/layout/SidebarProvider.vue";
 import PageBreadcrumb from "@/components/common/PageBreadcrumb.vue";
@@ -28,8 +28,8 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-
-import { Eye, UserPlus, Trash2, CheckCircle, Circle } from "lucide-vue-next";
+import { Eye, UserPlus, Trash2 } from "lucide-vue-next";
+import { refAutoReset } from "@vueuse/core";
 
 defineProps<{
     organisations?: Array<any>;
@@ -39,41 +39,64 @@ defineProps<{
         statut: boolean;
     }>;
 }>();
+
 const actionType = ref<"activate" | "deactivate">("activate");
 const openConfirm = ref(false);
+// stocke l'objet organisation complet (pas seulement l'id)
 const selectedOrg = ref<any | null>(null);
-const page = usePage();
-const session: any = page.props.session;
-const activeOrganisationId = ref(session.active_organisation?.id || null);
 
-function askActivation(org) {
-    selectedOrg.value = org.id;
+const page = usePage();
+
+const activeOrganisationId = computed(
+    // @ts-ignore
+    () => page.props.session.active_organisation?.id || null
+);
+
+function askActivation(org: any) {
+    // stocke l'objet (pour affichage du nom etc.)
+    selectedOrg.value = org;
 
     // si on clique sur l’org déjà active → désactivation
     actionType.value =
         org.id === activeOrganisationId.value ? "deactivate" : "activate";
     openConfirm.value = true;
 }
+
 function confirmActivation() {
     if (!selectedOrg.value) return;
 
+    const id = selectedOrg.value.id;
+
     if (actionType.value === "activate") {
         router.post(
-            route("organisations.activate", selectedOrg.value),
+            route("organisations.activate", id),
             {},
-            { preserveScroll: true }
+            {
+                preserveScroll: false,
+
+                onSuccess: () => {
+                    router.reload();
+                },
+            }
         );
     } else {
-        alert("deactivate");
-
         router.post(
-            route("organisations.deactivate", selectedOrg.value),
+            route("organisations.deactivate", id),
             {},
-            { preserveScroll: true }
+            {
+                preserveScroll: false,
+
+                onSuccess: () => {
+                    router.reload();
+                },
+            }
         );
     }
 
+    // fermer le dialog — l'état réel (activeOrganisation) viendra du serveur / Inertia après la requête
     openConfirm.value = false;
+    // on peut aussi réinitialiser selectedOrg si on veut :
+    selectedOrg.value = null;
 }
 </script>
 
@@ -84,9 +107,6 @@ function confirmActivation() {
         <AdminLayout>
             <PageBreadcrumb pageTitle="Organisations" />
             <div class="rounded-xl border bg-background">
-              {{ page.props.flash }}
-                            {{ page.props.session }}
-
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -104,18 +124,19 @@ function confirmActivation() {
                                 v-for="org in organisations"
                                 :key="org.id"
                             >
-                                <TableCell class="font-medium">
-                                    {{ org.nom }}
-                                </TableCell>
-
-                                <TableCell>
-                                    <Badge variant="outline">—</Badge>
-                                </TableCell>
-
-                                <TableCell>
-                                    <Badge variant="secondary"> Système </Badge>
-                                </TableCell>
-
+                                <TableCell class="font-medium">{{
+                                    org.nom
+                                }}</TableCell>
+                                <TableCell
+                                    ><Badge variant="outline"
+                                        >—</Badge
+                                    ></TableCell
+                                >
+                                <TableCell
+                                    ><Badge variant="secondary">
+                                        Système
+                                    </Badge></TableCell
+                                >
                                 <TableCell class="text-right">
                                     <Button
                                         size="sm"
@@ -141,38 +162,36 @@ function confirmActivation() {
                             <TableRow
                                 v-for="item in teamsWithRoles"
                                 :key="item.team.id"
-                                :class="!item.statut && 'opacity-50'"
+                                :class="
+                                    item.team.id !== activeOrganisationId &&
+                                    'opacity-50'
+                                "
                             >
-                                <!-- Organisation -->
-                                <TableCell class="font-medium">
-                                    {{ item.team.nom }}
-                                </TableCell>
+                                <TableCell class="font-medium">{{
+                                    item.team.nom
+                                }}</TableCell>
 
-                                <!-- Rôles -->
                                 <TableCell>
                                     <div class="flex flex-wrap gap-1">
                                         <Badge
                                             v-for="role in item.roles"
                                             :key="role"
                                             variant="secondary"
+                                            >{{ role }}</Badge
                                         >
-                                            {{ role }}
-                                        </Badge>
                                     </div>
                                 </TableCell>
 
-                                <!-- Statut -->
-                                <!-- Statut -->
-                                 {{ page.props.flash }}
                                 <TableCell>
                                     <div class="flex items-center gap-3">
                                         <Switch
-                                            :checked="
+                                            :modelValue="
                                                 item.team.id ===
                                                 activeOrganisationId
                                             "
                                             @click="askActivation(item.team)"
                                         />
+
                                         <Badge
                                             :variant="
                                                 item.team.id ===
@@ -191,12 +210,14 @@ function confirmActivation() {
                                     </div>
                                 </TableCell>
 
-                                <!-- Actions -->
                                 <TableCell class="text-right space-x-2">
                                     <Button
                                         size="sm"
                                         variant="outline"
-                                        :disabled="!item.statut"
+                                        :disabled="
+                                            item.team.id !==
+                                            activeOrganisationId
+                                        "
                                         @click="
                                             router.visit(
                                                 route(
@@ -213,8 +234,16 @@ function confirmActivation() {
                                     <Button
                                         v-if="item.roles.includes('ORG_ADMIN')"
                                         size="sm"
-                                        variant="destructive"
-                                        :disabled="!item.statut"
+                                        :variant="
+                                            item.team.id ===
+                                            activeOrganisationId
+                                                ? 'destructive'
+                                                : 'outline'
+                                        "
+                                        :disabled="
+                                            item.team.id !==
+                                            activeOrganisationId
+                                        "
                                         @click="
                                             router.visit(
                                                 route(
@@ -248,17 +277,35 @@ function confirmActivation() {
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>
-                            Changer d’organisation active ?
+                            <!-- titre dynamique selon action -->
+                            {{
+                                actionType === "activate"
+                                    ? "Activer cette organisation ?"
+                                    : "Désactiver cette organisation ?"
+                            }}
                         </AlertDialogTitle>
 
                         <AlertDialogDescription>
-                            Vous êtes sur le point d’activer l’organisation
-                            <strong>{{ selectedOrg?.nom }}</strong
-                            >.
-
-                            <br /><br />
-                            Toutes les actions suivantes seront effectuées dans
-                            cette organisation.
+                            <template v-if="actionType === 'activate'">
+                                Vous êtes sur le point d’activer l’organisation
+                                <strong>{{
+                                    selectedOrg ? selectedOrg.nom : ""
+                                }}</strong
+                                >. <br /><br />
+                                Toutes les actions suivantes seront effectuées
+                                dans cette organisation.
+                            </template>
+                            <template v-else>
+                                Vous êtes sur le point de désactiver
+                                l’organisation
+                                <strong>{{
+                                    selectedOrg ? selectedOrg.nom : ""
+                                }}</strong
+                                >. <br /><br />
+                                Après désactivation, vous ne pourrez plus
+                                effectuer d’actions dans cette organisation tant
+                                qu’elle ne sera pas réactivée.
+                            </template>
                         </AlertDialogDescription>
                     </AlertDialogHeader>
 
@@ -266,10 +313,18 @@ function confirmActivation() {
                         <AlertDialogCancel> Annuler </AlertDialogCancel>
 
                         <AlertDialogAction
-                            class="bg-primary text-white"
+                            :class="
+                                actionType === 'activate'
+                                    ? 'bg-primary text-white'
+                                    : 'bg-red-600 text-white'
+                            "
                             @click="confirmActivation"
                         >
-                            Confirmer
+                            {{
+                                actionType === "activate"
+                                    ? "Activer"
+                                    : "Désactiver"
+                            }}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

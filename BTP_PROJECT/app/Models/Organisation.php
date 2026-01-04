@@ -9,7 +9,7 @@ class Organisation extends Model
 {
     use HasFactory;
 
-    protected $fillable = [ 'nom', 'raison_sociale', 'logo', 'adresse', 'pays', 'devise', 'user_id'];
+    protected $fillable = [ 'nom','is_system', 'raison_sociale', 'logo', 'adresse', 'pays', 'devise', 'user_id'];
 
     // Une organisation appartient à un utilisateur (créateur)
     public function user()

@@ -2,8 +2,7 @@
 import { ref, computed } from "vue";
 import { useForm, usePage } from "@inertiajs/vue3";
 import { router, Head  } from "@inertiajs/vue3";
-import { ArrowLeft } from "lucide-vue-next";
-// shadcn/ui
+we// shadcn/ui
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
