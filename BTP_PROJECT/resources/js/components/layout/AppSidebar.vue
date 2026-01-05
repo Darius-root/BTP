@@ -14,32 +14,75 @@ import {
 } from '../../icons'
 
 import { useSidebar } from '../../composables/useSidebar'
+import BoxCubeIcon from '@/icons/BoxCubeIcon.vue'
 
 const page = usePage()
 
 const { isExpanded, isMobileOpen, isHovered, openSubmenu } = useSidebar()
 
+/**
+ * Menu configuration
+ */
 const menuGroups = [
     {
         title: 'Menu',
         items: [
-            { icon: GridIcon, name: 'Dashboard', path: '/dashboard' },
-            { icon: CalenderIcon, name: 'Calendrier', path: '/calendar' },
-            { icon: UserCircleIcon, name: 'Profil', path: '/profile' },
+            {
+                name: 'Dashboard',
+                icon: GridIcon,
+                path: '/dashboard',
+            },
             {
                 name: 'Bordereaux',
                 icon: ListIcon,
+                path: '/bordereaux',
+            },
+            {
+                name: 'Organisations',
+                icon: ListIcon,
+                path: '/organisations',
+            },
+            {
+                name : 'Clients',
+                icon: UserCircleIcon,
+                path: '/clients',
+            },
+            {
+                name : 'Projets',
+                icon: BoxCubeIcon ,
+                path: '/projets',
+            },
+            // {
+            //     name: 'Batiments',
+            //     icon: ListIcon,
+            //     path: '/batiments',
+            // },
+            {
+                name: 'Référentiels',
+                icon: PlugInIcon,
                 subItems: [
-                    { name: 'Liste', path: '/bordereaux' },
-                    { name: 'Importer', path: '/bordereaux/import' },
+                    { name: 'Communes', path: '/communes' },
+                    { name: 'Arrondissements', path: '/arrondissements' },
+                    { name: 'Unités de mesure', path: '/unites-mesure' },
+                    { name: 'Matériaux', path: '/materiaux' },
+                    { name: 'Devises', path: '/devises' },
+                    { name: 'Corps d’état', path: '/corps-etat' },
                 ],
             },
             {
-                name: 'Formulaires',
+                name: 'Collections de prix',
                 icon: ListIcon,
-                subItems: [
-                    { name: 'Éléments', path: '/forms/elements' },
-                ],
+                path: '/collections-prix',
+            },
+            {
+                name: 'Calendrier',
+                icon: CalenderIcon,
+                path: '/calendar',
+            },
+            {
+                name: 'Profil',
+                icon: UserCircleIcon,
+                path: '/profile',
             },
         ],
     },
@@ -47,26 +90,21 @@ const menuGroups = [
         title: 'Autres',
         items: [
             {
-                icon: PieChartIcon,
                 name: 'Graphiques',
+                icon: PieChartIcon,
                 subItems: [
                     { name: 'Ligne', path: '/charts/line' },
                     { name: 'Barres', path: '/charts/bar' },
-                ],
-            },
-            {
-                icon: PlugInIcon,
-                name: 'Authentification',
-                subItems: [
-                    { name: 'Connexion', path: '/login' },
-                    { name: 'Inscription', path: '/register' },
                 ],
             },
         ],
     },
 ]
 
-const isActive = (path) => page.url === path
+/**
+ * Helpers
+ */
+const isActive = (path) => page.url.startsWith(path)
 
 const toggleSubmenu = (groupIndex, itemIndex) => {
     const key = `${groupIndex}-${itemIndex}`
@@ -78,27 +116,186 @@ const isSubmenuOpen = (groupIndex, itemIndex) =>
 </script>
 
 <template>
-    <aside :class="[
-        'fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200',
-        {
-            'lg:w-[290px]': isExpanded || isHovered || isMobileOpen,
-            'lg:w-[90px]': !isExpanded && !isHovered,
-            'translate-x-0 w-[290px]': isMobileOpen,
-            '-translate-x-full': !isMobileOpen,
-            'lg:translate-x-0': true,
-        },
-    ]" @mouseenter="!isExpanded && (isHovered = true)" @mouseleave="isHovered = false">
+    <aside
+        :class="[
+            'fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200',
+            {
+                'lg:w-[290px]': isExpanded || isHovered || isMobileOpen,
+                'lg:w-[90px]': !isExpanded && !isHovered,
+                'translate-x-0 w-[290px]': isMobileOpen,
+                '-translate-x-full': !isMobileOpen,
+                'lg:translate-x-0': true,
+            },
+        ]"
+        @mouseenter="!isExpanded && (isHovered = true)"
+        @mouseleave="isHovered = false"
+    >
         <!-- Logo -->
-        <div :class="['py-8 flex', !isExpanded && !isHovered ? 'lg:justify-center' : 'justify-start']">
+        <div
+            :class="[
+                'py-8 flex',
+                !isExpanded && !isHovered ? 'lg:justify-center' : 'justify-start',
+            ]"
+        >
             <Link href="/">
-                <img v-if="isExpanded || isHovered || isMobileOpen" class="dark:hidden" src="/images/logo/logo.svg"
-                    alt="Logo" width="150" height="40" />
-                <img v-if="isExpanded || isHovered || isMobileOpen" class="hidden dark:block"
-                    src="/images/logo/logo-dark.svg" alt="Logo" width="150" height="40" />
-                <img v-else src="/images/logo/logo-icon.svg" alt="Logo" width="32" height="32" />
+                <img
+                    v-if="isExpanded || isHovered || isMobileOpen"
+                    class="dark:hidden"
+                    src="/images/logo/logo.svg"
+                    alt="Logo"
+                    width="150"
+                    height="40"
+                />
+                <img
+                    v-if="isExpanded || isHovered || isMobileOpen"
+                    class="hidden dark:block"
+                    src="/images/logo/logo-dark.svg"
+                    alt="Logo"
+                    width="150"
+                    height="40"
+                />
+                <img
+                    v-else
+                    src="/images/logo/logo-icon.svg"
+                    alt="Logo"
+                    width="32"
+                    height="32"
+                />
             </Link>
         </div>
 
-    </div>
-  </aside>
+        <!-- Menu -->
+        <div class="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
+            <nav class="mb-6">
+                <div class="flex flex-col gap-4">
+                    <div
+                        v-for="(menuGroup, groupIndex) in menuGroups"
+                        :key="groupIndex"
+                    >
+                        <h2
+                            :class="[
+                                'mb-4 text-xs uppercase flex leading-[20px] text-gray-400',
+                                !isExpanded && !isHovered
+                                    ? 'lg:justify-center'
+                                    : 'justify-start',
+                            ]"
+                        >
+                            <template v-if="isExpanded || isHovered || isMobileOpen">
+                                {{ menuGroup.title }}
+                            </template>
+                            <HorizontalDots v-else />
+                        </h2>
+
+                        <ul class="flex flex-col gap-4">
+                            <li
+                                v-for="(item, index) in menuGroup.items"
+                                :key="item.name"
+                            >
+                                <!-- Item with submenu -->
+                                <button
+                                    v-if="item.subItems"
+                                    @click="toggleSubmenu(groupIndex, index)"
+                                    :class="[
+                                        'menu-item group w-full',
+                                        isSubmenuOpen(groupIndex, index)
+                                            ? 'menu-item-active'
+                                            : 'menu-item-inactive',
+                                        !isExpanded && !isHovered
+                                            ? 'lg:justify-center'
+                                            : 'lg:justify-start',
+                                    ]"
+                                >
+                                    <span
+                                        :class="
+                                            isSubmenuOpen(groupIndex, index)
+                                                ? 'menu-item-icon-active'
+                                                : 'menu-item-icon-inactive'
+                                        "
+                                    >
+                                        <component :is="item.icon" />
+                                    </span>
+
+                                    <span
+                                        v-if="isExpanded || isHovered || isMobileOpen"
+                                        class="menu-item-text"
+                                    >
+                                        {{ item.name }}
+                                    </span>
+
+                                    <ChevronDownIcon
+                                        v-if="isExpanded || isHovered || isMobileOpen"
+                                        :class="[
+                                            'ml-auto w-5 h-5 transition-transform duration-200',
+                                            {
+                                                'rotate-180 text-brand-500':
+                                                    isSubmenuOpen(groupIndex, index),
+                                            },
+                                        ]"
+                                    />
+                                </button>
+
+                                <!-- Item without submenu -->
+                                <Link
+                                    v-else
+                                    :href="item.path"
+                                    :class="[
+                                        'menu-item group',
+                                        isActive(item.path)
+                                            ? 'menu-item-active'
+                                            : 'menu-item-inactive',
+                                    ]"
+                                >
+                                    <span
+                                        :class="
+                                            isActive(item.path)
+                                                ? 'menu-item-icon-active'
+                                                : 'menu-item-icon-inactive'
+                                        "
+                                    >
+                                        <component :is="item.icon" />
+                                    </span>
+
+                                    <span
+                                        v-if="isExpanded || isHovered || isMobileOpen"
+                                        class="menu-item-text"
+                                    >
+                                        {{ item.name }}
+                                    </span>
+                                </Link>
+
+                                <!-- Submenu -->
+                                <transition>
+                                    <div
+                                        v-show="
+                                            isSubmenuOpen(groupIndex, index) &&
+                                            (isExpanded || isHovered || isMobileOpen)
+                                        "
+                                    >
+                                        <ul class="mt-2 space-y-1 ml-9">
+                                            <li
+                                                v-for="subItem in item.subItems"
+                                                :key="subItem.name"
+                                            >
+                                                <Link
+                                                    :href="subItem.path"
+                                                    :class="[
+                                                        'menu-dropdown-item',
+                                                        isActive(subItem.path)
+                                                            ? 'menu-dropdown-item-active'
+                                                            : 'menu-dropdown-item-inactive',
+                                                    ]"
+                                                >
+                                                    {{ subItem.name }}
+                                                </Link>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </transition>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </aside>
 </template>

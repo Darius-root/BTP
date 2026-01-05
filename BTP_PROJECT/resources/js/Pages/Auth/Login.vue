@@ -137,8 +137,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import FullScreenLayout from '@/Components/layout/FullScreenLayout.vue'
-import CommonGridShape from '@/Components/common/CommonGridShape.vue'
+import FullScreenLayout from '@/components/layout/FullScreenLayout.vue'
+import CommonGridShape from '@/components/common/CommonGridShape.vue'
 
 import InputError from '@/components/InputError.vue';
 

@@ -3,136 +3,164 @@
 namespace App\Imports;
 
 use App\Models\Bordereau;
-use App\Models\BordereauLigne;
-use Illuminate\Support\Collection;
-use Maatwebsite\Excel\Concerns\ToCollection;
+use App\Models\BordereauDesignation;
+use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
+use PhpOffice\PhpSpreadsheet\Cell\DefaultValueBinder;
+use PhpOffice\PhpSpreadsheet\Cell\Cell;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Cell\IValueBinder;
 
-class BordereauImport implements ToCollection, WithHeadingRow
+class BordereauImport extends DefaultValueBinder
+    implements IValueBinder, ToModel, WithHeadingRow, SkipsEmptyRows
 {
-    protected int $annee;
-    protected string $version;
-    protected int $userId;
+    private string $nomBordereau;
+    private string $annee;
+    private string $version;
+    private int $userId;
 
-    public function __construct(int $annee, string $version, int $userId)
-    {
+    private ?Bordereau $bordereau = null;
+
+    public function __construct(
+        string $nomBordereau,
+        string $annee,
+        string $version,
+        int $userId
+    ) {
+        $this->nomBordereau = $nomBordereau;
         $this->annee = $annee;
         $this->version = $version;
         $this->userId = $userId;
     }
 
-    public function collection(Collection $rows)
+    /**
+     * Traitement d'une ligne Excel
+     */
+    public function model(array $row)
     {
-        if ($rows->isEmpty()) {
-            throw new \Exception("Le fichier ne contient aucune donnée.");
+        // --- Sécurisation minimale des données ---
+        $code = $this->cleanString($row['code'] ?? null);
+        $designation = $this->cleanString($row['designation'] ?? null);
+
+        // Ignorer les lignes vides / parasites
+        if ($code === '' || $designation === '') {
+            return null;
         }
 
-        $lineCount = 0;
-        $skippedCount = 0;
-
-        foreach ($rows as $index => $row) {
-            try {
-                $code = str_replace(' ', '', trim($row['code'] ?? ''));
-                if (!$code) {
-                    Log::warning("Ligne {$index} ignorée : code vide");
-                    $skippedCount++;
-                    continue;
-                }
-
-                $bordereauLibelle = trim($row['libelle'] ?? '');
-                if (!$bordereauLibelle) {
-                    Log::warning("Ligne {$index} ignorée : libellé vide", ['code' => $code]);
-                    $skippedCount++;
-                    continue;
-                }
-
-                $designationsText = $row['designations'] ?? '';
-                if (empty(trim($designationsText))) {
-                    Log::warning("Ligne {$index} ignorée : désignations vides", ['code' => $code]);
-                    $skippedCount++;
-                    continue;
-                }
-
-                // Créer le bordereau pour cette ligne
-                $bordereau = Bordereau::firstOrCreate(
-                    [
-                        'annee' => $this->annee,
-                        'version' => $this->version,
-                        'user_id' => $this->userId,
-                        'libelle' => $bordereauLibelle
-                    ]
-                );
-
-                // Séparer le texte en lignes pour les désignations
-                $lines = preg_split('/\r\n|\r|\n/', $designationsText);
-                $lines = array_map('trim', $lines);
-                $lines = array_filter($lines);
-
-                // La première ligne du bloc peut être répétitive, on la retire si identique au libellé
-                $firstLine = array_shift($lines);
-                if ($firstLine === $bordereauLibelle) {
-                    $firstLine = null;
-                }
-
-                $designationLines = array_filter($lines, fn($line) => preg_match('/^[〉\)>]/u', $line));
-                $designationLines = array_map(fn($line) => preg_replace('/^[〉\)>]\s*/u', '', $line), $designationLines);
-
-                // Si aucune désignation trouvée, on considère tout le texte restant
-                if (empty($designationLines) && !empty($lines)) {
-                    $designationLines = $lines;
-                }
-
-                $bi = $this->parseNumeric($row['bi'] ?? 0);
-                $bs = $this->parseNumeric($row['bs'] ?? 0);
-                $uniteMesure = $row['unite_de_mesure'] ?? null;
-
-                foreach ($designationLines as $designation) {
-                    if (!$designation)
-                        continue;
-
-                    BordereauLigne::updateOrCreate(
-                        [
-                            'bordereau_id' => $bordereau->id,
-                            'code' => $code,
-                            'designation' => $designation,
-                        ],
-                        [
-                            'specification_technique' => $uniteMesure,
-                            'bi' => $bi,
-                            'bs' => $bs,
-                        ]
-                    );
-
-                    $lineCount++;
-                }
-
-            } catch (\Exception $e) {
-                Log::error("Erreur lors de l'import de la ligne {$index}", [
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString(),
-                    'row' => $row
-                ]);
-                throw new \Exception("Erreur ligne " . ($index + 2) . " : " . $e->getMessage());
-            }
+        // --- Création du bordereau (1 seule fois par fichier) ---
+        if (!$this->bordereau) {
+            $this->bordereau = Bordereau::firstOrCreate(
+                [
+                    'nom_bordereau' => $this->nomBordereau,
+                    'annee' => $this->annee,
+                    'version' => $this->version,
+                ],
+                [
+                    'user_id' => $this->userId,
+                ]
+            );
         }
 
-        Log::info("Import terminé", [
-            'lignes_importees' => $lineCount,
-            'lignes_ignorees' => $skippedCount
+        // --- Protection contre doublon (bordereau_id + code) ---
+        if (
+            BordereauDesignation::where('bordereau_id', $this->bordereau->id)
+                ->where('code', $code)
+                ->exists()
+        ) {
+            return null;
+        }
+
+        return new BordereauDesignation([
+            'bordereau_id'   => $this->bordereau->id,
+            'code'           => $code,
+            'designation'    => $designation,
+            'caracteristiques' => $this->normalizeCaracteristiques(
+                $row['caracteristiques'] ?? ''
+            ),
+            'unite_mesure'   => $this->cleanString(
+                $row['unite_de_mesure'] ?? ''
+            ),
+            'bi'             => $this->cleanNumeric($row['bi'] ?? null),
+            'bs'             => $this->cleanNumeric($row['bs'] ?? null),
         ]);
     }
 
-    protected function parseNumeric($value)
+    /**
+     * Forcer la colonne CODE en string (Excel + gros numéros)
+     */
+    public function bindValue(Cell $cell, $value)
     {
-        if (is_numeric($value))
-            return floatval($value);
-        $cleaned = str_replace([' ', ','], ['', '.'], trim($value));
-        return is_numeric($cleaned) ? floatval($cleaned) : 0;
+        if ($cell->getColumn() === 'A') {
+            $cell->setValueExplicit((string) $value, DataType::TYPE_STRING);
+            return true;
+        }
+
+        return parent::bindValue($cell, $value);
     }
 
-    public function headingRow(): int
+    /* =====================================================
+       Helpers
+       ===================================================== */
+
+    private function cleanString($value): string
     {
-        return 1;
+        if ($value === null) {
+            return '';
+        }
+
+        $value = trim((string) $value);
+        return preg_replace('/[\x00-\x1F\x7F]/u', '', $value);
+    }
+
+    private function cleanNumeric($value): ?float
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (is_numeric($value)) {
+            return (float) $value;
+        }
+
+        // 21 600 000 → 21600000
+        $value = preg_replace('/[^0-9.,\-]/', '', (string) $value);
+        $value = str_replace(',', '.', $value);
+
+        $parts = explode('.', $value);
+        if (count($parts) > 2) {
+            $value = $parts[0] . '.' . implode('', array_slice($parts, 1));
+        }
+
+        return is_numeric($value) ? (float) $value : null;
+    }
+
+    private function normalizeCaracteristiques(string $texte): string
+    {
+        if ($texte === '') {
+            return '';
+        }
+
+        $texte = $this->cleanString($texte);
+
+        // Déjà normalisé
+        if (str_contains($texte, '〉')) {
+            return $texte;
+        }
+
+        $lines = array_filter(array_map('trim', explode("\n", $texte)));
+
+        if (count($lines) <= 1) {
+            return $texte;
+        }
+
+        $titre = array_shift($lines);
+        $result = $titre . "\n";
+
+        foreach ($lines as $line) {
+            $result .= '〉 ' . ltrim($line, "-•* ") . "\n";
+        }
+
+        return trim($result);
     }
 }

@@ -1,64 +1,138 @@
 <script>
 import { ref } from 'vue'
 import { Head, useForm, Link } from '@inertiajs/vue3'
-import AdminLayout from '@/Components/layout/AdminLayout.vue'
-import SidebarProvider from '@/Components/layout/SidebarProvider.vue'
+import AdminLayout from '@/components/layout/AdminLayout.vue'
+import SidebarProvider from '@/components/layout/SidebarProvider.vue'
+import PageBreadcrumb from '@/components/common/PageBreadcrumb.vue'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
 
 export default {
     components: {
         AdminLayout,
         SidebarProvider,
+        PageBreadcrumb,
         Head,
         Link,
+        Card,
+        CardContent,
+        CardHeader,
+        CardTitle,
+        CardDescription,
+        Input,
+        Button,
+        Label,
     },
-    setup() {
+    props: {
+        annees: Array
+    },
+    setup(props) {
+        const currentPageTitle = ref("Importer un bordereau")
         const fileInput = ref(null)
-        const fileName = ref('')
+        const isDragging = ref(false)
 
         const form = useForm({
             file: null,
-            annee: new Date().getFullYear(),
-            version: 'V1',
+            nom_bordereau: '',
+            annee: new Date().getFullYear().toString(),
+            version: 'V1'
         })
 
         const handleFileChange = (event) => {
             const file = event.target.files[0]
-            if (file) {
+            if (file && isValidFile(file)) {
                 form.file = file
-                fileName.value = file.name
+                // Remplir automatiquement le nom du bordereau avec le nom du fichier (sans extension)
+                if (!form.nom_bordereau) {
+                    form.nom_bordereau = file.name.replace(/\.[^/.]+$/, '')
+                }
             }
+        }
+
+        const isValidFile = (file) => {
+            const validExtensions = ['.xlsx', '.xls']
+            const fileName = file.name.toLowerCase()
+            return validExtensions.some(ext => fileName.endsWith(ext))
         }
 
         const triggerFileInput = () => {
             fileInput.value?.click()
         }
 
-        const removeFile = () => {
+        const clearFile = () => {
             form.file = null
-            fileName.value = ''
-            if (fileInput.value) {
-                fileInput.value.value = ''
+            form.reset('file')
+        }
+
+        // Gestionnaires pour le drag and drop
+        const handleDragEnter = (event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            isDragging.value = true
+        }
+
+        const handleDragOver = (event) => {
+            event.preventDefault()
+            event.stopPropagation()
+        }
+
+        const handleDragLeave = (event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            isDragging.value = false
+        }
+
+        const handleDrop = (event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            isDragging.value = false
+
+            const file = event.dataTransfer.files[0]
+            if (file && isValidFile(file)) {
+                form.file = file
+                if (!form.nom_bordereau) {
+                    form.nom_bordereau = file.name.replace(/\.[^/.]+$/, '')
+                }
             }
         }
 
         const submit = () => {
+            // Vérifier que tous les champs sont remplis
+            if (!form.file || !form.nom_bordereau.trim() || !form.annee || !form.version.trim()) {
+                alert('Veuillez remplir tous les champs requis')
+                return
+            }
+
+            // Créer un FormData
+            const formData = new FormData()
+            formData.append('file', form.file)
+            formData.append('nom_bordereau', form.nom_bordereau.trim())
+            formData.append('annee', form.annee)
+            formData.append('version', form.version.trim())
+
             form.post('/bordereaux/import', {
                 preserveScroll: true,
                 onSuccess: () => {
                     form.reset()
-                    fileName.value = ''
                 },
             })
         }
 
         return {
+            currentPageTitle,
             fileInput,
-            fileName,
+            isDragging,
             form,
             handleFileChange,
             triggerFileInput,
-            removeFile,
-            submit,
+            clearFile,
+            handleDragEnter,
+            handleDragOver,
+            handleDragLeave,
+            handleDrop,
+            submit
         }
     },
 }
@@ -67,129 +141,148 @@ export default {
 <template>
 
     <Head title="Importer un bordereau" />
-
     <SidebarProvider>
         <AdminLayout>
-            <div class="grid grid-cols-12 gap-4 md:gap-6">
-                <div class="col-span-12">
-                    <!-- Header -->
-                    <div class="mb-6">
-                        <Link href="/bordereaux"
-                            class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white mb-4">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                        </svg>
-                        Retour à la liste
-                        </Link>
-                        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
-                            Importer un bordereau
-                        </h1>
-                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                            Importez un fichier Excel contenant les données du bordereau
-                        </p>
-                    </div>
+            <!-- Breadcrumb -->
+            <PageBreadcrumb :pageTitle="currentPageTitle" />
 
-                    <!-- Form -->
-                    <div class="max-w-3xl">
-                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                            <form @submit.prevent="submit" class="space-y-6">
-                                <!-- File Upload -->
+            <!-- Container principal -->
+            <div
+                class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3 lg:p-6 shadow-sm">
+                <div class="max-w-4xl mx-auto">
+                    <Card>
+                        <CardHeader>
+                            <div class="flex items-center justify-between">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Fichier Excel <span class="text-red-500">*</span>
-                                    </label>
-                                    <div class="mt-1">
-                                        <input ref="fileInput" type="file" accept=".xlsx,.xls"
-                                            @change="handleFileChange" class="hidden" />
+                                    <CardTitle class="text-2xl">Importer un bordereau</CardTitle>
+                                    <CardDescription class="mt-1">
+                                        Importez un fichier Excel contenant les données du bordereau
+                                    </CardDescription>
+                                </div>
+                            </div>
+                        </CardHeader>
 
-                                        <!-- Upload Area -->
-                                        <div v-if="!fileName" @click="triggerFileInput"
-                                            class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 dark:hover:border-blue-400 transition-colors duration-200">
+                        <CardContent>
+                            <form @submit.prevent="submit" class="space-y-6">
+                                <!-- File Upload avec Drag and Drop -->
+                                <div class="space-y-2">
+                                    <Label for="file">
+                                        Fichier Excel <span class="text-red-500">*</span>
+                                    </Label>
+
+                                    <input ref="fileInput" id="file" type="file" accept=".xlsx,.xls"
+                                        @change="handleFileChange" class="hidden" />
+
+                                    <!-- Zone de Drag and Drop -->
+                                    <div @click="triggerFileInput" @dragenter="handleDragEnter"
+                                        @dragover="handleDragOver" @dragleave="handleDragLeave" @drop="handleDrop"
+                                        :class="[
+                                            'mt-1 border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors duration-200',
+                                            isDragging
+                                                ? 'border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/20'
+                                                : 'border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400'
+                                        ]">
+                                        <!-- État: Aucun fichier sélectionné -->
+                                        <div v-if="!form.file">
                                             <svg class="mx-auto h-12 w-12 text-gray-400" fill="none"
                                                 stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                             </svg>
                                             <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                                                Cliquez pour sélectionner un fichier
+                                                <span v-if="!isDragging">
+                                                    Cliquez pour sélectionner un fichier ou glissez-déposez ici
+                                                </span>
+                                                <span v-else class="text-blue-600 dark:text-blue-400">
+                                                    Lâchez le fichier pour l'uploader
+                                                </span>
                                             </p>
                                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-500">
-                                                Formats acceptés: XLSX, XLS
+                                                Formats acceptés: XLSX, XLS (un seul fichier)
                                             </p>
                                         </div>
 
-                                        <!-- File Selected -->
-                                        <div v-else
-                                            class="border border-gray-300 dark:border-gray-600 rounded-lg p-4 flex items-center justify-between bg-gray-50 dark:bg-gray-700">
-                                            <div class="flex items-center">
-                                                <svg class="h-8 w-8 text-green-500" fill="none" stroke="currentColor"
+                                        <!-- État: Fichier sélectionné -->
+                                        <div v-else>
+                                            <div class="flex items-center justify-center">
+                                                <svg class="h-12 w-12 text-green-500" fill="none" stroke="currentColor"
                                                     viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round"
                                                         stroke-width="2"
                                                         d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                 </svg>
-                                                <div class="ml-3">
-                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                                        {{ fileName }}
-                                                    </p>
-                                                    <p class="text-xs text-gray-500 dark:text-gray-400">
-                                                        Prêt à importer
-                                                    </p>
-                                                </div>
                                             </div>
-                                            <button type="button" @click="removeFile"
-                                                class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
-                                                <svg class="h-5 w-5" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                                </svg>
+                                            <p class="mt-2 text-sm font-medium text-gray-900 dark:text-white">
+                                                {{ form.file.name }}
+                                            </p>
+                                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-500">
+                                                Prêt à importer
+                                            </p>
+                                            <button type="button" @click.stop="clearFile"
+                                                class="mt-2 text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+                                                Supprimer ce fichier
                                             </button>
                                         </div>
                                     </div>
-                                    <p v-if="form.errors.file" class="mt-1 text-sm text-red-600 dark:text-red-400">
+
+                                    <p v-if="form.errors.file" class="mt-1 text-sm text-red-600">
                                         {{ form.errors.file }}
                                     </p>
                                 </div>
 
-                                <!-- Année -->
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Année <span class="text-red-500">*</span>
-                                    </label>
-                                    <input v-model.number="form.annee" type="number" min="2000"
-                                        :max="new Date().getFullYear() + 10" required
-                                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        :class="{ 'border-red-500': form.errors.annee }" />
-                                    <p v-if="form.errors.annee" class="mt-1 text-sm text-red-600 dark:text-red-400">
-                                        {{ form.errors.annee }}
-                                    </p>
-                                </div>
+                                <!-- Configuration du fichier -->
+                                <div v-if="form.file" class="space-y-6">
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <div class="space-y-2">
+                                            <Label for="nom_bordereau">
+                                                Nom du bordereau <span class="text-red-500">*</span>
+                                            </Label>
+                                            <Input id="nom_bordereau" type="text" v-model="form.nom_bordereau" required
+                                                maxlength="255" placeholder="Ex: Bordereau 2024" class="w-full" />
+                                            <p v-if="form.errors.nom_bordereau" class="mt-1 text-sm text-red-600">
+                                                {{ form.errors.nom_bordereau }}
+                                            </p>
+                                        </div>
 
-                                <!-- Version -->
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Version <span class="text-red-500">*</span>
-                                    </label>
-                                    <input v-model="form.version" type="text" maxlength="10" required
-                                        placeholder="Ex: V1, V2, etc."
-                                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        :class="{ 'border-red-500': form.errors.version }" />
-                                    <p v-if="form.errors.version" class="mt-1 text-sm text-red-600 dark:text-red-400">
-                                        {{ form.errors.version }}
-                                    </p>
+                                        <div class="space-y-2">
+                                            <Label for="annee">
+                                                Année <span class="text-red-500">*</span>
+                                            </Label>
+                                            <select id="annee" v-model="form.annee" required
+                                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white">
+                                                <option value="">Sélectionner une année</option>
+                                                <option v-for="annee in annees" :key="annee" :value="annee">
+                                                    {{ annee }}
+                                                </option>
+                                            </select>
+                                            <p v-if="form.errors.annee" class="mt-1 text-sm text-red-600">
+                                                {{ form.errors.annee }}
+                                            </p>
+                                        </div>
+
+                                        <div class="space-y-2">
+                                            <Label for="version">
+                                                Version <span class="text-red-500">*</span>
+                                            </Label>
+                                            <Input id="version" type="text" v-model="form.version" required
+                                                maxlength="20" placeholder="Ex: V1, V2, etc." class="w-full" />
+                                            <p v-if="form.errors.version" class="mt-1 text-sm text-red-600">
+                                                {{ form.errors.version }}
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <!-- Info Box -->
                                 <div
                                     class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                                     <div class="flex">
-                                        <svg class="h-5 w-5 text-blue-400 mt-0.5" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24">
+                                        <svg class="h-5 w-5 text-blue-400 mt-0.5 flex-shrink-0" fill="none"
+                                            stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
-                                        <div class="ml-3">
+                                        <div class="ml-3 flex-1">
                                             <h3 class="text-sm font-medium text-blue-800 dark:text-blue-200">
                                                 Instructions d'importation
                                             </h3>
@@ -197,23 +290,39 @@ export default {
                                                 class="mt-2 text-sm text-blue-700 dark:text-blue-300 list-disc list-inside space-y-1">
                                                 <li>Le fichier doit être au format Excel (.xlsx ou .xls)</li>
                                                 <li>Assurez-vous que les colonnes correspondent au format attendu</li>
-                                                <li>L'année doit être comprise entre 2000 et {{ new Date().getFullYear()
-                                                    + 10 }}</li>
-                                                <li>La version permet de différencier plusieurs imports pour une même
-                                                    année</li>
+                                                <li>Le nom du bordereau doit être unique pour la combinaison
+                                                    année/version</li>
+                                                <li>Vérifiez que le bordereau n'existe pas déjà avec la même
+                                                    combinaison</li>
                                             </ul>
+
+                                            <!-- Lien de téléchargement de l'exemple -->
+                                            <div class="mt-3 pt-3 border-t border-blue-200 dark:border-blue-700">
+                                                <a href="/exemples/bordereau_exemple.xlsx" download
+                                                    class="inline-flex items-center gap-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline transition-colors">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                        viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                    </svg>
+                                                    <span>Télécharger un exemple de bordereau</span>
+                                                </a>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- Actions -->
-                                <div class="flex items-center justify-end gap-4 pt-4">
-                                    <Link href="/bordereaux"
-                                        class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium transition-colors duration-200">
-                                    Annuler
-                                    </Link>
-                                    <button type="submit" :disabled="form.processing || !form.file"
-                                        class="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold rounded-lg shadow-sm transition-colors duration-200 flex items-center">
+                                <div class="flex items-center gap-4 pt-4">
+                                    <Button type="button" variant="outline" as-child class="flex-1 sm:flex-none">
+                                        <Link href="/bordereaux">
+                                        Annuler
+                                        </Link>
+                                    </Button>
+
+                                    <Button type="submit" :disabled="form.processing || !form.file"
+                                        class="flex-1 sm:flex-none">
                                         <svg v-if="form.processing" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
                                             fill="none" viewBox="0 0 24 24">
                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
@@ -223,11 +332,11 @@ export default {
                                             </path>
                                         </svg>
                                         {{ form.processing ? 'Importation...' : 'Importer' }}
-                                    </button>
+                                    </Button>
                                 </div>
                             </form>
-                        </div>
-                    </div>
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
         </AdminLayout>
