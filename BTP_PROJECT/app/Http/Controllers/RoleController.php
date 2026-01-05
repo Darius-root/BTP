@@ -107,6 +107,8 @@ class RoleController extends Controller
         DB::transaction(function () use ($roleName, $permissions) {
             $role = Role::create([
                 'name' => $roleName,
+                'organisation_id' => null,
+
             ]);
 
             $role->permissions()->sync($permissions->pluck('id')->toArray());
@@ -172,13 +174,34 @@ class RoleController extends Controller
         ]);
 
         // Mise à jour du nom
-        $role->update([
-            'name' => $validated['name'],
-        ]);
+        try {
+            \DB::transaction(function () use ($role, $validated) {
+                // Mise à jour du nom
+                $role->update([
+                    'name' => $validated['name'],
+                    'organisation_id' => null,
+                ]);
 
-        // Synchronisation des permissions
-        if (isset($validated['permissions'])) {
-            $role->permissions()->sync($validated['permissions']);
+                // Synchronisation des permissions
+                if (isset($validated['permissions'])) {
+                    $role->permissions()->sync($validated['permissions']);
+                }
+            });
+
+            // Flash message succès
+            return redirect()
+                ->route('organisations.roles.index')
+                ->with('success', 'Rôle mis à jour avec succès.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Gestion d'erreur doublon
+            if ($e->getCode() === '23000') {
+                return back()
+                    ->withErrors(['name' => 'Ce nom de rôle existe déjà pour votre organisation.'])
+                    ->withInput();
+            }
+
+            // Autres erreurs : relancer
+            throw $e;
         }
 
         // Flash message

@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { useForm, usePage } from '@inertiajs/vue3';
+import { ref, computed } from 'vue'
+import { useForm, usePage } from '@inertiajs/vue3'
 
 // shadcn/ui
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import {
   Command,
   CommandInput,
@@ -14,86 +14,72 @@ import {
   CommandEmpty,
   CommandGroup,
   CommandItem,
-} from '@/components/ui/command';
-import { Badge } from '@/components/ui/badge';
-import { Check, ChevronsUpDown } from 'lucide-vue-next';
+} from '@/components/ui/command'
+import { Badge } from '@/components/ui/badge'
+import { Check, ChevronsUpDown } from 'lucide-vue-next'
 
 // layout
-import AdminLayout from '@/components/layout/AdminLayout.vue';
-import SidebarProvider from '@/components/layout/SidebarProvider.vue';
-import PageBreadcrumb from '@/components/common/PageBreadcrumb.vue';
+import AdminLayout from '@/components/layout/AdminLayout.vue'
+import SidebarProvider from '@/components/layout/SidebarProvider.vue'
+import PageBreadcrumb from '@/components/common/PageBreadcrumb.vue'
 
 // -----------------------------
 // Types
 // -----------------------------
 interface Permission {
-  id: number;
-  name: string;
+  id: number
+  name: string
 }
 
 interface PageProps {
-  systemPermissions: Permission[];
-  orgPermissions: Permission[];
+  orgPermissions: Permission[]
 }
 // @ts-ignore
-const page = usePage<PageProps>();
+const page = usePage<PageProps>()
 
 // -----------------------------
 // UI
 // -----------------------------
-const popoverOpen = ref(false);
+const popoverOpen = ref(false)
 
 // -----------------------------
-// Form
+// Formulaire
 // -----------------------------
 const form = useForm({
-  category: 'system' as 'system' | 'org',
   name: '',
   permissions: [] as number[],
-});
+})
 
 // -----------------------------
-// Permissions visibles (STRICT)
+// Permissions visibles
 // -----------------------------
-const visiblePermissions = computed(() => {
-  return form.category === 'system'
-    ? page.props.systemPermissions
-    : page.props.orgPermissions;
-});
-
-// 🔥 reset dès qu’on change de catégorie
-const onCategoryChange = () => {
-  form.permissions = [];
-  popoverOpen.value = false;
-};
+const visiblePermissions = computed(() => page.props.orgPermissions)
 
 // -----------------------------
-// Préfixe
+// Préfixe fixe
 // -----------------------------
-const ROLE_PREFIX = computed(() =>
-  form.category === 'system' ? 'SYSTEM_' : 'ORG_'
-);
+const ROLE_PREFIX = 'ORG_'
 
 // -----------------------------
 // Nom normalisé
 // -----------------------------
 const normalizedRoleName = computed({
   get() {
-    return form.name;
+    return form.name
   },
   set(value: string) {
     let clean = value
       .toUpperCase()
       .replace(/\s+/g, '_')
-      .replace(/[^A-Z0-9_]/g, '');
+      .replace(/[^A-Z0-9_]/g, '')
 
-    if (!clean.startsWith(ROLE_PREFIX.value)) {
-      clean = ROLE_PREFIX.value + clean.replace(/^SYSTEM_|^ORG_/, '');
+    if (!clean.startsWith(ROLE_PREFIX)) {
+      clean = ROLE_PREFIX + clean.replace(/^ORG_/, '')
     }
 
-    form.name = clean;
+    form.name = clean
   },
-});
+})
 
 // -----------------------------
 // Permissions
@@ -101,83 +87,55 @@ const normalizedRoleName = computed({
 const togglePermission = (id: number) => {
   form.permissions = form.permissions.includes(id)
     ? form.permissions.filter(pid => pid !== id)
-    : [...form.permissions, id];
-};
+    : [...form.permissions, id]
+}
 
 const selectedPermissions = computed(() =>
   visiblePermissions.value.filter(p =>
     form.permissions.includes(p.id)
   )
-);
+)
 
-
-
+// -----------------------------
+// Submit
+// -----------------------------
 const submit = () => {
-  form.post(route('roles.store'), {
+  form.post(route('organisations.roles.store'), {
     preserveScroll: true,
-  });
-};
-
+    onError: (errors) => {
+        console.log(errors);
+    },
+  })
+}
 </script>
+
 <template>
   <SidebarProvider>
     <AdminLayout>
-      <PageBreadcrumb pageTitle="Créer un rôle" />
+      <PageBreadcrumb pageTitle="Créer un rôle d’organisation" />
 
       <div class="mx-auto max-w-3xl space-y-6">
 
-        <!-- Catégorie -->
-        <div class="space-y-1">
-          <Label>Catégorie du rôle</Label>
-          <div class="flex gap-6">
-            <label class="flex items-center gap-2">
-              <input
-                type="radio"
-                value="system"
-                v-model="form.category"
-                @change="onCategoryChange"
-              />
-              Rôle système
-            </label>
-
-            <label class="flex items-center gap-2">
-              <input
-                type="radio"
-                value="org"
-                v-model="form.category"
-                @change="onCategoryChange"
-              />
-              Rôle organisation
-            </label>
-          </div>
-        </div>
-
-        <!-- Nom -->
+        <!-- Nom du rôle -->
         <div class="space-y-1">
           <Label for="name">Nom du rôle</Label>
           <Input
             id="name"
             v-model="normalizedRoleName"
             placeholder="Ex : ADMIN"
-              :class="form.errors.name ? 'border-red-500' : ''"
+            :class="form.errors.name ? 'border-red-500' : ''"
           />
           <p class="text-xs text-muted-foreground">
-            Préfixe appliqué automatiquement :
-            <strong>{{ ROLE_PREFIX }}</strong>
+            Préfixe appliqué automatiquement : <strong>ORG_</strong>
           </p>
-            <p v-if="form.errors.name" class="text-xs text-red-500">
+          <p v-if="form.errors.name" class="text-xs text-red-500">
             {{ form.errors.name }}
           </p>
         </div>
 
         <!-- Permissions -->
         <div class="space-y-2">
-          <Label>
-            Permissions autorisées
-            <span class="text-xs text-muted-foreground">
-              ({{ form.category.toUpperCase() }})
-            </span>
-          </Label>
+          <Label>Permissions autorisées</Label>
 
           <Popover v-model:open="popoverOpen">
             <PopoverTrigger as-child>
@@ -198,11 +156,13 @@ const submit = () => {
                 <CommandInput placeholder="Rechercher une permission..." />
                 <CommandList>
                   <CommandEmpty>Aucune permission trouvée</CommandEmpty>
-                  <CommandGroup heading="Permissions disponibles">
+
+                  <CommandGroup heading="Permissions organisation">
                     <CommandItem
+                     
                       v-for="permission in visiblePermissions"
                       :key="permission.id"
-                        :value="permission.id"     
+                       :value="permission.id"  
                       @select="togglePermission(permission.id)"
                     >
                       <Check
@@ -219,7 +179,7 @@ const submit = () => {
             </PopoverContent>
           </Popover>
 
-          <!-- Aperçu -->
+          <!-- Aperçu sélection -->
           <div class="flex flex-wrap gap-2 pt-2">
             <Badge
               v-for="permission in selectedPermissions"
@@ -229,31 +189,32 @@ const submit = () => {
               {{ permission.name }}
             </Badge>
           </div>
-             <p v-if="form.errors.permissions" class="text-xs text-red-500">
+
+          <!-- Erreur permissions -->
+          <p v-if="form.errors.permissions" class="text-xs text-red-500">
             {{ form.errors.permissions }}
           </p>
         </div>
-<!-- Validation -->
-<div class="pt-6">
-  <Button
-    class="w-full"
-    :disabled="
-      form.processing ||
-      !form.name ||
-      form.permissions.length === 0
-    "
-    @click="submit"
-  >
-    <span v-if="form.processing">Création...</span>
-    <span v-else>Créer le rôle</span>
-  </Button>
 
-  <p class="mt-2 text-center text-xs text-muted-foreground">
-    Le rôle sera créé avec
-    <strong> {{ form.permissions.length }} </strong>
-    permission(s)
-  </p>
-</div>
+        <!-- Validation -->
+        <div class="pt-6">
+          <Button
+            class="w-full"
+            :disabled="
+              form.processing ||
+              !form.name ||
+              form.permissions.length === 0
+            "
+            @click="submit"
+          >
+            <span v-if="form.processing">Création...</span>
+            <span v-else>Créer le rôle</span>
+          </Button>
+
+          <p class="mt-2 text-center text-xs text-muted-foreground">
+            Le rôle sera créé avec <strong>{{ form.permissions.length }}</strong> permission(s)
+          </p>
+        </div>
 
       </div>
     </AdminLayout>

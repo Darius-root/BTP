@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\OrganisationController;
+use App\Http\Controllers\OrganisationRoleController;
+use App\Http\Controllers\OrganisationUserController;
 use App\Http\Controllers\PermissionCrontroller;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
@@ -67,11 +69,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::middleware(['organisation.active'])->group(function () {
 
-        Route::get('/organisations/roles', [OrganisationController::class, 'roleOrganisation'])->name('organisations.roleOrganisation');
+        //Roles organisationnels
+        Route::resource('organisations/roles', OrganisationRoleController::class)->names('organisations.roles');
+        //Utilisateurs dans une organisation
+        Route::resource('organisations/users', OrganisationUserController::class)
+            ->names('organisations.users');
 
-        Route::get('/organisations/add-user', [OrganisationController::class, 'addUserToOrganisation'])->name('organisations.addUser');
 
-        Route::post('/organisations/store-user', [OrganisationController::class, 'storeUserToOrganisation'])->name('organisations.storeUser');
+
+
 
         // Organisations
 

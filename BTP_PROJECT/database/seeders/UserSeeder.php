@@ -39,7 +39,7 @@ class UserSeeder extends Seeder
             ]
         );
 
-         $orgtest = Organisation::firstOrCreate(
+        $orgtest = Organisation::firstOrCreate(
             [
                 'is_system' => false,
                 'nom' => 'TEST Organisation',
@@ -55,7 +55,7 @@ class UserSeeder extends Seeder
 
         foreach ($roles as $role) {
             if (str_starts_with($role->name, 'SYSTEM_')) {
-                app(PermissionRegistrar::class)->setPermissionsTeamId( $org->id);
+                app(PermissionRegistrar::class)->setPermissionsTeamId($org->id);
 
                 // Attribution des rôles système avec organisation   systeme
                 $user->assignRole($role->name);

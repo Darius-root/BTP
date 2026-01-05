@@ -28,7 +28,7 @@ const form = useForm({
 })
 
 function submit() {
-  form.post(route("organisations.storeUser"), {
+  form.post(route("organisations.users.store"), {
     preserveScroll: true,
     onSuccess: () => {
       form.reset("email", "role")

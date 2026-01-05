@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Permission\Models\Role;
 
 class OrganisationUser extends Model
 {
@@ -21,5 +22,9 @@ class OrganisationUser extends Model
     public function organisation()
     {
         return $this->belongsTo(Organisation::class);
+    }
+       public function role()
+    {
+        return $this->belongsTo(Role::class);
     }
 }

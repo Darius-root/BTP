@@ -221,7 +221,7 @@ function confirmActivation() {
                                         @click="
                                             router.visit(
                                                 route(
-                                                    'organisations.addUser',
+                                                    'organisations.users.create',
                                                     item.team.id
                                                 )
                                             )
