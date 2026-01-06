@@ -28,13 +28,54 @@ const menuGroups = [
         title: "Menu",
         items: [
             { icon: GridIcon, name: "Dashboard", path: "/dashboard" },
+            {
+                name: 'Profil',
+                icon: UserCircleIcon,
+                path: '/profile',
+            },
+              {
+                name: 'Dashboard',
+                icon: GridIcon,
+                path: '/dashboard',
+            },
+            {
+                name: 'Bordereaux',
+                icon: ListIcon,
+                path: '/bordereaux',
+            },
+              {
+                name: "Organisations",
+                icon: ListIcon,
+                subItems: [
+                    { name: "Liste", path: "/organisations" },
+                    { name: "Utilisateurs", path: "/organisations/users" },
+                      { name: "Rôles", path: "/organisations/roles" },
+                ]
+                  
+            },
+           
+            {
+                name : 'Clients',
+                icon: UserCircleIcon,
+                path: '/clients',
+            },
+            {
+                name : 'Projets',
+                icon: BoxCubeIcon ,
+                path: '/projets',
+            },
+           
           
+            {
+                name: 'Collections de prix',
+                icon: ListIcon,
+                path: '/collections-prix',
+            },
         ],
     },
     {
-        title: "Autres",
+        title: "Fonctions",
         items: [
-            { icon: GridIcon, name: "Profile", path: "/profile" },
 
             {
                 name: "Configurations",
@@ -42,6 +83,12 @@ const menuGroups = [
                 subItems: [
                     { name: "Rôles", path: "/roles" },
                     { name: "Permissions", path: "/permissions" },
+                     { name: 'Communes', path: '/communes' },
+                    { name: 'Arrondissements', path: '/arrondissements' },
+                    { name: 'Unités de mesure', path: '/unites-mesure' },
+                    { name: 'Matériaux', path: '/materiaux' },
+                    { name: 'Devises', path: '/devises' },
+                    { name: 'Corps d’état', path: '/corps-etat' },
                 ],
             },
         ],
@@ -62,81 +109,7 @@ const menuGroups = [
         ],
     },
 
-{
- title: 'Menu',
-        items: [
-            {
-                name: 'Dashboard',
-                icon: GridIcon,
-                path: '/dashboard',
-            },
-            {
-                name: 'Bordereaux',
-                icon: ListIcon,
-                path: '/bordereaux',
-            },
-            {
-                name: 'Organisations',
-                icon: ListIcon,
-                path: '/organisations',
-            },
-            {
-                name : 'Clients',
-                icon: UserCircleIcon,
-                path: '/clients',
-            },
-            {
-                name : 'Projets',
-                icon: BoxCubeIcon ,
-                path: '/projets',
-            },
-            // {
-            //     name: 'Batiments',
-            //     icon: ListIcon,
-            //     path: '/batiments',
-            // },
-            {
-                name: 'Référentiels',
-                icon: PlugInIcon,
-                subItems: [
-                    { name: 'Communes', path: '/communes' },
-                    { name: 'Arrondissements', path: '/arrondissements' },
-                    { name: 'Unités de mesure', path: '/unites-mesure' },
-                    { name: 'Matériaux', path: '/materiaux' },
-                    { name: 'Devises', path: '/devises' },
-                    { name: 'Corps d’état', path: '/corps-etat' },
-                ],
-            },
-            {
-                name: 'Collections de prix',
-                icon: ListIcon,
-                path: '/collections-prix',
-            },
-            {
-                name: 'Calendrier',
-                icon: CalenderIcon,
-                path: '/calendar',
-            },
-            {
-                name: 'Profil',
-                icon: UserCircleIcon,
-                path: '/profile',
-            },
-        ],
-    },
-    {
-        title: 'Autres',
-        items: [
-            {
-                name: 'Graphiques',
-                icon: PieChartIcon,
-                subItems: [
-                    { name: 'Ligne', path: '/charts/line' },
-                    { name: 'Barres', path: '/charts/bar' },
-                ],
-            },
-        ],
-    },
+
 
 
 
