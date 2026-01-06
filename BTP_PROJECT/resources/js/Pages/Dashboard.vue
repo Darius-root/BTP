@@ -14,8 +14,9 @@
                 <profile-card />
                 <personal-info-card />
                 <address-card />
-            </div> </admin-layout
-    ></SidebarProvider>
+            </div>
+        </admin-layout>
+    </SidebarProvider>
 </template>
 
 <script setup lang="ts">

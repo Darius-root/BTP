@@ -3,17 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Organisation;
-use App\Models\OrganisationUser;
-use App\Models\User;
-use App\Services\OrganisationContext;
+
 use App\Services\OrganisationService;
 use Auth;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Gate;
+
+use Illuminate\Support\Facades\Response;
 use Inertia\Inertia;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 class OrganisationController extends Controller
 {
@@ -112,9 +109,87 @@ class OrganisationController extends Controller
     }
 
 
+    public function create()
+    {
+        return Inertia::render('Organisations/Create');
+    }
 
-   
 
 
- 
+
+
+
+    private const ACTIVE_ORGANISATION_ID = 2;
+
+
+
+
+
+    public function store(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:organisations,name',
+            'raison_sociale' => 'required|string|max:255|unique:organisations,raison_sociale',
+            'logo' => 'nullable|image|max:2048',
+            'adresse' => 'nullable|string',
+            'pays' => 'nullable|string|max:255',
+            'devise' => 'nullable|string|max:3',
+        ]);
+
+        if ($request->hasFile('logo')) {
+            $validated['logo'] = $request->file('logo')->store('logos', 'public');
+        }
+
+        $validated['user_id'] = $request->user()->id;
+
+        Organisation::create($validated);
+
+        return redirect()->route('organisations.index')
+            ->with('success', 'Organisation créée avec succès.');
+    }
+
+    public function show(Organisation $organisation)
+    {
+        $organisation->load(['user', 'clients', 'projets']);
+
+        return Inertia::render('Organisations/Show', [
+            'organisation' => $organisation
+        ]);
+    }
+
+    public function edit(Organisation $organisation)
+    {
+        return Inertia::render('Organisations/Edit', [
+            'organisation' => $organisation
+        ]);
+    }
+
+    public function update(Request $request, Organisation $organisation): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:organisations,name,' . $organisation->id,
+            'raison_sociale' => 'required|string|max:255|unique:organisations,raison_sociale,' . $organisation->id,
+            'logo' => 'nullable|image|max:2048',
+            'adresse' => 'nullable|string',
+            'pays' => 'nullable|string|max:255',
+            'devise' => 'nullable|string|max:3',
+        ]);
+
+        if ($request->hasFile('logo')) {
+            $validated['logo'] = $request->file('logo')->store('logos', 'public');
+        }
+
+        $organisation->update($validated);
+
+        return redirect()->route('organisations.index')
+            ->with('success', 'Organisation mise à jour avec succès.');
+    }
+
+    public function destroy(Organisation $organisation): RedirectResponse
+    {
+        // $organisation->delete();
+
+        return redirect()->route('organisations.index')
+            ->with('success', 'Organisation supprimée avec succès.');
+    }
 }

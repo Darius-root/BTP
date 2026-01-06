@@ -11,14 +11,18 @@ import {
     HorizontalDots,
     ListIcon,
     PlugInIcon,
-} from "../../icons";
+} from '../../icons'
 
-import { useSidebar } from "../../composables/useSidebar";
+import { useSidebar } from '../../composables/useSidebar'
+import BoxCubeIcon from '@/icons/BoxCubeIcon.vue'
 
 const page = usePage();
 
 const { isExpanded, isMobileOpen, isHovered, openSubmenu } = useSidebar();
 
+/**
+ * Menu configuration
+ */
 const menuGroups = [
     {
         title: "Menu",
@@ -57,6 +61,88 @@ const menuGroups = [
             },
         ],
     },
+
+{
+ title: 'Menu',
+        items: [
+            {
+                name: 'Dashboard',
+                icon: GridIcon,
+                path: '/dashboard',
+            },
+            {
+                name: 'Bordereaux',
+                icon: ListIcon,
+                path: '/bordereaux',
+            },
+            {
+                name: 'Organisations',
+                icon: ListIcon,
+                path: '/organisations',
+            },
+            {
+                name : 'Clients',
+                icon: UserCircleIcon,
+                path: '/clients',
+            },
+            {
+                name : 'Projets',
+                icon: BoxCubeIcon ,
+                path: '/projets',
+            },
+            // {
+            //     name: 'Batiments',
+            //     icon: ListIcon,
+            //     path: '/batiments',
+            // },
+            {
+                name: 'Référentiels',
+                icon: PlugInIcon,
+                subItems: [
+                    { name: 'Communes', path: '/communes' },
+                    { name: 'Arrondissements', path: '/arrondissements' },
+                    { name: 'Unités de mesure', path: '/unites-mesure' },
+                    { name: 'Matériaux', path: '/materiaux' },
+                    { name: 'Devises', path: '/devises' },
+                    { name: 'Corps d’état', path: '/corps-etat' },
+                ],
+            },
+            {
+                name: 'Collections de prix',
+                icon: ListIcon,
+                path: '/collections-prix',
+            },
+            {
+                name: 'Calendrier',
+                icon: CalenderIcon,
+                path: '/calendar',
+            },
+            {
+                name: 'Profil',
+                icon: UserCircleIcon,
+                path: '/profile',
+            },
+        ],
+    },
+    {
+        title: 'Autres',
+        items: [
+            {
+                name: 'Graphiques',
+                icon: PieChartIcon,
+                subItems: [
+                    { name: 'Ligne', path: '/charts/line' },
+                    { name: 'Barres', path: '/charts/bar' },
+                ],
+            },
+        ],
+    },
+
+
+
+
+
+
 ];
 
 const isActive = (path) => page.url === path;
