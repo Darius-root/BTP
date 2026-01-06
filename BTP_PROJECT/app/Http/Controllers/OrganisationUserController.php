@@ -37,7 +37,7 @@ class OrganisationUserController extends Controller
                 ];
             });
 
-    
+
         return Inertia::render('Organisations/Users/Index', [
             'orgUsers' => $users,
         ]);
@@ -49,34 +49,34 @@ class OrganisationUserController extends Controller
 
 
 
-public function destroy(User $user)
-{
-    $organisationId = getPermissionsTeamId();
+    public function destroy(User $user)
+    {
+        $organisationId = getPermissionsTeamId();
 
-    if (! $organisationId) {
-        return back()->with('error', "Aucune organisation active.");
+        if (! $organisationId) {
+            return back()->with('error', "Aucune organisation active.");
+        }
+
+        if ($user->id === Auth::id()) {
+            return back()->with('error', "Vous ne pouvez pas vous retirer vous-même de l’organisation.");
+        }
+
+        // 🔍récupérer la relation organisation_user
+        $organisationUser = OrganisationUser::where('user_id', $user->id)
+            ->where('organisation_id', $organisationId)
+            ->with('role')
+            ->first();
+
+        if (! $organisationUser) {
+            return back()->with('error', "Cet utilisateur n’appartient pas à cette organisation.");
+        }
+
+
+
+        $organisationUser->delete();
+
+        return back()->with('success', "Utilisateur retiré de l’organisation avec succès.");
     }
-
-    if ($user->id === Auth::id()) {
-        return back()->with('error', "Vous ne pouvez pas vous retirer vous-même de l’organisation.");
-    }
-
-    // 🔍récupérer la relation organisation_user
-    $organisationUser = OrganisationUser::where('user_id', $user->id)
-        ->where('organisation_id', $organisationId)
-        ->with('role')
-        ->first();
-
-    if (! $organisationUser) {
-        return back()->with('error', "Cet utilisateur n’appartient pas à cette organisation.");
-    }
-
-  
-
-    $organisationUser->delete();
-
-    return back()->with('success', "Utilisateur retiré de l’organisation avec succès.");
-}
 
 
 
@@ -146,5 +146,5 @@ public function destroy(User $user)
         return redirect()
             ->route('organisations.users.index')
             ->with('success', "Utilisateur ajouté à l’organisation avec succès.");
-}
+    }
 }

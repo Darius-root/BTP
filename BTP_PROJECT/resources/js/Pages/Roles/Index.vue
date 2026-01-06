@@ -10,7 +10,7 @@ import {
     CardAction,
 } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { PlusIcon, PenBoxIcon, EyeIcon, PlusIcon } from "lucide-vue-next";
+import { TrashIcon, PenBoxIcon, EyeIcon, PlusIcon } from "lucide-vue-next";
 import {
     Table,
     TableHeader,
