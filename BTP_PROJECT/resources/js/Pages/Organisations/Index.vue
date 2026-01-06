@@ -28,7 +28,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Eye, UserPlus, Trash2 } from "lucide-vue-next";
+import { Eye, UserPlus, Trash2, PlusIcon } from "lucide-vue-next";
 import { refAutoReset } from "@vueuse/core";
 
 defineProps<{
@@ -61,7 +61,9 @@ function askActivation(org: any) {
         org.id === activeOrganisationId.value ? "deactivate" : "activate";
     openConfirm.value = true;
 }
-
+const goToCreate = () => {
+  router.visit(route("organisations.create"))
+}
 function confirmActivation() {
     if (!selectedOrg.value) return;
 
@@ -105,8 +107,16 @@ function confirmActivation() {
 
     <SidebarProvider>
         <AdminLayout>
-            <PageBreadcrumb pageTitle="Organisations" />
+            <PageBreadcrumb pageTitle="Organisations" /> 
+            <div>
+            <div class="flex  mt-4 justify-end mb-4">
+          <Button variant="outline" v-if="teamsWithRoles" @click="goToCreate">
+            Ajouter une organisation
+            <PlusIcon class="w-4 h-4 ml-2 text-blue-600" />
+          </Button>
+        </div></div>
             <div class="rounded-xl border bg-background">
+               
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -159,6 +169,7 @@ function confirmActivation() {
 
                         <!-- ================= UTILISATEUR NORMAL ================= -->
                         <template v-else-if="teamsWithRoles">
+                            
                             <TableRow
                                 v-for="item in teamsWithRoles"
                                 :key="item.team.id"
