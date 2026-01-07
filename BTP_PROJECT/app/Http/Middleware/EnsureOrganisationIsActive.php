@@ -81,7 +81,6 @@ class EnsureOrganisationIsActive
         // Contexte Spatie → organisation normale
         setPermissionsTeamId($organisation->id);
         $user->unsetRelation('roles')->unsetRelation('permissions');
-
         return $next($request);
     }
 }

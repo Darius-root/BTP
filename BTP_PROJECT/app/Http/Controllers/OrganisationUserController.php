@@ -147,4 +147,96 @@ class OrganisationUserController extends Controller
             ->route('organisations.users.index')
             ->with('success', "Utilisateur ajouté à l’organisation avec succès.");
     }
+
+
+
+
+    public function edit($userId)
+    {
+        $organisationId = getPermissionsTeamId();
+
+        if (!$organisationId) {
+            return back()->with('error', "Aucune organisation active.");
+        }
+
+
+
+        // Récupérer la relation OrganisationUser avec l'utilisateur
+        $organisationUser = OrganisationUser::where('user_id', $userId)
+            ->where('organisation_id', $organisationId)
+            ->with('role', 'user') // charge aussi l'utilisateur
+            ->first();
+
+        if (!$organisationUser) {
+            return back()->with('error', "Cet utilisateur n’appartient pas à cette organisation.");
+        }
+
+        // Empêcher la modification de soi-même
+        if ($organisationUser->user->id === Auth::id()) {
+            return back()->with('error', "Vous ne pouvez pas modifier votre propre rôle.");
+        }
+
+        // Rôles disponibles pour l'organisation
+        $roles = Role::query()
+            ->where('name', 'like', 'ORG_%')
+            ->where(function ($query) use ($organisationId) {
+                $query->whereNull('organisation_id') // rôles système
+                    ->orWhere('organisation_id', $organisationId);
+            })
+            ->orderBy('name')
+            ->get()
+            ->map(fn($role) => [
+                'id' => $role->id,
+                'name' => $role->name,
+                'readonly' => is_null($role->organisation_id), // true si rôle système
+            ]);
+
+        return Inertia::render('Organisations/Users/Edit', [
+            'user' => [
+                'id' => $organisationUser->user->id,
+                'name' => $organisationUser->user->name ?? $organisationUser->user->email,
+                'email' => $organisationUser->user->email,
+            ],
+            'currentRoleId' => $organisationUser->role_id,
+            'roles' => $roles,
+        ]);
+    }
+
+
+    public function update(Request $request, User $user)
+    {
+        $organisationId = getPermissionsTeamId();
+
+        if (! $organisationId) {
+            return back()->with('error', "Aucune organisation active.");
+        }
+
+        if ($user->id === Auth::id()) {
+            return back()->with('error', "Vous ne pouvez pas modifier votre propre rôle.");
+        }
+
+        $validated = $request->validate([
+            'role_id' => ['required', 'exists:roles,id'],
+        ]);
+
+        //  Ligne organisation_users
+        $organisationUser = OrganisationUser::where('user_id', $user->id)
+            ->where('organisation_id', $organisationId)
+            ->with('role')
+            ->first();
+
+        if (! $organisationUser) {
+            return back()->with('error', "Cet utilisateur n’appartient pas à cette organisation.");
+        }
+
+        $newRole = Role::find($validated['role_id']);
+
+        $organisationUser->update([
+            'role_id' => $newRole->id,
+        ]);
+
+        return redirect()
+            ->route('organisations.users.index')
+            ->with('success', "Rôle de l’utilisateur mis à jour avec succès.");
+    }
 }
