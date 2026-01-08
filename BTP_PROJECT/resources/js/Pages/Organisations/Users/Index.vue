@@ -66,7 +66,7 @@ const goToCreate = () => {
 
 const editUser = (user: any) => {
   if (!user.role.readonly) {
-    router.visit(route("organisations.users.edit", user.id))
+    router.visit(route("organisations.users.edit", user))
   }
 }
 

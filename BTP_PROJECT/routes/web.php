@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\OrganisationController;
 use App\Http\Controllers\OrganisationRoleController;
-use App\Http\Controllers\OrganisationUserController;
 use App\Http\Controllers\PermissionCrontroller;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
@@ -16,6 +15,7 @@ use App\Http\Controllers\CommuneController;
 use App\Http\Controllers\CorpsEtatController;
 use App\Http\Controllers\DeviseController;
 use App\Http\Controllers\MateriauController;
+use App\Http\Controllers\OrganisationUserController;
 use App\Http\Controllers\ProjetController;
 use App\Http\Controllers\UniteMesureController;
 use Illuminate\Foundation\Application;
@@ -86,14 +86,34 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('organisations/users', OrganisationUserController::class)
             ->names('organisations.users');
 
-   //  Projets
-    Route::resource('projets', ProjetController::class);
+        //  Projets
+        Route::resource('projets', ProjetController::class);
 
 
 
         // Organisations
 
+        //  Organisations
+        Route::resource('organisations', OrganisationController::class)->except('index');
 
+        //  Clients
+        Route::resource('clients', ClientController::class);
+
+        //  Projets
+        Route::resource('projets', ProjetController::class);
+
+        //  Bâtiments
+        Route::resource('batiments', BatimentController::class);
+
+        Route::get(
+            'projets/{projet}/batiments',
+            [BatimentController::class, 'indexByProjet']
+        )->name('projets.batiments.index');
+
+        Route::get(
+            'projets/{projet}/batiments/create',
+            [BatimentController::class, 'createFromProjet']
+        )->name('projets.batiments.create');
     });
 
 
@@ -155,30 +175,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('collections-prix', CollectionPrixController::class);
     Route::get('collections-prix/arrondissements/{communeId}', [CollectionPrixController::class, 'getArrondissements'])
         ->name('collections-prix.arrondissements');
-
-
-    //  Organisations
-    Route::resource('organisations', OrganisationController::class);
-
-    //  Clients
-    Route::resource('clients', ClientController::class);
-
-
-
-    //  Bâtiments
-    Route::resource('batiments', BatimentController::class);
-
-    Route::get(
-        'projets/{projet}/batiments',
-        [BatimentController::class, 'indexByProjet']
-    )->name('projets.batiments.index');
-
-    Route::get(
-        'projets/{projet}/batiments/create',
-        [BatimentController::class, 'createFromProjet']
-    )->name('projets.batiments.create');
-
-
 });
 
 require __DIR__ . '/auth.php';
