@@ -30,19 +30,23 @@ class ProjetController extends Controller
     public function index()
     {
         try {
-            $activeOrg = getPermissionsTeamId();
-            if (OrganisationContext::hasPermission(Auth::user(), getPermissionsTeamId(), 'ORG_PROJET_VIEW') === false) {
+            $activeOrgId = getPermissionsTeamId();
+
+            if (OrganisationContext::hasPermission(Auth::user(), $activeOrgId, 'ORG_PROJET_VIEW') === false) {
                 return back()->with('error', "Vous n'avez pas la permission de voir les projets.");
             }
 
             $projets = Projet::with(['client', 'organisation', 'devise'])
-                ->where('organisation_id', $activeOrg)
+                ->where('organisation_id', $activeOrgId)
                 ->latest()
                 ->paginate(10);
 
+            // Récupérer l'organisation complète
+            $activeOrganisation = Organisation::find($activeOrgId);
+
             return Inertia::render('Organisations/Projets/Index', [
                 'projets' => $projets,
-                'activeOrganisation' => $activeOrg,
+                'activeOrganisation' => $activeOrganisation, // Objet complet
             ]);
 
         } catch (Throwable $e) {

@@ -17,7 +17,7 @@ class OrganisationController extends Controller
     public function index(OrganisationService $organisationService)
     {
 
-        
+
         $user = Auth::user();
         $currentTeamId = getPermissionsTeamId();
 
