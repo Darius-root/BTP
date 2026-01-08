@@ -11,15 +11,15 @@ class Organisation extends Model
 {
     use HasFactory;
 
-    protected $fillable = [ 'nom','is_system', 'raison_sociale', 'logo', 'adresse', 'pays', 'devise', 'user_id'];
- 
+    protected $fillable = ['nom', 'is_system', 'raison_sociale', 'logo', 'adresse', 'pays', 'devise', 'user_id'];
+
 
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
 
-   
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -31,7 +31,7 @@ class Organisation extends Model
         return $this->hasMany(OrganisationUser::class);
     }
 
-  
+
     public function clients(): HasMany
     {
         return $this->hasMany(Client::class);
@@ -41,4 +41,13 @@ class Organisation extends Model
     {
         return $this->hasMany(Projet::class);
     }
+
+    public function canBeDeleted(): bool
+    {
+        return
+            !$this->is_system
+            && !$this->organisationUsers()->exists()
+            && !$this->projets()->exists();
+    }
+
 }

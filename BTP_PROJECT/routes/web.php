@@ -86,7 +86,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('organisations/users', OrganisationUserController::class)
             ->names('organisations.users');
 
-
+   //  Projets
+    Route::resource('projets', ProjetController::class);
 
 
 
@@ -162,8 +163,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     //  Clients
     Route::resource('clients', ClientController::class);
 
-    //  Projets
-    Route::resource('projets', ProjetController::class);
+
 
     //  Bâtiments
     Route::resource('batiments', BatimentController::class);

@@ -46,7 +46,7 @@ const filteredData = computed(() => {
     return props.clients.data.filter(client =>
         client.nom.toLowerCase().includes(searchTerm) ||
         (client.email && client.email.toLowerCase().includes(searchTerm)) ||
-        (client.organisation?.raison_sociale && client.organisation.raison_sociale.toLowerCase().includes(searchTerm))
+        (client.organisation?.nom && client.organisation.nom.toLowerCase().includes(searchTerm))
     )
 })
 
@@ -152,7 +152,7 @@ const confirmDelete = (client) => {
 
                                                     <TableCell>{{ client.email }}</TableCell>
                                                     <TableCell>{{ client.telephone ?? '—' }}</TableCell>
-                                                    <TableCell>{{ client.organisation?.name ?? '—' }}
+                                                    <TableCell>{{ client.organisation?.nom ?? '—' }}
                                                     </TableCell>
 
                                                     <TableCell class="text-right">

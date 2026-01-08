@@ -14,7 +14,7 @@
                                 <div>
                                     <CardTitle class="text-3xl">Projets</CardTitle>
                                     <CardDescription class="mt-1">
-                                        Gérez les projets de votre système
+                                        Gérez les projets de votre organisation active
                                     </CardDescription>
                                 </div>
 
@@ -36,7 +36,7 @@
                                             <Search
                                                 class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                             <Input id="searchFilter" v-model="globalFilter" type="text"
-                                                placeholder="Nom, code projet, client ou organisation..."
+                                                placeholder="Nom, code projet, client..."
                                                 class="pl-10 pr-10 w-full" autocomplete="off" />
                                             <button v-if="globalFilter" @click="clearSearch"
                                                 class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -62,7 +62,6 @@
                                                 <TableHead>Nom du projet</TableHead>
                                                 <TableHead>Code projet</TableHead>
                                                 <TableHead>Client</TableHead>
-                                                <TableHead>Organisation</TableHead>
                                                 <TableHead class="text-right">Actions</TableHead>
                                             </TableRow>
                                         </TableHeader>
@@ -74,7 +73,6 @@
                                                     <TableCell class="font-medium">{{ projet.nom }}</TableCell>
                                                     <TableCell>{{ projet.code_projet }}</TableCell>
                                                     <TableCell>{{ projet.client?.nom ?? '—' }}</TableCell>
-                                                    <TableCell>{{ projet.organisation?.name ?? '—' }}</TableCell>
                                                     <TableCell class="text-right">
                                                         <div class="flex justify-end gap-2">
                                                             <!-- SHOW -->
@@ -102,7 +100,7 @@
 
                                             <template v-else>
                                                 <TableRow>
-                                                    <TableCell colspan="5" class="h-24 text-center">
+                                                    <TableCell colspan="4" class="h-24 text-center">
                                                         <div class="py-8 text-gray-500">
                                                             <p class="text-lg">Aucun projet trouvé</p>
                                                             <p class="text-sm mt-1">
@@ -131,7 +129,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { Head, Link, router } from '@inertiajs/vue3'
-import { Plus, Edit, Trash2, Search, X } from 'lucide-vue-next'
+import { Plus, Edit, Trash2, Search, X, Eye } from 'lucide-vue-next'
 
 import AdminLayout from '@/components/layout/AdminLayout.vue'
 import SidebarProvider from '@/components/layout/SidebarProvider.vue'
@@ -148,31 +146,31 @@ const props = defineProps({
     projets: {
         type: Object,
         required: true,
+    },
+    activeOrganisation: { // fournie par le controller
+        type: Object,
+        required: true,
     }
 })
 
 const globalFilter = ref('')
 
-const ACTIVE_ORGANISATION_ID = 2; // ID de l'organisation active
-
 const filteredData = computed(() => {
-    let data = props.projets.data;
+    let data = props.projets.data
 
-    // Ne garder que les projets dont l'organisation est active
-    data = data.filter(p => p.organisation?.id === ACTIVE_ORGANISATION_ID);
+    // Filtrage automatique selon l'organisation active
+    data = data.filter(p => p.organisation?.id === props.activeOrganisation.id)
 
-    if (!globalFilter.value) return data;
+    if (!globalFilter.value) return data
 
-    const searchTerm = globalFilter.value.toLowerCase();
+    const searchTerm = globalFilter.value.toLowerCase()
 
     return data.filter(p =>
         p.nom.toLowerCase().includes(searchTerm) ||
         p.code_projet.toLowerCase().includes(searchTerm) ||
-        (p.client && p.client.nom.toLowerCase().includes(searchTerm)) ||
-        (p.organisation && p.organisation.raison_sociale.toLowerCase().includes(searchTerm))
-    );
-});
-
+        (p.client && p.client.nom.toLowerCase().includes(searchTerm))
+    )
+})
 
 const clearSearch = () => { globalFilter.value = '' }
 

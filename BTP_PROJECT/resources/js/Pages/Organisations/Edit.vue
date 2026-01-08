@@ -31,19 +31,19 @@
                             <form @submit.prevent="submit" class="space-y-6" enctype="multipart/form-data">
                                 <!-- Nom -->
                                 <div class="space-y-2">
-                                    <Label for="name">
+                                    <Label for="nom">
                                         Nom <span class="text-red-500">*</span>
                                     </Label>
                                     <div class="relative">
                                         <div class="absolute left-3 top-1/2 -translate-y-1/2">
                                             <Building2 class="w-4 h-4 text-gray-400" />
                                         </div>
-                                        <Input id="name" v-model="form.name" type="text"
+                                        <Input id="nom" v-model="form.nom" type="text"
                                             class="pl-10 w-full"
-                                            :class="{ 'border-red-300': form.errors.name }" required />
+                                            :class="{ 'border-red-300': form.errors.nom }" required />
                                     </div>
-                                    <p v-if="form.errors.name" class="text-sm text-red-600">
-                                        {{ form.errors.name }}
+                                    <p v-if="form.errors.nom" class="text-sm text-red-600">
+                                        {{ form.errors.nom }}
                                     </p>
                                 </div>
 
@@ -192,7 +192,7 @@ const props = defineProps({
 const currentPageTitle = ref('Modifier Organisation')
 
 const form = useForm({
-    name: props.organisation.name,
+    nom: props.organisation.nom,
     raison_sociale: props.organisation.raison_sociale,
     logo: null,
     adresse: props.organisation.adresse,

@@ -14,10 +14,10 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 
 class OrganisationController extends Controller
 {
-
-
     public function index(OrganisationService $organisationService)
     {
+
+        
         $user = Auth::user();
         $currentTeamId = getPermissionsTeamId();
 
@@ -53,8 +53,8 @@ class OrganisationController extends Controller
             $user->unsetRelation('roles')->unsetRelation('permissions');
 
             $organisationsWithRoles[] = [
-                'team'   => $organisation,
-                'roles'  => $user->getRoleNames(),
+                'team' => $organisation,
+                'roles' => $user->getRoleNames(),
                 'statut' => $organisation->id === $currentTeamId,
             ];
         }
@@ -79,7 +79,7 @@ class OrganisationController extends Controller
     {
         $user = Auth::user();
 
-        if (! $user->organisations()->where('id', $organisation->id)->exists()) {
+        if (!$user->organisations()->where('id', $organisation->id)->exists()) {
             return back()->with('error', "Accès refusé.");
         }
 
@@ -118,17 +118,10 @@ class OrganisationController extends Controller
 
 
 
-
-    private const ACTIVE_ORGANISATION_ID = 2;
-
-
-
-
-
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:organisations,name',
+            'nom' => 'required|string|max:255|unique:organisations,nom',
             'raison_sociale' => 'required|string|max:255|unique:organisations,raison_sociale',
             'logo' => 'nullable|image|max:2048',
             'adresse' => 'nullable|string',
@@ -167,7 +160,7 @@ class OrganisationController extends Controller
     public function update(Request $request, Organisation $organisation): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:organisations,name,' . $organisation->id,
+            'nom' => 'required|string|max:255|unique:organisations,nom,' . $organisation->id,
             'raison_sociale' => 'required|string|max:255|unique:organisations,raison_sociale,' . $organisation->id,
             'logo' => 'nullable|image|max:2048',
             'adresse' => 'nullable|string',
@@ -187,9 +180,17 @@ class OrganisationController extends Controller
 
     public function destroy(Organisation $organisation): RedirectResponse
     {
-        // $organisation->delete();
+        if (!$organisation->canBeDeleted()) {
+            return redirect()
+                ->route('organisations.index')
+                ->with('error', "Impossible de supprimer l'organisation : elle est encore liée à des utilisateurs ou des projets.");
+        }
 
-        return redirect()->route('organisations.index')
-            ->with('success', 'Organisation supprimée avec succès.');
+        $organisation->delete();
+
+        return redirect()
+            ->route('organisations.index')
+            ->with('success', "Organisation supprimée avec succès.");
     }
+
 }
