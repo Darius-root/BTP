@@ -5,10 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Commune;
 use App\Models\Arrondissement;
 use App\Models\CollectionPrix;
+use App\Services\OrganisationContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Throwable;
 
 class CommuneController extends Controller
 {
@@ -17,22 +21,33 @@ class CommuneController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Commune::withCount(['arrondissements', 'collectionsPrix']);
+        try {
+            $activeOrg = getPermissionsTeamId();
+            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'SYSTEM_COMMUNE_VIEW')) {
+                return back()->with('error', "Vous n'avez pas la permission de voir les communes.");
+            }
 
-        // Recherche
-        if ($request->filled('search')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('code', 'like', '%' . $request->search . '%')
-                    ->orWhere('libelle', 'like', '%' . $request->search . '%');
-            });
+            $query = Commune::withCount(['arrondissements', 'collectionsPrix']);
+
+            // Recherche
+            if ($request->filled('search')) {
+                $query->where(function ($q) use ($request) {
+                    $q->where('code', 'like', '%' . $request->search . '%')
+                        ->orWhere('libelle', 'like', '%' . $request->search . '%');
+                });
+            }
+
+            $communes = $query->orderBy('libelle')->paginate(15);
+
+            return Inertia::render('Communes/Index', [
+                'communes' => $communes,
+                'filters' => $request->only(['search']),
+            ]);
+
+        } catch (Throwable $e) {
+            Log::error('Erreur index communes: ' . $e->getMessage());
+            return back()->with('error', 'Erreur lors du chargement des communes.');
         }
-
-        $communes = $query->orderBy('libelle')->paginate(15);
-
-        return Inertia::render('Communes/Index', [
-            'communes' => $communes,
-            'filters' => $request->only(['search']),
-        ]);
     }
 
     /**
@@ -40,7 +55,18 @@ class CommuneController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Communes/Create');
+        try {
+            $activeOrg = getPermissionsTeamId();
+            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'SYSTEM_COMMUNE_CREATE')) {
+                return back()->with('error', "Vous n'avez pas la permission de créer une commune.");
+            }
+
+            return Inertia::render('Communes/Create');
+
+        } catch (Throwable $e) {
+            Log::error('Erreur create commune: ' . $e->getMessage());
+            return back()->with('error', 'Erreur lors de l\'accès au formulaire.');
+        }
     }
 
     /**
@@ -48,25 +74,48 @@ class CommuneController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'libelle' => [
-                'required',
-                'string',
-                'max:255',
-                'unique:communes,libelle',
-            ],
-        ], [
-            'libelle.required' => 'Le libellé est obligatoire.',
-            'libelle.unique' => 'Cette commune existe déjà.',
-        ]);
+        try {
+            $activeOrg = getPermissionsTeamId();
+            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'SYSTEM_COMMUNE_CREATE')) {
+                return back()->with('error', "Vous n'avez pas la permission de créer une commune.");
+            }
 
-        // Générer le code automatiquement à partir du libellé
-        $validated['code'] = $this->generateCommuneCode($validated['libelle']);
+            $validated = $request->validate([
+                'libelle' => [
+                    'required',
+                    'string',
+                    'max:255',
+                    'unique:communes,libelle',
+                ],
+            ], [
+                'libelle.required' => 'Le libellé est obligatoire.',
+                'libelle.unique' => 'Cette commune existe déjà.',
+            ]);
 
-        Commune::create($validated);
+            DB::beginTransaction();
 
-        return redirect()->route('communes.index')
-            ->with('success', 'Commune créée avec succès.');
+            // Générer le code automatiquement à partir du libellé
+            $validated['code'] = $this->generateCommuneCode($validated['libelle']);
+
+            Commune::create($validated);
+
+            DB::commit();
+
+            return redirect()->route('communes.index')
+                ->with('success', 'Commune créée avec succès.');
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return back()
+                ->withInput()
+                ->withErrors($e->errors());
+
+        } catch (Throwable $e) {
+            DB::rollBack();
+            Log::error('Erreur store commune: ' . $e->getMessage());
+            return back()
+                ->withInput()
+                ->with('error', 'Erreur lors de la création de la commune.');
+        }
     }
 
     /**
@@ -74,9 +123,20 @@ class CommuneController extends Controller
      */
     public function edit(Commune $commune)
     {
-        return Inertia::render('Communes/Edit', [
-            'commune' => $commune->loadCount(['arrondissements', 'collectionsPrix']),
-        ]);
+        try {
+            $activeOrg = getPermissionsTeamId();
+            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'SYSTEM_COMMUNE_EDIT')) {
+                return back()->with('error', "Vous n'avez pas la permission de modifier cette commune.");
+            }
+
+            return Inertia::render('Communes/Edit', [
+                'commune' => $commune->loadCount(['arrondissements', 'collectionsPrix']),
+            ]);
+
+        } catch (Throwable $e) {
+            Log::error('Erreur edit commune: ' . $e->getMessage());
+            return back()->with('error', 'Erreur lors de l\'accès à la commune.');
+        }
     }
 
     /**
@@ -84,22 +144,40 @@ class CommuneController extends Controller
      */
     public function update(Request $request, Commune $commune)
     {
-        $validated = $request->validate([
-            'code' => 'required|string|max:20|unique:communes,code,' . $commune->id,
-            'libelle' => [
-                'required',
-                'string',
-                'max:255',
-                'unique:communes,libelle,' . $commune->id,
-            ],
-        ], [
-            'libelle.unique' => 'Cette commune existe déjà.',
-        ]);
+        try {
+            $activeOrg = getPermissionsTeamId();
+            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'SYSTEM_COMMUNE_EDIT')) {
+                return back()->with('error', "Vous n'avez pas la permission de modifier cette commune.");
+            }
 
-        $commune->update($validated);
+            $validated = $request->validate([
+                'code' => 'required|string|max:20|unique:communes,code,' . $commune->id,
+                'libelle' => [
+                    'required',
+                    'string',
+                    'max:255',
+                    'unique:communes,libelle,' . $commune->id,
+                ],
+            ], [
+                'libelle.unique' => 'Cette commune existe déjà.',
+            ]);
 
-        return redirect()->route('communes.index')
-            ->with('success', 'Commune mise à jour avec succès.');
+            $commune->update($validated);
+
+            return redirect()->route('communes.index')
+                ->with('success', 'Commune mise à jour avec succès.');
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return back()
+                ->withInput()
+                ->withErrors($e->errors());
+
+        } catch (Throwable $e) {
+            Log::error('Erreur update commune: ' . $e->getMessage());
+            return back()
+                ->withInput()
+                ->with('error', 'Erreur lors de la mise à jour de la commune.');
+        }
     }
 
     /**
@@ -107,26 +185,32 @@ class CommuneController extends Controller
      */
     public function destroy(Commune $commune)
     {
-        // 1. Bloquer si la commune a des arrondissements
-        if ($commune->arrondissements()->exists()) {
-            return redirect()->route('communes.index')
-                ->with('error', 'Impossible de supprimer cette commune car elle contient des arrondissements.');
-        }
-
-        // 2. Bloquer si la commune est utilisée dans des collections de prix
-        if ($commune->collectionsPrix()->exists()) {
-            return redirect()->route('communes.index')
-                ->with('error', 'Impossible de supprimer cette commune car elle est utilisée dans des collections de prix.');
-        }
-
         try {
+            $activeOrg = getPermissionsTeamId();
+            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'SYSTEM_COMMUNE_DELETE')) {
+                return back()->with('error', "Vous n'avez pas la permission de supprimer cette commune.");
+            }
+
+            // 1. Bloquer si la commune a des arrondissements
+            if ($commune->arrondissements()->exists()) {
+                return redirect()->route('communes.index')
+                    ->with('error', 'Impossible de supprimer cette commune car elle contient des arrondissements.');
+            }
+
+            // 2. Bloquer si la commune est utilisée dans des collections de prix
+            if ($commune->collectionsPrix()->exists()) {
+                return redirect()->route('communes.index')
+                    ->with('error', 'Impossible de supprimer cette commune car elle est utilisée dans des collections de prix.');
+            }
+
             $commune->delete();
 
             return redirect()->route('communes.index')
                 ->with('success', 'Commune supprimée avec succès.');
-        } catch (\Exception $e) {
-            return redirect()->route('communes.index')
-                ->with('error', 'Erreur lors de la suppression : ' . $e->getMessage());
+
+        } catch (Throwable $e) {
+            Log::error('Erreur destroy commune: ' . $e->getMessage());
+            return back()->with('error', 'Erreur lors de la suppression de la commune.');
         }
     }
 
@@ -135,13 +219,24 @@ class CommuneController extends Controller
      */
     public function stats(Commune $commune)
     {
-        return response()->json([
-            'arrondissements_count' => $commune->arrondissements()->count(),
-            'collections_prix_count' => $commune->collectionsPrix()->count(),
-            'arrondissements_with_collections' => $commune->arrondissements()
-                ->whereHas('collectionsPrix')
-                ->count(),
-        ]);
+        try {
+            $activeOrg = getPermissionsTeamId();
+            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'SYSTEM_COMMUNE_VIEW')) {
+                return response()->json(['error' => 'Permission refusée'], 403);
+            }
+
+            return response()->json([
+                'arrondissements_count' => $commune->arrondissements()->count(),
+                'collections_prix_count' => $commune->collectionsPrix()->count(),
+                'arrondissements_with_collections' => $commune->arrondissements()
+                    ->whereHas('collectionsPrix')
+                    ->count(),
+            ]);
+
+        } catch (Throwable $e) {
+            Log::error('Erreur stats commune: ' . $e->getMessage());
+            return response()->json(['error' => 'Erreur lors du chargement des statistiques'], 500);
+        }
     }
 
     /**
@@ -199,14 +294,20 @@ class CommuneController extends Controller
      */
     public function previewCode(Request $request)
     {
-        $libelle = $request->input('libelle');
+        try {
+            $libelle = $request->input('libelle');
 
-        if (empty($libelle)) {
-            return response()->json(['code' => '']);
+            if (empty($libelle)) {
+                return response()->json(['code' => '']);
+            }
+
+            $code = $this->generateCommuneCode($libelle);
+
+            return response()->json(['code' => $code]);
+
+        } catch (Throwable $e) {
+            Log::error('Erreur preview code: ' . $e->getMessage());
+            return response()->json(['error' => 'Erreur lors de la génération du code'], 500);
         }
-
-        $code = $this->generateCommuneCode($libelle);
-
-        return response()->json(['code' => $code]);
     }
 }

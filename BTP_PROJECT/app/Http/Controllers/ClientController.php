@@ -4,37 +4,29 @@ namespace App\Http\Controllers;
 
 use App\Models\Client;
 use App\Models\Organisation;
+use App\Services\OrganisationContext;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Illuminate\Http\RedirectResponse;
+use Throwable;
 
 class ClientController extends Controller
 {
     /**
-     * Liste des clients de l'organisation active uniquement
+     * Liste des clients de l'organisation active
      */
-
-    private function getActiveOrganisation(): Organisation
-    {
-        $organisation = session('active_organisation');
-
-        if (!$organisation instanceof Organisation) {
-            abort(403, 'Aucune organisation active.');
-        }
-
-        // Synchronisation Spatie (IMPORTANT)
-        setPermissionsTeamId($organisation->id);
-
-        return $organisation;
-    }
-
     public function index()
     {
         try {
-            $activeOrg = $this->getActiveOrganisation();
+            $activeOrg = getPermissionsTeamId();
+
+            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'ORG_CLIENT_VIEW')) {
+                return back()->with('error', "Vous n'avez pas la permission de voir les clients.");
+            }
 
             $clients = Client::with('organisation')
-                ->where('organisation_id', $activeOrg->id)
+                ->where('organisation_id', $activeOrg)
                 ->latest()
                 ->paginate(10);
 
@@ -43,37 +35,43 @@ class ClientController extends Controller
                 'activeOrganisation' => $activeOrg,
             ]);
 
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return back()->with('error', $e->getMessage());
         }
     }
 
-
     /**
-     * Formulaire de création (organisation active imposée)
+     * Formulaire de création
      */
     public function create()
     {
         try {
-            $activeOrg = $this->getActiveOrganisation();
+            $activeOrg = getPermissionsTeamId();
+
+            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'ORG_CLIENT_CREATE')) {
+                return back()->with('error', "Vous n'avez pas la permission de créer un client.");
+            }
 
             return Inertia::render('Clients/Create', [
                 'activeOrganisation' => $activeOrg,
             ]);
 
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return back()->with('error', $e->getMessage());
         }
     }
 
-
     /**
-     * Création d'un client rattaché à l'organisation active
+     * Création
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request)
     {
         try {
-            $activeOrg = $this->getActiveOrganisation();
+            $activeOrg = getPermissionsTeamId();
+
+            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'ORG_CLIENT_CREATE')) {
+                return back()->with('error', "Vous n'avez pas la permission de créer un client.");
+            }
 
             $validated = $request->validate([
                 'nom' => 'required|string|max:255',
@@ -83,7 +81,7 @@ class ClientController extends Controller
                 'adresse' => 'nullable|string',
             ]);
 
-            $validated['organisation_id'] = $activeOrg->id;
+            $validated['organisation_id'] = $activeOrg;
 
             Client::create($validated);
 
@@ -91,21 +89,24 @@ class ClientController extends Controller
                 ->route('clients.index')
                 ->with('success', 'Client créé avec succès.');
 
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return back()->with('error', $e->getMessage());
         }
     }
 
-
     /**
-     * Affichage d'un client (uniquement si organisation active)
+     * Détail
      */
     public function show(Client $client)
     {
         try {
-            $activeOrg = $this->getActiveOrganisation();
+            $activeOrg = getPermissionsTeamId();
 
-            if ($client->organisation_id !== $activeOrg->id) {
+            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'ORG_CLIENT_VIEW')) {
+                return back()->with('error', "Vous n'avez pas la permission de consulter ce client.");
+            }
+
+            if ($client->organisation_id !== $activeOrg) {
                 return redirect()
                     ->route('clients.index')
                     ->with('error', 'Client non accessible.');
@@ -118,24 +119,27 @@ class ClientController extends Controller
                 'activeOrganisation' => $activeOrg,
             ]);
 
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return back()->with('error', $e->getMessage());
         }
     }
 
-
     /**
-     * Formulaire d'édition (organisation active uniquement)
+     * Formulaire d’édition
      */
     public function edit(Client $client)
     {
         try {
-            $activeOrg = $this->getActiveOrganisation();
+            $activeOrg = getPermissionsTeamId();
 
-            if ($client->organisation_id !== $activeOrg->id) {
+            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'ORG_CLIENT_EDIT')) {
+                return back()->with('error', "Vous n'avez pas la permission de modifier ce client.");
+            }
+
+            if ($client->organisation_id !== $activeOrg) {
                 return redirect()
                     ->route('clients.index')
-                    ->with('error', 'Vous ne pouvez pas modifier un client hors de l’organisation active.');
+                    ->with('error', 'Accès interdit.');
             }
 
             return Inertia::render('Clients/Edit', [
@@ -143,25 +147,27 @@ class ClientController extends Controller
                 'activeOrganisation' => $activeOrg,
             ]);
 
-        } catch (\Throwable $e) {
-            return back()->with('error', 'Impossible d’ouvrir le formulaire : ' . $e->getMessage());
+        } catch (Throwable $e) {
+            return back()->with('error', $e->getMessage());
         }
     }
 
-
-
     /**
-     * Mise à jour d'un client de l'organisation active
+     * Mise à jour
      */
-    public function update(Request $request, Client $client): RedirectResponse
+    public function update(Request $request, Client $client)
     {
         try {
-            $activeOrg = $this->getActiveOrganisation();
+            $activeOrg = getPermissionsTeamId();
 
-            if ($client->organisation_id !== $activeOrg->id) {
+            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'ORG_CLIENT_EDIT')) {
+                return back()->with('error', "Vous n'avez pas la permission de modifier ce client.");
+            }
+
+            if ($client->organisation_id !== $activeOrg) {
                 return redirect()
                     ->route('clients.index')
-                    ->with('error', 'Vous ne pouvez pas modifier ce client.');
+                    ->with('error', 'Accès interdit.');
             }
 
             $validated = $request->validate([
@@ -178,27 +184,29 @@ class ClientController extends Controller
                 ->route('clients.index')
                 ->with('success', 'Client mis à jour avec succès.');
 
-        } catch (\Throwable $e) {
-            return back()->with('error', 'Impossible de mettre à jour le client : ' . $e->getMessage());
+        } catch (Throwable $e) {
+            return back()->with('error', $e->getMessage());
         }
     }
 
-
     /**
-     * Suppression d'un client de l'organisation active
+     * Suppression
      */
-    public function destroy(Client $client): RedirectResponse
+    public function destroy(Client $client)
     {
         try {
-            $activeOrg = $this->getActiveOrganisation();
+            $activeOrg = getPermissionsTeamId();
 
-            if ($client->organisation_id !== $activeOrg->id) {
-                return redirect()
-                    ->route('clients.index')
-                    ->with('error', 'Vous ne pouvez pas supprimer ce client.');
+            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'ORG_CLIENT_DELETE')) {
+                return back()->with('error', "Vous n'avez pas la permission de supprimer ce client.");
             }
 
-            // Sécurité métier optionnelle
+            if ($client->organisation_id !== $activeOrg) {
+                return redirect()
+                    ->route('clients.index')
+                    ->with('error', 'Suppression non autorisée.');
+            }
+
             if ($client->projets()->exists()) {
                 return back()->with(
                     'error',
@@ -212,9 +220,8 @@ class ClientController extends Controller
                 ->route('clients.index')
                 ->with('success', 'Client supprimé avec succès.');
 
-        } catch (\Throwable $e) {
-            return back()->with('error', 'Impossible de supprimer le client : ' . $e->getMessage());
+        } catch (Throwable $e) {
+            return back()->with('error', $e->getMessage());
         }
     }
-
 }
