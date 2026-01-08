@@ -39,7 +39,9 @@ class HandleInertiaRequests extends Middleware
                 'error' => fn() => $request->session()->get('error'),
             ],
             'session' => fn() => [
-                'active_organisation' => $request->session()->get('active_organisation'),
+                'active_organisation_id' => $request->session()->get('active_organisation_id'),
+                'active_organisation_name' => $request->session()->get('active_organisation_name'),
+
             ],
         ];
     }

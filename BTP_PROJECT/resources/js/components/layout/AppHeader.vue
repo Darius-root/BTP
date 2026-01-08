@@ -100,7 +100,7 @@ import { usePage } from "@inertiajs/vue3";
 const page = usePage();
 const organisation = computed(
     // @ts-ignore
-    () => page.props.session.active_organisation?.nom ||' Aucune organisation active'
+    () => page.props.session.active_organisation_name ||' Aucune organisation active'
 );
 const { toggleSidebar, toggleMobileSidebar, isMobileOpen } = useSidebar()
 

@@ -24,7 +24,6 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 
-// shadcn/ui AlertDialog
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -49,12 +48,12 @@ const props = defineProps<{
     id: number
     name: string
     email: string
-    role: {
+    roles: {
       id: number
       name: string
-      readonly: boolean
+      readonly?: boolean
       permissions: { id: number; name: string }[]
-    }
+    }[]
   }>
 }>()
 
@@ -65,13 +64,16 @@ const goToCreate = () => {
 }
 
 const editUser = (user: any) => {
-  if (!user.role.readonly) {
+  // ⚠️ Ici tu peux décider de la logique : par ex. éditer le premier rôle
+  const editableRole = user.roles.find(r => !r.readonly)
+  if (editableRole) {
     router.visit(route("organisations.users.edit", user))
   }
 }
 
 const deleteUser = (user: any) => {
-  if (!user.role.readonly) {
+  const editableRole = user.roles.find(r => !r.readonly)
+  if (editableRole) {
     router.delete(route("organisations.users.destroy", user.id))
   }
 }
@@ -105,7 +107,7 @@ const deleteUser = (user: any) => {
           <TableHeader>
             <TableRow>
               <TableHead>Utilisateur</TableHead>
-              <TableHead>Rôle</TableHead>
+              <TableHead>Rôles</TableHead>
               <TableHead>Permissions</TableHead>
               <TableHead class="text-right">Actions</TableHead>
             </TableRow>
@@ -123,13 +125,17 @@ const deleteUser = (user: any) => {
                 </div>
               </TableCell>
 
-              <!-- Role -->
+              <!-- Roles -->
               <TableCell>
-                <Badge
-                  :variant="user.role.readonly ? 'secondary' : 'default'"
-                >
-                  {{ user.role.name }}
-                </Badge>
+                <div class="flex flex-wrap gap-2">
+                  <Badge
+                    v-for="role in user.roles"
+                    :key="role.id"
+                    :variant="role.readonly ? 'secondary' : 'default'"
+                  >
+                    {{ role.name }}
+                  </Badge>
+                </div>
               </TableCell>
 
               <!-- Permissions -->
@@ -143,21 +149,31 @@ const deleteUser = (user: any) => {
                   </CollapsibleTrigger>
 
                   <CollapsibleContent>
-                    <div class="mt-2 flex flex-wrap gap-2">
-                      <Badge
-                        v-for="perm in user.role.permissions"
-                        :key="perm.id"
-                        variant="outline"
+                    <div class="mt-2 flex flex-col gap-4">
+                      <div
+                        v-for="role in user.roles"
+                        :key="role.id"
+                        class="flex flex-col gap-2"
                       >
-                        {{ perm.name }}
-                      </Badge>
-
-                      <span
-                        v-if="user.role.permissions.length === 0"
-                        class="text-xs text-muted-foreground"
-                      >
-                        Aucune permission
-                      </span>
+                        <span class="text-xs font-semibold">
+                          {{ role.name }}
+                        </span>
+                        <div class="flex flex-wrap gap-2">
+                          <Badge
+                            v-for="perm in role.permissions"
+                            :key="perm.id"
+                            variant="outline"
+                          >
+                            {{ perm.name }}
+                          </Badge>
+                          <span
+                            v-if="role.permissions.length === 0"
+                            class="text-xs text-muted-foreground"
+                          >
+                            Aucune permission
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </CollapsibleContent>
                 </Collapsible>
@@ -170,7 +186,7 @@ const deleteUser = (user: any) => {
                   <Button
                     size="sm"
                     variant="secondary"
-                    :disabled="user.role.readonly"
+                    :disabled="!user.roles.some(r => !r.readonly)"
                     @click="editUser(user)"
                   >
                     <PenBoxIcon class="h-4 w-4 text-yellow-600" />
@@ -182,7 +198,7 @@ const deleteUser = (user: any) => {
                       <Button
                         size="sm"
                         variant="secondary"
-                        :disabled="user.role.readonly"
+                        :disabled="!user.roles.some(r => !r.readonly)"
                       >
                         <TrashIcon class="h-4 w-4 text-red-600" />
                       </Button>
@@ -218,4 +234,3 @@ const deleteUser = (user: any) => {
     </AdminLayout>
   </SidebarProvider>
 </template>
-

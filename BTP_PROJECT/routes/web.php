@@ -38,7 +38,7 @@ Route::get('/', function () {
 
 
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function () {
     // Tableau de bord
     Route::get('/dashboard', function () {
         return Inertia::render('Dashboard');

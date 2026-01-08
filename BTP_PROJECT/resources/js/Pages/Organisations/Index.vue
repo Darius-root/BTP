@@ -8,7 +8,6 @@ import { Switch } from "@/components/ui/switch";
 
 import {
     AlertDialog,
-    AlertDialogTrigger,
     AlertDialogContent,
     AlertDialogHeader,
     AlertDialogTitle,
@@ -49,7 +48,7 @@ const page = usePage();
 
 const activeOrganisationId = computed(
     // @ts-ignore
-    () => page.props.session.active_organisation?.id || null
+    () => page.props.session.active_organisation_id || null
 );
 
 function askActivation(org: any) {

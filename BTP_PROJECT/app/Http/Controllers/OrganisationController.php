@@ -3,7 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Organisation;
-
+use App\Models\OrganisationUser;
+use App\Models\Role;
 use App\Services\OrganisationService;
 use Auth;
 use Illuminate\Http\Request;
@@ -42,26 +43,34 @@ class OrganisationController extends Controller
         }
 
         // ===== USER NORMAL =====
-        $organisations = $user->organisations()
-            ->where('is_system', false)
+
+        $user = Auth::user();
+        $currentTeamId = getPermissionsTeamId();
+
+        // Récupérer toutes les organisations normales où l'utilisateur est membre
+        $organisationUsers = OrganisationUser::with(['organisation'])
+            ->where('user_id', $user->id)
+            ->whereHas('organisation', fn($q) => $q->where('is_system', false))
             ->get();
 
-        $organisationsWithRoles = [];
+        $organisationsWithRoles = $organisationUsers->map(function ($ou) use ($currentTeamId, $user) {
+            // 🔹 Changer le contexte Spatie pour cette organisation
+            setPermissionsTeamId($ou->organisation->id);
 
-        foreach ($organisations as $organisation) {
-            setPermissionsTeamId($organisation->id);
+            // 🔹 Reset relations pour éviter les conflits
             $user->unsetRelation('roles')->unsetRelation('permissions');
 
-            $organisationsWithRoles[] = [
-                'team'   => $organisation,
-                'roles'  => $user->getRoleNames(),
-                'statut' => $organisation->id === $currentTeamId,
+            return [
+                'team'   => $ou->organisation,
+                // 🔹 Récupérer tous les rôles Spatie dans ce team
+                'roles'  => $user->getRoleNames()->toArray(),
+                'statut' => $ou->organisation->id === $currentTeamId,
             ];
-        }
+        })->all();
 
+        // 🔹 Revenir au contexte initial
         setPermissionsTeamId($currentTeamId);
         $user->unsetRelation('roles')->unsetRelation('permissions');
-
         return Inertia::render('Organisations/Index', [
             'user' => $user,
             'teamsWithRoles' => $organisationsWithRoles,
@@ -86,9 +95,9 @@ class OrganisationController extends Controller
         setPermissionsTeamId($organisation->id);
 
         session([
-            'active_organisation' => $organisation
+            'active_organisation_id' => $organisation->id,
+            'active_organisation_name' => $organisation->nom,
         ]);
-
         $user->unsetRelation('roles')->unsetRelation('permissions');
 
         return to_route('organisations.index')->with('success', 'Organisation activée');
@@ -101,7 +110,7 @@ class OrganisationController extends Controller
         // Retirer l'organisation active
         setPermissionsTeamId(null);
 
-        session()->forget('active_organisation');
+        session()->forget(['active_organisation_id', 'active_organisation_name']);
 
         $user->unsetRelation('roles')->unsetRelation('permissions');
 
@@ -127,6 +136,8 @@ class OrganisationController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+
+        $currentTeamId = getPermissionsTeamId();
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:organisations,name',
             'raison_sociale' => 'required|string|max:255|unique:organisations,raison_sociale',
@@ -142,7 +153,28 @@ class OrganisationController extends Controller
 
         $validated['user_id'] = $request->user()->id;
 
-        Organisation::create($validated);
+        $organisation = Organisation::create($validated);
+
+
+        /** =========================
+         * 2️ Récupération du rôle ORG_ADMIN
+         * ========================= */
+
+
+        OrganisationUser::create([
+            'user_id'         => $request->user()->id,
+            'organisation_id' => $organisation->id,
+        ]);
+        $user = Auth::user();
+        setPermissionsTeamId($organisation->id);
+
+        $user->unsetRelation('roles')->unsetRelation('permissions');
+        $user->assignRole('ORG_ADMIN');
+
+
+        // Revenir au contexte initial
+        setPermissionsTeamId($currentTeamId);
+        $user->unsetRelation('roles')->unsetRelation('permissions');
 
         return redirect()->route('organisations.index')
             ->with('success', 'Organisation créée avec succès.');
