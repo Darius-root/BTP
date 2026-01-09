@@ -24,18 +24,18 @@ class CheckOrganisation
 
         $user = Auth::user();
 
-        // 🔹 Vérifier directement dans organisation_users
+        //  Vérifier directement dans organisation_users
         $organisationUsers = OrganisationUser::where('user_id', $user->id)->get();
-
         if ($organisationUsers->isEmpty()) {
             setPermissionsTeamId(null);
             $user->unsetRelation('roles')->unsetRelation('permissions');
-            session()->forget(['active_organisation_id','active_organisation_name']);
+            session()->forget(['active_organisation_id', 'active_organisation_name']);
 
-            return redirect()->route('organisations.index');
+
+            return $next($request);
         }
 
-        // 🔹 Organisation système prioritaire
+        //  Organisation système prioritaire
         $systemOrganisation = $organisationUsers->map->organisation->firstWhere('is_system', true);
 
         if ($systemOrganisation) {
@@ -50,13 +50,16 @@ class CheckOrganisation
             return $next($request);
         }
 
-        // 🔹 Organisation normale
+        //  Organisation normale
         $organisationId = session('active_organisation_id');
 
         if (! $organisationId) {
-            if ($organisationUsers->count() === 1) {
-                $organisation = $organisationUsers->first()->organisation;
+            $organisation = $organisationUsers
+                ->sortByDesc('created_at')
+                ->first()
+                ->organisation;
 
+            if ($organisation) {
                 session([
                     'active_organisation_id'   => $organisation->id,
                     'active_organisation_name' => $organisation->nom,
@@ -65,6 +68,7 @@ class CheckOrganisation
                 setPermissionsTeamId($organisation->id);
                 $user->unsetRelation('roles')->unsetRelation('permissions');
             } else {
+                // Aucun lien trouvé, on redirige
                 return redirect()->route('organisations.index');
             }
         } else {
@@ -74,7 +78,7 @@ class CheckOrganisation
                 ->exists();
 
             if (! $exists) {
-                session()->forget(['active_organisation_id','active_organisation_name']);
+                session()->forget(['active_organisation_id', 'active_organisation_name']);
                 return redirect()->route('organisations.index');
             }
 

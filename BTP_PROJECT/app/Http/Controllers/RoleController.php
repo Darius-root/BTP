@@ -42,20 +42,20 @@ class RoleController extends Controller
 
     public function create()
     {
-        $permissions = Permission::all();
+        $systemPermissions = Permission::where('name', 'like', 'SYSTEM_%')
+            ->select('id', 'name')
+            ->get();
 
-        $systemPermissions = $permissions->filter(function ($perm) {
-            return str_starts_with($perm->name, 'SYSTEM_');
-        });
+        $orgPermissions = Permission::where('name', 'like', 'ORG_%')
+            ->select('id', 'name')
+            ->get();
 
-        $orgPermissions = $permissions->filter(function ($perm) {
-            return str_starts_with($perm->name, 'ORG_');
-        });
         return Inertia::render('Roles/Create', [
             'systemPermissions' => $systemPermissions,
-            'orgPermissions' => $orgPermissions,
+            'orgPermissions'    => $orgPermissions,
         ]);
     }
+
     public function show(Role $role)
     {
         // Charger les permissions liées au rôle

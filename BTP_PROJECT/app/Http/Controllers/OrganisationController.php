@@ -20,7 +20,7 @@ class OrganisationController extends Controller
     public function index(OrganisationService $organisationService)
     {
         $user = Auth::user();
-        
+
         $currentTeamId = getPermissionsTeamId();
 
         // ===== Vérification SUPER ADMIN dans le contexte SYSTEM =====
@@ -36,8 +36,9 @@ class OrganisationController extends Controller
         // ============================================================
 
         if ($isSystemAdmin) {
-            $organisations = Organisation::where('is_system', false)->get();
-
+            $organisations = Organisation::where('is_system', false)
+                ->with(['clients', 'projets', 'user'])
+                ->get();
             return Inertia::render('Organisations/Index', [
                 'organisations' => $organisations,
             ]);
@@ -120,7 +121,7 @@ class OrganisationController extends Controller
      | CREATE / STORE
      ========================================================== */
     public function create()
-    {       
+    {
         $user = Auth::user();
         $currentTeamId = getPermissionsTeamId();
 
@@ -128,7 +129,7 @@ class OrganisationController extends Controller
         if ($currentTeamId !== null) {
             setPermissionsTeamId($currentTeamId);
             $user->unsetRelation('roles')->unsetRelation('permissions');
-            
+
             if (!$user->can('ORG_ORGANISATION_CREATE')) {
                 return back()->with('error', "Permission refusée.");
             }
@@ -140,12 +141,13 @@ class OrganisationController extends Controller
     public function store(Request $request)
     {
         $user = Auth::user();
+
         $currentTeamId = getPermissionsTeamId();
         // Vérifier permission si dans un contexte organisation
         if ($currentTeamId !== null) {
             setPermissionsTeamId($currentTeamId);
             $user->unsetRelation('roles')->unsetRelation('permissions');
-            
+
             if (!$user->can('ORG_ORGANISATION_CREATE')) {
                 return back()->with('error', "Permission refusée.");
             }
@@ -164,7 +166,7 @@ class OrganisationController extends Controller
             $validated['logo'] = $request->file('logo')->store('logos', 'public');
         }
 
-        $validated['created_by'] = $user->id;
+        $validated['user_id'] = $user->id;
 
         try {
             DB::transaction(function () use ($validated, $user, $currentTeamId) {
@@ -191,7 +193,6 @@ class OrganisationController extends Controller
 
             return redirect()->route('organisations.index')
                 ->with('success', 'Organisation créée avec succès.');
-
         } catch (Throwable $e) {
             return back()->with('error', 'Erreur lors de la création : ' . $e->getMessage());
         }
@@ -324,7 +325,6 @@ class OrganisationController extends Controller
             return redirect()
                 ->route('organisations.index')
                 ->with('success', "Organisation supprimée avec succès.");
-
         } catch (Throwable $e) {
             return back()->with('error', 'Erreur lors de la suppression : ' . $e->getMessage());
         }

@@ -49,8 +49,8 @@ class CorpsEtatController extends Controller
         }
 
         $validated = $request->validate([
-            'code' => 'required|string|max:10|unique:corps_etats',
-            'intitule' => 'required|string|max:255|unique:corps_etats',
+            'code' => 'required|string|max:10|unique:corps_etat',
+            'intitule' => 'required|string|max:255|unique:corps_etat',
             'ordre' => 'required|integer',
             'sous_total' => 'nullable|numeric|min:0',
         ]);
@@ -88,8 +88,8 @@ class CorpsEtatController extends Controller
         }
 
         $validated = $request->validate([
-            'code' => 'required|string|max:10|unique:corps_etats,code,' . $corpsEtat->id,
-            'intitule' => 'required|string|max:255|unique:corps_etats,intitule,' . $corpsEtat->id,
+            'code' => 'required|string|max:10|unique:corps_etat,code,' . $corpsEtat->id,
+            'intitule' => 'required|string|max:255|unique:corps_etat,intitule,' . $corpsEtat->id,
             'ordre' => 'required|integer',
             'sous_total' => 'nullable|numeric|min:0',
         ]);

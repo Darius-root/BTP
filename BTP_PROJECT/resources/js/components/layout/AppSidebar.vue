@@ -46,12 +46,12 @@ const menuGroups = [
             {
                 name: "Organisations",
                 icon: ListIcon,
-                permission: "ORG_ORGANISATION_VIEW",
+                permission: "",
                 subItems: [
                     {
                         name: "Mes organisations",
                         path: "/organisations",
-                        permission: "ORG_ORGANISATION_VIEW",
+                        permission: "",
                     },
                     {
                         name: "Utilisateurs",
@@ -92,37 +92,12 @@ const menuGroups = [
             {
                 name: "Configurations",
                 icon: ListIcon,
-                permission: "manage settings",
+                permission: "SYSTEM",
                 subItems: [
                     {
-                        name: "Rôles",
-                        path: "/roles",
-                        permission: "SYSTEM_ROLE_VIEW",
-                    },
-                    {
-                        name: "Permissions",
-                        path: "/permissions",
-                        permission: "SYSTEM_PERMISSION_VIEW",
-                    },
-                    {
-                        name: "Communes",
-                        path: "/communes",
-                        permission: "SYSTEM_COMMUNE_VIEW",
-                    },
-                    {
-                        name: "Arrondissements",
-                        path: "/arrondissements",
-                        permission: "SYSTEM_ARRONDISSEMENT_VIEW",
-                    },
-                    {
-                        name: "Unités de mesure",
-                        path: "/unites-mesure",
-                        permission: "SYSTEM_UNITE_MESURE_VIEW",
-                    },
-                    {
-                        name: "Matériaux",
-                        path: "/materiaux",
-                        permission: "SYSTEM_MATERIAU_VIEW",
+                        name: "Corps d’état",
+                        path: "/corps-etat",
+                        permission: "SYSTEM_CORPS_ETAT_VIEW",
                     },
                     {
                         name: "Devises",
@@ -130,9 +105,24 @@ const menuGroups = [
                         permission: "SYSTEM_DEVISE_VIEW",
                     },
                     {
-                        name: "Corps d’état",
-                        path: "/corps-etat",
-                        permission: "SYSTEM_CORPS_ETAT_VIEW",
+                        name: "Matériaux",
+                        path: "/materiaux",
+                        permission: "SYSTEM_MATERIAU_VIEW",
+                    },
+                    {
+                        name: "Unités de mesure",
+                        path: "/unites-mesure",
+                        permission: "SYSTEM_UNITE_MESURE_VIEW",
+                    },
+                    {
+                        name: "Arrondissements",
+                        path: "/arrondissements",
+                        permission: "SYSTEM_ARRONDISSEMENT_VIEW",
+                    },
+                    {
+                        name: "Communes",
+                        path: "/communes",
+                        permission: "SYSTEM_COMMUNE_VIEW",
                     },
                 ],
             },
@@ -145,13 +135,22 @@ const menuGroups = [
             {
                 name: "Utilisateurs",
                 icon: ListIcon,
-                permission: "view users",
+                permission: "SYSTEM",
                 subItems: [
-                    { name: "Liste", path: "/users", permission: "view users" },
+                    {
+                        name: "Utilisateurs",
+                        path: "/users",
+                        permission: "SYSTEM_USER_VIEW",
+                    },
+                    {
+                        name: "Permissions",
+                        path: "/permissions",
+                        permission: "SYSTEM_PERMISSION_VIEW",
+                    },
                     {
                         name: "Rôles",
-                        path: "/permissions",
-                        permission: "manage users",
+                        path: "/roles",
+                        permission: "SYSTEM_ROLE_VIEW",
                     },
                 ],
             },

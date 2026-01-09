@@ -16,7 +16,7 @@ class RolePermissionSeeder extends Seeder
      
         $systemPermissions = [
 
-
+            'SYSTEM',
 
             //Utilisateurs
             'SYSTEM_USER_VIEW',
