@@ -14,12 +14,18 @@ class UserTestSeeder extends Seeder
     /**
      * Run the database seeds.
      */
-   public function run(): void
+    public function run(): void
     {
 
         User::factory()->count(10)->create();
 
-
+        User::firstOrCreate(
+            [
+                'email' => 'tester2@test.com',
+                'name' => 'user',
+                'password' => Hash::make('password'), // mot de passe hashé
+            ]
+        );
         // Créons un utilisateur de test
         $user = User::firstOrCreate(
             [
@@ -41,13 +47,13 @@ class UserTestSeeder extends Seeder
             ]
         );
 
-     
+
         OrganisationUser::create([
             'user_id'         => $user->id,
             'organisation_id' =>  $org->id,
         ]);
 
-       app(PermissionRegistrar::class)->setPermissionsTeamId($org->id);
+        app(PermissionRegistrar::class)->setPermissionsTeamId($org->id);
         // Attribution du admin org
         $user->assignRole('ORG_ADMIN');
     }

@@ -74,17 +74,20 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
     ])->name('organisations.deactivate');
 
 
-        Route::resource('organisations', OrganisationController::class);
+    Route::get('/organisations', [OrganisationController::class, 'index'])->name('organisations.index');
 
-
+    Route::resource('organisations', OrganisationController::class)->names('organisations')->only(['index', 'create', 'store']);
 
     Route::middleware(['organisation.active'])->group(function () {
-
-        //Roles organisationnels
-        Route::resource('organisations/roles', OrganisationRoleController::class)->names('organisations.roles');
-        //Utilisateurs dans une organisation
-        Route::resource('organisations/users', OrganisationUserController::class)
+        Route::resource('organisations/roles', OrganisationRoleController::class)->names('organisations.roles');  
+         Route::resource('organisations/users', OrganisationUserController::class)
             ->names('organisations.users');
+            
+          Route::resource('organisations', OrganisationController::class)->names('organisations')->only(['show', 'edit', 'update', 'destroy']);
+        //Roles organisationnels
+     
+        //Utilisateurs dans une organisation
+      
 
         //  Projets
         Route::resource('projets', ProjetController::class);

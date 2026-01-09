@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Organisation;
 use App\Models\OrganisationUser;
 use App\Models\User;
 use App\Services\OrganisationContext;
@@ -12,7 +13,9 @@ use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
 
 class OrganisationUserController extends Controller
-{
+{   
+   
+
 
    public function index()
 {
@@ -162,7 +165,7 @@ public function edit($userId)
 
     // Empêcher la modification de soi-même
     if ($organisationUser->user->id === Auth::id()) {
-        return back()->with('error', "Vous ne pouvez pas modifier votre propre rôle.");
+        return back()->with('error', "Vous ne pouvez pas modifier assigner  de rôle.");
     }
 
     //  Fixer le contexte Spatie
@@ -215,8 +218,8 @@ public function update(Request $request, User $user)
         return back()->with('error', "Aucune organisation active.");
     }
 
-    if ($user->id === Auth::id()) {
-        return back()->with('error', "Vous ne pouvez pas modifier votre propre rôle.");
+    $organisation = Organisation::find($organisationId);
+    if ($user->id === $organisation->user_id ||$user->id === Auth::id() ) {        return back()->with('error', "Vous ne pouvez pas modifier votre propre rôle.");
     }
 
     // Vérifier que l'utilisateur appartient bien à l'organisation
@@ -261,9 +264,9 @@ public function destroy(User $user)
     if (! $organisationId) {
         return back()->with('error', "Aucune organisation active.");
     }
-
-    if ($user->id === Auth::id()) {
-        return back()->with('error', "Vous ne pouvez pas vous retirer vous-même de l’organisation.");
+ $organisation = Organisation::find($organisationId);
+    if ($user->id === $organisation->user_id ||$user->id === Auth::id() ) {
+        return back()->with('error', "Vous ne pouvez  pas le supprimer");
     }
 
     // 🔹 Vérifier que l'utilisateur appartient bien à l'organisation

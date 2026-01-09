@@ -12,11 +12,6 @@ use Symfony\Component\HttpFoundation\Response;
 
 class CheckOrganisation
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-     */
     public function handle(Request $request, Closure $next)
     {
         if (! Auth::check()) {
@@ -28,21 +23,20 @@ class CheckOrganisation
         }
 
         $user = Auth::user();
-        $organisations = $user->organisations()->get();
-        if ($organisations->isEmpty()) {
 
+        // 🔹 Vérifier directement dans organisation_users
+        $organisationUsers = OrganisationUser::where('user_id', $user->id)->get();
+
+        if ($organisationUsers->isEmpty()) {
             setPermissionsTeamId(null);
             $user->unsetRelation('roles')->unsetRelation('permissions');
-            session()->forget([
-                'active_organisation_id',
-                'active_organisation_name'
-            ]);
+            session()->forget(['active_organisation_id','active_organisation_name']);
 
             return redirect()->route('organisations.index');
         }
 
-        // 1️Organisation système prioritaire
-        $systemOrganisation = $organisations->firstWhere('is_system', true);
+        // 🔹 Organisation système prioritaire
+        $systemOrganisation = $organisationUsers->map->organisation->firstWhere('is_system', true);
 
         if ($systemOrganisation) {
             session([
@@ -56,12 +50,12 @@ class CheckOrganisation
             return $next($request);
         }
 
-        // 2️ Organisation normale
+        // 🔹 Organisation normale
         $organisationId = session('active_organisation_id');
+
         if (! $organisationId) {
-           
-            if ($organisations->count() === 1) {
-                $organisation = $organisations->first();
+            if ($organisationUsers->count() === 1) {
+                $organisation = $organisationUsers->first()->organisation;
 
                 session([
                     'active_organisation_id'   => $organisation->id,
@@ -74,24 +68,19 @@ class CheckOrganisation
                 return redirect()->route('organisations.index');
             }
         } else {
-
+            //  Vérification stricte dans organisation_users
             $exists = OrganisationUser::where('organisation_id', $organisationId)
                 ->where('user_id', $user->id)
                 ->exists();
 
             if (! $exists) {
-                session()->forget([
-                    'active_organisation_id',
-                    'active_organisation_name',
-                ]);
-
+                session()->forget(['active_organisation_id','active_organisation_name']);
                 return redirect()->route('organisations.index');
             }
 
             $organisation = Organisation::find($organisationId);
 
             setPermissionsTeamId($organisation->id);
-            $user->unsetRelation('roles')->unsetRelation('permissions');
             $user->unsetRelation('roles')->unsetRelation('permissions');
         }
 

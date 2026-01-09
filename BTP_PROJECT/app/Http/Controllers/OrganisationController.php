@@ -84,24 +84,34 @@ class OrganisationController extends Controller
 
 
 
-    public function activate(Organisation $organisation)
-    {
-        $user = Auth::user();
+  public function activate(Organisation $organisation)
+{
+    $user = Auth::user();
 
-        if (!$user->organisations()->where('id', $organisation->id)->exists()) {
-            return back()->with('error', "Accès refusé.");
-        }
+    // 🔹 Vérifier dans la table pivot organisation_users
+    $exists = \App\Models\OrganisationUser::where('organisation_id', $organisation->id)
+        ->where('user_id', $user->id)
+        ->exists();
 
-        setPermissionsTeamId($organisation->id);
-
-        session([
-            'active_organisation_id' => $organisation->id,
-            'active_organisation_name' => $organisation->nom,
-        ]);
-        $user->unsetRelation('roles')->unsetRelation('permissions');
-
-        return to_route('organisations.index')->with('success', 'Organisation activée');
+    if (! $exists) {
+        return back()->with('error', "Accès refusé.");
     }
+
+    //  Fixer le contexte Spatie pour ce team
+    setPermissionsTeamId($organisation->id);
+
+    //  Mettre à jour la session
+    session([
+        'active_organisation_id'   => $organisation->id,
+        'active_organisation_name' => $organisation->nom,
+    ]);
+
+    //  Réinitialiser les relations pour forcer Spatie à recalculer
+    $user->unsetRelation('roles')->unsetRelation('permissions');
+
+    return to_route('organisations.index')
+        ->with('success', 'Organisation activée');
+}
 
     public function deactivate()
     {
