@@ -8,7 +8,6 @@ import { Switch } from "@/components/ui/switch";
 
 import {
     AlertDialog,
-    AlertDialogTrigger,
     AlertDialogContent,
     AlertDialogHeader,
     AlertDialogTitle,
@@ -44,12 +43,33 @@ const actionType = ref<"activate" | "deactivate">("activate");
 const openConfirm = ref(false);
 // stocke l'objet organisation complet (pas seulement l'id)
 const selectedOrg = ref<any | null>(null);
+const openDeleteConfirm = ref(false);
+const orgToDelete = ref<any | null>(null);
+
+function askDelete(org: any) {
+    orgToDelete.value = org;
+    openDeleteConfirm.value = true;
+}
+
+function confirmDelete() {
+    if (!orgToDelete.value) return;
+
+    router.delete(route("organisations.destroy", orgToDelete.value.id), {
+        preserveScroll: false,
+        onSuccess: () => {
+            router.reload();
+        },
+    });
+
+    openDeleteConfirm.value = false;
+    orgToDelete.value = null;
+}
 
 const page = usePage();
 
 const activeOrganisationId = computed(
     // @ts-ignore
-    () => page.props.session.active_organisation?.id || null
+    () => page.props.session.active_organisation_id || null
 );
 
 function askActivation(org: any) {
@@ -62,8 +82,8 @@ function askActivation(org: any) {
     openConfirm.value = true;
 }
 const goToCreate = () => {
-    router.visit(route("organisations.create"))
-}
+    router.visit(route("organisations.create"));
+};
 function confirmActivation() {
     if (!selectedOrg.value) return;
 
@@ -110,15 +130,18 @@ function confirmActivation() {
         <AdminLayout>
             <PageBreadcrumb pageTitle="Organisations" />
             <div>
-                <div class="flex  mt-4 justify-end mb-4">
-                    <Button variant="outline" v-if="teamsWithRoles" @click="goToCreate">
+                <div class="flex mt-4 justify-end mb-4">
+                    <Button
+                        variant="outline"
+                        v-if="teamsWithRoles"
+                        @click="goToCreate"
+                    >
                         Ajouter une organisation
                         <PlusIcon class="w-4 h-4 ml-2 text-blue-600" />
                     </Button>
                 </div>
             </div>
             <div class="rounded-xl border bg-background">
-
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -162,10 +185,14 @@ function confirmActivation() {
 
                         <!-- ================= UTILISATEUR NORMAL ================= -->
                         <template v-else-if="teamsWithRoles">
-
-                            <TableRow v-for="item in teamsWithRoles" :key="item.team.id" :class="item.team.id !== activeOrganisationId &&
-                                'opacity-50'
-                                ">
+                            <TableRow
+                                v-for="item in teamsWithRoles"
+                                :key="item.team.id"
+                                :class="
+                                    item.team.id !== activeOrganisationId &&
+                                    'opacity-50'
+                                "
+                            >
                                 <TableCell class="font-medium">{{
                                     item.team.nom
                                 }}</TableCell>
@@ -220,14 +247,16 @@ function confirmActivation() {
                                         Ajouter
                                     </Button>
 
-                                    <!-- Supprimer utilisateurs : uniquement si active et rôle ORG_ADMIN -->
-                                    <Button v-if="item.roles.includes('ORG_ADMIN')" size="sm"
-                                        :variant="item.team.id === activeOrganisationId ? 'destructive' : 'outline'"
-                                        :disabled="item.team.id !== activeOrganisationId" @click="
-                                            router.visit(
-                                                route('organisations.users.index', item.team.id)
-                                            )
-                                            ">
+                                    <Button
+                                        v-if="item.roles.includes('ORG_ADMIN')"
+                                        size="sm"
+                                        variant="destructive"
+                                        :disabled="
+                                            item.team.id !==
+                                            activeOrganisationId
+                                        "
+                                        @click="askDelete(item.team)"
+                                    >
                                         <Trash2 class="w-4 h-4 mr-1" />
                                         Supprimer
                                     </Button>
@@ -245,6 +274,43 @@ function confirmActivation() {
                     </TableBody>
                 </Table>
             </div>
+<AlertDialog v-model:open="openDeleteConfirm">
+    <AlertDialogContent>
+        <AlertDialogHeader>
+            <AlertDialogTitle class="text-red-600">
+                Supprimer définitivement cette organisation ?
+            </AlertDialogTitle>
+
+            <AlertDialogDescription class="space-y-3">
+                <p>
+                    Vous êtes sur le point de supprimer l’organisation
+                    <strong>{{ orgToDelete?.nom }}</strong>.
+                </p>
+
+                <p class="text-red-600 font-medium">
+                     Cette action est irréversible.
+                </p>
+
+                <ul class="list-disc pl-5 text-sm text-muted-foreground">
+                    <li>Tous les utilisateurs seront détachés</li>
+                    <li>Les rôles et permissions seront perdus</li>
+                    <li>Les données associées pourront être supprimées</li>
+                </ul>
+            </AlertDialogDescription>
+        </AlertDialogHeader>
+
+        <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+
+            <AlertDialogAction
+                class="bg-red-600 text-white hover:bg-red-700"
+                @click="confirmDelete"
+            >
+                Supprimer définitivement
+            </AlertDialogAction>
+        </AlertDialogFooter>
+    </AlertDialogContent>
+</AlertDialog>
 
             <AlertDialog v-model:open="openConfirm">
                 <AlertDialogContent>

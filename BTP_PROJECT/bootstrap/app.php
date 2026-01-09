@@ -18,7 +18,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         //
         $middleware->alias([
-            'organisation.active' => \App\Http\Middleware\EnsureOrganisationIsActive::class
+            'organisation.active' => \App\Http\Middleware\EnsureOrganisationIsActive::class,
+            'organisation.profil' => \App\Http\Middleware\CheckOrganisation::class
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

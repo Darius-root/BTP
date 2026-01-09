@@ -38,7 +38,7 @@ Route::get('/', function () {
 
 
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function () {
     // Tableau de bord
     Route::get('/dashboard', function () {
         return Inertia::render('Dashboard');
@@ -76,15 +76,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/organisations', [OrganisationController::class, 'index'])->name('organisations.index');
 
-
+    Route::resource('organisations', OrganisationController::class)->names('organisations')->only(['index', 'create', 'store']);
 
     Route::middleware(['organisation.active'])->group(function () {
-
-        //Roles organisationnels
-        Route::resource('organisations/roles', OrganisationRoleController::class)->names('organisations.roles');
-        //Utilisateurs dans une organisation
-        Route::resource('organisations/users', OrganisationUserController::class)
+        Route::resource('organisations/roles', OrganisationRoleController::class)->names('organisations.roles');  
+         Route::resource('organisations/users', OrganisationUserController::class)
             ->names('organisations.users');
+            
+          Route::resource('organisations', OrganisationController::class)->names('organisations')->only(['show', 'edit', 'update', 'destroy']);
+        //Roles organisationnels
+     
+        //Utilisateurs dans une organisation
+      
 
         //  Projets
         Route::resource('projets', ProjetController::class);
@@ -94,7 +97,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Organisations
 
         //  Organisations
-        Route::resource('organisations', OrganisationController::class)->except('index');
 
         //  Clients
         Route::resource('clients', ClientController::class);

@@ -10,7 +10,7 @@ class OrganisationUser extends Model
 {
     use HasFactory;
     protected $table = 'organisation_users';
-    protected $fillable = ['user_id',  'organisation_id', 'role_id'];
+    protected $fillable = ['user_id',  'organisation_id', ];
 
 
 
@@ -23,8 +23,5 @@ class OrganisationUser extends Model
     {
         return $this->belongsTo(Organisation::class);
     }
-       public function role()
-    {
-        return $this->belongsTo(Role::class);
-    }
+   
 }

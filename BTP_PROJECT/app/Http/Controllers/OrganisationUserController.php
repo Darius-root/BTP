@@ -2,295 +2,299 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Organisation;
 use App\Models\OrganisationUser;
 use App\Models\User;
 use App\Services\OrganisationContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
 use Illuminate\Http\RedirectResponse;
 use Throwable;
 
 class OrganisationUserController extends Controller
+{   
+   
+
+
+   public function index()
 {
-    /**
-     * Liste des utilisateurs de l'organisation
-     */
-    public function index()
-    {
-        try {
-            $organisationId = getPermissionsTeamId();
+    $organisationId = getPermissionsTeamId();
+    $authUserId = Auth::id();
 
-            if (!$organisationId) {
-                return back()->with('error', "Aucune organisation active.");
-            }
+    //  Fixer le contexte Spatie pour l’organisation active
+    setPermissionsTeamId($organisationId);
 
-            if (!OrganisationContext::hasPermission(Auth::user(), $organisationId, 'ORG_ORGANISATIONUSER_VIEW')) {
-                return back()->with('error', "Vous n'avez pas la permission de consulter les utilisateurs de l'organisation.");
-            }
+    //  Eager load des rôles et permissions via la relation User
+    $organisationUsers = OrganisationUser::with([
+            'user.roles.permissions',
+        ])
+        ->where('organisation_id', $organisationId)
+        ->where('user_id', '!=', $authUserId)
+        ->get();
 
-            $users = OrganisationUser::with(['user', 'role.permissions'])
-                ->where('organisation_id', $organisationId)
-                ->get()
-                ->map(function ($ou) {
-                    $ou->user->unsetRelation('roles')->unsetRelation('permissions'); // reset Spatie relations
-                    return [
-                        'id' => $ou->user->id,
-                        'name' => $ou->user->name ?? $ou->user->email,
-                        'email' => $ou->user->email,
-                        'role' => [
-                            'id' => $ou->role->id,
-                            'name' => $ou->role->name,
-                            'permissions' => $ou->role->permissions->map(fn($p) => [
-                                'id' => $p->id,
-                                'name' => $p->name,
-                            ]),
-                        ],
-                        'created_at' => $ou->created_at->format('Y-m-d H:i'),
-                    ];
-                });
+    $users = $organisationUsers->map(function ($ou) {
+        // Optionnel: reset des relations si tu changes de team ailleurs
+        $ou->user->unsetRelation('roles')->unsetRelation('permissions');
 
-            return Inertia::render('Organisations/Users/Index', [
-                'orgUsers' => $users,
-            ]);
+        //  Rôles filtrés par le team courant (grâce à Spatie)
+        $roles = $ou->user->roles->map(function ($role) {
+            return [
+                'id' => $role->id,
+                'name' => $role->name,
+                'permissions' => $role->permissions->map(fn ($p) => [
+                    'id' => $p->id,
+                    'name' => $p->name,
+                ]),
+            ];
+        });
 
-        } catch (Throwable $e) {
-            return back()->with('error', $e->getMessage());
-        }
-    }
+        return [
+            'id' => $ou->user->id,
+            'name' => $ou->user->name ?? $ou->user->email,
+            'email' => $ou->user->email,
+            'roles' => $roles,
+            'created_at' => $ou->created_at->format('Y-m-d H:i'),
+        ];
+    });
 
-    /**
-     * Formulaire d'ajout d'un utilisateur
-     */
+    return Inertia::render('Organisations/Users/Index', [
+        'orgUsers' => $users,
+    ]);
+}
+
+ 
+
+
+
     public function create()
     {
-        try {
-            $organisationId = getPermissionsTeamId();
 
-            if (!$organisationId) {
-                return back()->with('error', "Aucune organisation active.");
-            }
-
-            if (!OrganisationContext::hasPermission(Auth::user(), $organisationId, 'ORG_ORGANISATIONUSER_CREATE')) {
-                return back()->with('error', "Vous n'avez pas la permission d'ajouter un utilisateur à cette organisation.");
-            }
-
-            $roles = Role::query()
-                ->where('name', 'like', 'ORG_%')
-                ->where(function ($query) use ($organisationId) {
-                    $query->whereNull('organisation_id')            // rôle système
-                        ->orWhere('organisation_id', $organisationId); // rôle de l'orga active
-                })
-                ->orderBy('name')
-                ->get()
-                ->map(function ($role) use ($organisationId) {
-                    return [
-                        'id' => $role->id,
-                        'name' => $role->name,
-                    ];
-                });
-
-            return Inertia::render('Organisations/Users/Create', [
-                'roles' => $roles,
-            ]);
-
-        } catch (Throwable $e) {
-            return back()->with('error', $e->getMessage());
+        if (OrganisationContext::hasPermission(Auth::user(), getPermissionsTeamId(), 'ORG_ADD_USER_TO_ORGANISATION') === false) {
+            return back()->with('error', "Vous n'avez pas la permission d'ajouter un utilisateur à cette organisation.");
         }
-    }
 
-    /**
-     * Ajouter un utilisateur à l'organisation
-     */
-    public function store(Request $request): RedirectResponse
-    {
-        try {
-            $organisationId = getPermissionsTeamId();
-
-            if (!$organisationId) {
-                return back()->with('error', "Aucune organisation active.");
-            }
-
-            if (!OrganisationContext::hasPermission(Auth::user(), $organisationId, 'ORG_ORGANISATIONUSER_CREATE')) {
-                return back()->with('error', "Vous n'avez pas la permission d'ajouter un utilisateur à cette organisation.");
-            }
-
-            $request->validate([
-                'email' => ['required', 'email'],
-                'role' => ['required', 'exists:roles,name'],
-            ]);
-
-            $user = User::where('email', $request->email)->first();
-
-            if (!$user) {
-                return back()->with('error', "Utilisateur introuvable. Veuillez l'inviter.");
-            }
-
-            $role = Role::where('name', $request->role)->first();
-
-            $exists = OrganisationUser::where('user_id', $user->id)
-                ->where('organisation_id', $organisationId)
-                ->exists();
-
-            if ($exists) {
-                return back()->with('error', "L'utilisateur est déjà membre de cette organisation.");
-            }
-
-            OrganisationUser::create([
-                'user_id' => $user->id,
-                'organisation_id' => $organisationId,
-                'role_id' => $role->id,
-            ]);
-
-            return redirect()
-                ->route('organisations.users.index')
-                ->with('success', "Utilisateur ajouté à l'organisation avec succès.");
-
-        } catch (Throwable $e) {
-            return back()->with('error', $e->getMessage());
-        }
-    }
-
-    /**
-     * Formulaire d'édition d'un utilisateur
-     */
-    public function edit($userId)
-    {
-        try {
-            $organisationId = getPermissionsTeamId();
-
-            if (!$organisationId) {
-                return back()->with('error', "Aucune organisation active.");
-            }
-
-            if (!OrganisationContext::hasPermission(Auth::user(), $organisationId, 'ORG_ORGANISATIONUSER_EDIT')) {
-                return back()->with('error', "Vous n'avez pas la permission de modifier les utilisateurs de cette organisation.");
-            }
-
-            $organisationUser = OrganisationUser::where('user_id', $userId)
-                ->where('organisation_id', $organisationId)
-                ->with('role', 'user')
-                ->first();
-
-            if (!$organisationUser) {
-                return back()->with('error', "Cet utilisateur n'appartient pas à cette organisation.");
-            }
-
-            if ($organisationUser->user->id === Auth::id()) {
-                return back()->with('error', "Vous ne pouvez pas modifier votre propre rôle.");
-            }
-
-            $roles = Role::query()
-                ->where('name', 'like', 'ORG_%')
-                ->where(function ($query) use ($organisationId) {
-                    $query->whereNull('organisation_id')
-                        ->orWhere('organisation_id', $organisationId);
-                })
-                ->orderBy('name')
-                ->get()
-                ->map(fn($role) => [
+        $organisationId = getPermissionsTeamId();
+        $roles = Role::query()
+            ->where('name', 'like', 'ORG_%')
+            ->where(function ($query) use ($organisationId) {
+                $query->whereNull('organisation_id')            // rôle système
+                    ->orWhere('organisation_id', $organisationId); // rôle de l'orga active
+            })
+            ->orderBy('name')
+            ->get()
+            ->map(function ($role) use ($organisationId) {
+                return [
                     'id' => $role->id,
                     'name' => $role->name,
-                    'readonly' => is_null($role->organisation_id),
-                ]);
-
-            return Inertia::render('Organisations/Users/Edit', [
-                'user' => [
-                    'id' => $organisationUser->user->id,
-                    'name' => $organisationUser->user->name ?? $organisationUser->user->email,
-                    'email' => $organisationUser->user->email,
-                ],
-                'currentRoleId' => $organisationUser->role_id,
-                'roles' => $roles,
-            ]);
-
-        } catch (Throwable $e) {
-            return back()->with('error', $e->getMessage());
-        }
+                ];
+            });
+        return Inertia::render('Organisations/Users/Create', [
+            'roles' => $roles,
+        ]);
     }
 
-    /**
-     * Mettre à jour le rôle d'un utilisateur
-     */
-    public function update(Request $request, User $user): RedirectResponse
+    public function store(Request $request)
     {
-        try {
-            $organisationId = getPermissionsTeamId();
+        $request->validate([
+            'email'  => ['required', 'email'],
+            'roles'  => ['required', 'array'],
+            'roles.*' => ['exists:roles,id'],
+        ]);
 
-            if (!$organisationId) {
-                return back()->with('error', "Aucune organisation active.");
-            }
+        $organisationId = getPermissionsTeamId();
 
-            if (!OrganisationContext::hasPermission(Auth::user(), $organisationId, 'ORG_ORGANISATIONUSER_EDIT')) {
-                return back()->with('error', "Vous n'avez pas la permission de modifier les utilisateurs de cette organisation.");
-            }
-
-            if ($user->id === Auth::id()) {
-                return back()->with('error', "Vous ne pouvez pas modifier votre propre rôle.");
-            }
-
-            $validated = $request->validate([
-                'role_id' => ['required', 'exists:roles,id'],
-            ]);
-
-            $organisationUser = OrganisationUser::where('user_id', $user->id)
-                ->where('organisation_id', $organisationId)
-                ->with('role')
-                ->first();
-
-            if (!$organisationUser) {
-                return back()->with('error', "Cet utilisateur n'appartient pas à cette organisation.");
-            }
-
-            $organisationUser->update([
-                'role_id' => $validated['role_id'],
-            ]);
-
-            return redirect()
-                ->route('organisations.users.index')
-                ->with('success', "Rôle de l'utilisateur mis à jour avec succès.");
-
-        } catch (Throwable $e) {
-            return back()->with('error', $e->getMessage());
+        if (! $organisationId) {
+            return back()->with('error', "Aucune organisation active.");
         }
+
+        $user = User::where('email', $request->email)->first();
+
+        if (! $user) {
+            return back()->with('error', "Utilisateur introuvable. Veuillez l’inviter.");
+        }
+
+        $exists = OrganisationUser::where('user_id', $user->id)
+            ->where('organisation_id', $organisationId)
+            ->exists();
+
+        if ($exists) {
+            return back()->with('error', "L’utilisateur est déjà membre de cette organisation.");
+        }
+
+        // 🔹 Créer le lien organisation <-> user
+        OrganisationUser::create([
+            'user_id'         => $user->id,
+            'organisation_id' => $organisationId,
+        ]);
+
+        // 🔹 Assigner plusieurs rôles dans le contexte de l’organisation
+        foreach ($request->roles as $roleId) {
+            $role = Role::find($roleId);
+            if ($role) {
+                // Spatie gère le team context via getPermissionsTeamId()
+                $user->assignRole($role);
+            }
+        }
+
+        return redirect()
+            ->route('organisations.users.index')
+            ->with('success', "Utilisateur ajouté à l’organisation avec succès.");
     }
 
-    /**
-     * Supprimer un utilisateur de l'organisation
-     */
-    public function destroy(User $user): RedirectResponse
-    {
-        try {
-            $organisationId = getPermissionsTeamId();
 
-            if (!$organisationId) {
-                return back()->with('error', "Aucune organisation active.");
-            }
 
-            if (!OrganisationContext::hasPermission(Auth::user(), $organisationId, 'ORG_ORGANISATIONUSER_DELETE')) {
-                return back()->with('error', "Vous n'avez pas la permission de supprimer des utilisateurs de cette organisation.");
-            }
 
-            if ($user->id === Auth::id()) {
-                return back()->with('error', "Vous ne pouvez pas vous retirer vous-même de l'organisation.");
-            }
+public function edit($userId)
+{
+    $organisationId = getPermissionsTeamId();
 
-            $organisationUser = OrganisationUser::where('user_id', $user->id)
-                ->where('organisation_id', $organisationId)
-                ->with('role')
-                ->first();
-
-            if (!$organisationUser) {
-                return back()->with('error', "Cet utilisateur n'appartient pas à cette organisation.");
-            }
-
-            $organisationUser->delete();
-
-            return back()->with('success', "Utilisateur retiré de l'organisation avec succès.");
-
-        } catch (Throwable $e) {
-            return back()->with('error', $e->getMessage());
-        }
+    if (! $organisationId) {
+        return back()->with('error', "Aucune organisation active.");
     }
+
+    // Récupérer la relation OrganisationUser avec l'utilisateur
+    $organisationUser = OrganisationUser::where('user_id', $userId)
+        ->where('organisation_id', $organisationId)
+        ->with('user')
+        ->first();
+
+    if (! $organisationUser) {
+        return back()->with('error', "Cet utilisateur n’appartient pas à cette organisation.");
+    }
+
+    // Empêcher la modification de soi-même
+    if ($organisationUser->user->id === Auth::id()) {
+        return back()->with('error', "Vous ne pouvez pas modifier assigner  de rôle.");
+    }
+
+    //  Fixer le contexte Spatie
+    setPermissionsTeamId($organisationId);
+
+    //  Récupérer les rôles actuels de l’utilisateur dans ce team
+    $organisationUser->user->unsetRelation('roles')->unsetRelation('permissions');
+    $currentRoles = $organisationUser->user->roles->map(fn($role) => [
+        'id' => $role->id,
+        'name' => $role->name,
+        'permissions' => $role->permissions->map(fn($p) => [
+            'id' => $p->id,
+            'name' => $p->name,
+        ]),
+    ]);
+
+    // Rôles disponibles pour l'organisation
+    $roles = Role::query()
+        ->where('name', 'like', 'ORG_%')
+        ->where(function ($query) use ($organisationId) {
+            $query->whereNull('organisation_id') // rôles système
+                ->orWhere('organisation_id', $organisationId);
+        })
+        ->orderBy('name')
+        ->get()
+        ->map(fn($role) => [
+            'id' => $role->id,
+            'name' => $role->name,
+            'readonly' => is_null($role->organisation_id),
+        ]);
+
+    return Inertia::render('Organisations/Users/Edit', [
+        'user' => [
+            'id' => $organisationUser->user->id,
+            'name' => $organisationUser->user->name ?? $organisationUser->user->email,
+            'email' => $organisationUser->user->email,
+            'roles' => $currentRoles, // tous les rôles actuels avec permissions
+        ],
+        'roles' => $roles, //  liste des rôles disponibles
+    ]);
+}
+
+
+
+public function update(Request $request, User $user)
+{
+    $organisationId = getPermissionsTeamId();
+
+    if (! $organisationId) {
+        return back()->with('error', "Aucune organisation active.");
+    }
+
+    $organisation = Organisation::find($organisationId);
+    if ($user->id === $organisation->user_id ||$user->id === Auth::id() ) {        return back()->with('error', "Vous ne pouvez pas modifier votre propre rôle.");
+    }
+
+    // Vérifier que l'utilisateur appartient bien à l'organisation
+    $organisationUser = OrganisationUser::where('user_id', $user->id)
+        ->where('organisation_id', $organisationId)
+        ->first();
+
+    if (! $organisationUser) {
+        return back()->with('error', "Cet utilisateur n’appartient pas à cette organisation.");
+    }
+
+    //  Validation
+    $data = $request->validate([
+        'roles'   => ['required', 'array'],
+        'roles.*' => ['integer', Rule::exists('roles', 'id')],
+    ]);
+
+    //  Fixer le contexte Spatie
+    setPermissionsTeamId($organisationId);
+
+    //  Mettre à jour les rôles de l’utilisateur dans ce team
+    $user->syncRoles($data['roles']);
+
+    return redirect()
+        ->route('organisations.users.index')
+        ->with('success', "Rôles de l’utilisateur mis à jour avec succès.");
+}
+
+    
+    
+    
+    
+    // ===========================
+    // SUPPRIMER UN UTILISATEUR DE L'ORGANISATION
+    // ===========================
+
+
+public function destroy(User $user)
+{
+    $organisationId = getPermissionsTeamId();
+
+    if (! $organisationId) {
+        return back()->with('error', "Aucune organisation active.");
+    }
+ $organisation = Organisation::find($organisationId);
+    if ($user->id === $organisation->user_id ||$user->id === Auth::id() ) {
+        return back()->with('error', "Vous ne pouvez  pas le supprimer");
+    }
+
+    // 🔹 Vérifier que l'utilisateur appartient bien à l'organisation
+    $organisationUser = OrganisationUser::where('user_id', $user->id)
+        ->where('organisation_id', $organisationId)
+        ->first();
+
+    if (! $organisationUser) {
+        return back()->with('error', "Cet utilisateur n’appartient pas à cette organisation.");
+    }
+
+    // Fixer le contexte Spatie
+    setPermissionsTeamId($organisationId);
+
+    // 🔹 Supprimer les rôles de l’utilisateur dans ce team
+    $user->syncRoles([]);
+
+    // 🔹 Supprimer toutes les permissions directes de l’utilisateur dans ce team
+    $user->syncPermissions([]);
+
+    // 🔹 Supprimer le lien organisation <-> user
+    $organisationUser->delete();
+
+    return back()->with('success', "Utilisateur retiré de l’organisation avec succès.");
+}
+
+
+
 }
