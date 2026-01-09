@@ -132,7 +132,7 @@ const getMaterialInfo = () => {
     if (selectedMaterial.value) {
         return `${selectedMaterial.value.nom} (${selectedMaterial.value.unite?.libelle || 'N/A'})`
     }
-    return 'Matériau inconnu'
+    return 'Matériel inconnu'
 }
 
 const getLocationInfo = () => {
@@ -338,7 +338,7 @@ const getSelectedMaterialUnit = () => {
                                     <div class="space-y-6">
                                         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 border-b pb-2">
                                             <Package class="w-5 h-5 inline-block mr-2" />
-                                            Matériau et Prix
+                                            Matériel et Prix
                                         </h3>
 
                                         <!-- Catégorie -->
@@ -370,7 +370,7 @@ const getSelectedMaterialUnit = () => {
                                         <!-- Matériau -->
                                         <div class="space-y-2">
                                             <Label for="materiau_id" class="text-sm font-medium">
-                                                Matériau <span class="text-red-500">*</span>
+                                                Matériel <span class="text-red-500">*</span>
                                             </Label>
                                             <select
                                                 id="materiau_id"
@@ -379,7 +379,7 @@ const getSelectedMaterialUnit = () => {
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
                                                 :class="{ 'border-red-300': errors.materiau_id }"
                                             >
-                                                <option value="">Sélectionnez un matériau</option>
+                                                <option value="">Sélectionnez un matériel</option>
                                                 <option
                                                     v-for="materiau in materiaux"
                                                     :key="materiau.id"
@@ -401,7 +401,7 @@ const getSelectedMaterialUnit = () => {
                                             <textarea
                                                 id="description_materiaux"
                                                 v-model="form.description_materiaux"
-                                                placeholder="Décrivez le matériau, ses caractéristiques..."
+                                                placeholder="Décrivez le matériel, ses caractéristiques..."
                                                 required
                                                 rows="3"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"

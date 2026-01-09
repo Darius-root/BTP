@@ -123,6 +123,7 @@ function confirmActivation() {
 </script>
 
 <template>
+
     <Head title="Organisations" />
 
     <SidebarProvider>
@@ -154,36 +155,27 @@ function confirmActivation() {
                     <TableBody>
                         <!-- ================= SUPER ADMIN ================= -->
                         <template v-if="organisations">
-                            <TableRow
-                                v-for="org in organisations"
-                                :key="org.id"
-                            >
+                            <TableRow v-for="org in organisations" :key="org.id">
                                 <TableCell class="font-medium">{{
                                     org.nom
                                 }}</TableCell>
-                                <TableCell
-                                    ><Badge variant="outline"
-                                        >—</Badge
-                                    ></TableCell
-                                >
-                                <TableCell
-                                    ><Badge variant="secondary">
+                                <TableCell>
+                                    <Badge variant="outline">—</Badge>
+                                </TableCell>
+                                <TableCell>
+                                    <Badge variant="secondary">
                                         Système
-                                    </Badge></TableCell
-                                >
+                                    </Badge>
+                                </TableCell>
                                 <TableCell class="text-right">
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        @click="
-                                            router.visit(
-                                                route(
-                                                    'organisations.show',
-                                                    org.id
-                                                )
+                                    <Button size="sm" variant="outline" @click="
+                                        router.visit(
+                                            route(
+                                                'organisations.show',
+                                                org.id
                                             )
-                                        "
-                                    >
+                                        )
+                                        ">
                                         <Eye class="w-4 h-4 mr-2" />
                                         Voir
                                     </Button>
@@ -207,36 +199,25 @@ function confirmActivation() {
 
                                 <TableCell>
                                     <div class="flex flex-wrap gap-1">
-                                        <Badge
-                                            v-for="role in item.roles"
-                                            :key="role"
-                                            variant="secondary"
-                                            >{{ role }}</Badge
-                                        >
+                                        <Badge v-for="role in item.roles" :key="role" variant="secondary">{{ role }}
+                                        </Badge>
                                     </div>
                                 </TableCell>
 
                                 <TableCell>
                                     <div class="flex items-center gap-3">
-                                        <Switch
-                                            :modelValue="
-                                                item.team.id ===
-                                                activeOrganisationId
-                                            "
-                                            @click="askActivation(item.team)"
-                                        />
+                                        <Switch :modelValue="item.team.id ===
+                                            activeOrganisationId
+                                            " @click="askActivation(item.team)" />
 
-                                        <Badge
-                                            :variant="
-                                                item.team.id ===
-                                                activeOrganisationId
-                                                    ? 'default'
-                                                    : 'outline'
-                                            "
-                                        >
+                                        <Badge :variant="item.team.id ===
+                                            activeOrganisationId
+                                            ? 'default'
+                                            : 'outline'
+                                            ">
                                             {{
                                                 item.team.id ===
-                                                activeOrganisationId
+                                                    activeOrganisationId
                                                     ? "Active"
                                                     : "Inactive"
                                             }}
@@ -245,22 +226,23 @@ function confirmActivation() {
                                 </TableCell>
 
                                 <TableCell class="text-right space-x-2">
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        :disabled="
-                                            item.team.id !==
-                                            activeOrganisationId
-                                        "
-                                        @click="
+                                    <!-- Voir organisation : uniquement si active -->
+                                    <Button size="sm" variant="outline"
+                                        :disabled="item.team.id !== activeOrganisationId" @click="
+                                            item.team.id === activeOrganisationId &&
+                                            router.visit(route('organisations.show', item.team.id))
+                                            ">
+                                        <Eye class="w-4 h-4 mr-1" />
+                                        Voir
+                                    </Button>
+
+                                    <!-- Ajouter utilisateur : uniquement si active -->
+                                    <Button size="sm" variant="outline"
+                                        :disabled="item.team.id !== activeOrganisationId" @click="
                                             router.visit(
-                                                route(
-                                                    'organisations.users.create',
-                                                    item.team.id
-                                                )
+                                                route('organisations.users.create', item.team.id)
                                             )
-                                        "
-                                    >
+                                            ">
                                         <UserPlus class="w-4 h-4 mr-1" />
                                         Ajouter
                                     </Button>
@@ -279,15 +261,13 @@ function confirmActivation() {
                                         Supprimer
                                     </Button>
                                 </TableCell>
+
                             </TableRow>
                         </template>
 
                         <!-- ================= EMPTY ================= -->
                         <TableRow v-else>
-                            <TableCell
-                                colspan="4"
-                                class="text-center text-muted-foreground py-10"
-                            >
+                            <TableCell colspan="4" class="text-center text-muted-foreground py-10">
                                 Aucune organisation trouvée
                             </TableCell>
                         </TableRow>
@@ -349,8 +329,7 @@ function confirmActivation() {
                                 Vous êtes sur le point d’activer l’organisation
                                 <strong>{{
                                     selectedOrg ? selectedOrg.nom : ""
-                                }}</strong
-                                >. <br /><br />
+                                }}</strong>. <br /><br />
                                 Toutes les actions suivantes seront effectuées
                                 dans cette organisation.
                             </template>
@@ -359,8 +338,7 @@ function confirmActivation() {
                                 l’organisation
                                 <strong>{{
                                     selectedOrg ? selectedOrg.nom : ""
-                                }}</strong
-                                >. <br /><br />
+                                }}</strong>. <br /><br />
                                 Après désactivation, vous ne pourrez plus
                                 effectuer d’actions dans cette organisation tant
                                 qu’elle ne sera pas réactivée.
@@ -371,14 +349,10 @@ function confirmActivation() {
                     <AlertDialogFooter>
                         <AlertDialogCancel> Annuler </AlertDialogCancel>
 
-                        <AlertDialogAction
-                            :class="
-                                actionType === 'activate'
-                                    ? 'bg-primary text-white'
-                                    : 'bg-red-600 text-white'
-                            "
-                            @click="confirmActivation"
-                        >
+                        <AlertDialogAction :class="actionType === 'activate'
+                            ? 'bg-primary text-white'
+                            : 'bg-red-600 text-white'
+                            " @click="confirmActivation">
                             {{
                                 actionType === "activate"
                                     ? "Activer"

@@ -57,7 +57,10 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
     // Utilisateurs
     Route::resource('users', UserController::class)
         ->only(['index', 'show']);
-
+    //collections-prix  
+    Route::resource('collections-prix', CollectionPrixController::class);
+    Route::get('collections-prix/arrondissements/{communeId}', [CollectionPrixController::class, 'getArrondissements'])
+        ->name('collections-prix.arrondissements');
 
 
 
@@ -79,15 +82,15 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
     Route::resource('organisations', OrganisationController::class)->names('organisations')->only(['index', 'create', 'store']);
 
     Route::middleware(['organisation.active'])->group(function () {
-        Route::resource('organisations/roles', OrganisationRoleController::class)->names('organisations.roles');  
-         Route::resource('organisations/users', OrganisationUserController::class)
+        Route::resource('organisations/roles', OrganisationRoleController::class)->names('organisations.roles');
+        Route::resource('organisations/users', OrganisationUserController::class)
             ->names('organisations.users');
-            
-          Route::resource('organisations', OrganisationController::class)->names('organisations')->only(['show', 'edit', 'update', 'destroy']);
+
+        Route::resource('organisations', OrganisationController::class)->names('organisations')->only(['show', 'edit', 'update', 'destroy']);
         //Roles organisationnels
-     
+
         //Utilisateurs dans une organisation
-      
+
 
         //  Projets
         Route::resource('projets', ProjetController::class);
@@ -173,10 +176,8 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
     // Corps d'état
     Route::resource('corps-etat', CorpsEtatController::class)->parameters(['corps-etat' => 'corpsEtat']);
 
-    //collections-prix
-    Route::resource('collections-prix', CollectionPrixController::class);
-    Route::get('collections-prix/arrondissements/{communeId}', [CollectionPrixController::class, 'getArrondissements'])
-        ->name('collections-prix.arrondissements');
+
 });
+
 
 require __DIR__ . '/auth.php';

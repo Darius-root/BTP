@@ -14,7 +14,7 @@
                             <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
                                     <CardTitle class="text-3xl">
-                                        Modifier le matériau
+                                        Modifier le matériel
                                     </CardTitle>
                                     <CardDescription class="mt-1">
                                         {{ materiau.nom }}
