@@ -19,6 +19,8 @@ class CollectionPrixController extends Controller
      */
     public function index(Request $request)
     {
+
+
         $query = CollectionPrix::with([
             'commune',
             'arrondissement',

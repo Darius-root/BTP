@@ -14,9 +14,9 @@
                         <CardHeader class="px-0 pt-0">
                             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                 <div>
-                                    <CardTitle class="text-3xl">Créer un matériau</CardTitle>
+                                    <CardTitle class="text-3xl">Créer un matériel</CardTitle>
                                     <CardDescription class="mt-1">
-                                        Remplissez les informations du nouveau matériau
+                                        Remplissez les informations du nouveau matériel
                                     </CardDescription>
                                 </div>
                                 <Link :href="route('materiaux.index')"
@@ -47,7 +47,7 @@
                                         {{ form.errors.code }}
                                     </p>
                                     <p class="text-xs text-gray-500">
-                                        Code unique identifiant le matériau
+                                        Code unique identifiant le matériel
                                     </p>
                                 </div>
 
@@ -63,7 +63,7 @@
                                         {{ form.errors.nom }}
                                     </p>
                                     <p class="text-xs text-gray-500">
-                                        Nom complet du matériau
+                                        Nom complet du matériel
                                     </p>
                                 </div>
 
@@ -90,7 +90,7 @@
                                         {{ form.errors.unite_id }}
                                     </p>
                                     <p class="text-xs text-gray-500">
-                                        Unité de mesure utilisée pour ce matériau
+                                        Unité de mesure utilisée pour ce matériel
                                     </p>
                                 </div>
 

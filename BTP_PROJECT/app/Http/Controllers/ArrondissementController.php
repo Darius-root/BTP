@@ -15,8 +15,10 @@ class ArrondissementController extends Controller
      */
     public function index()
     {
+
+        
         if (!Auth::user()->can('SYSTEM_ARRONDISSEMENT_VIEW')) {
-            return redirect()->back()->with('error', 'Permission refusée.');
+            return redirect()->back()->with('error', 'Vous ne pouvez pas accéder à la liste des arrondissements');
         }
 
         $arrondissements = Arrondissement::with('commune')

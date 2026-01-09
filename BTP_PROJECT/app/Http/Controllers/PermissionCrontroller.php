@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Models\Permission;
 
 class PermissionCrontroller extends Controller
@@ -12,25 +13,25 @@ class PermissionCrontroller extends Controller
      */
     public function index()
     {
-      
-        // Récupérer toutes les permissions
+        $user = Auth::user();
+
+        
+        // Vérifier que l'utilisateur a au moins une des permissions
+        if (!$user->canAny(['SYSTEM_PERMISSION_VIEW', 'ORG_ORGANISATIONUSER_VIEW'])) {
+            abort(403, "Vous n'avez pas la permission de consulter les permissions.");
+        }
+
         $permissions = Permission::all();
 
-        // Séparer les permissions par nomenclature
-        $systemPermissions = $permissions->filter(function ($perm) {
-            return str_starts_with($perm->name, 'SYSTEM_');
-        });
+        $systemPermissions = $permissions->filter(fn($perm) => str_starts_with($perm->name, 'SYSTEM_'));
+        $orgPermissions = $permissions->filter(fn($perm) => str_starts_with($perm->name, 'ORG_'));
 
-        $orgPermissions = $permissions->filter(function ($perm) {
-            return str_starts_with($perm->name, 'ORG_');
-        });
-
-        return inertia ('Permissions/Index', [
-           
+        return inertia('Permissions/Index', [
             'systemPermissions' => $systemPermissions,
             'orgPermissions' => $orgPermissions,
         ]);
     }
+
 
     /**
      * Show the form for creating a new resource.

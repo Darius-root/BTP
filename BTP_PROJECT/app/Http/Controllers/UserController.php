@@ -16,7 +16,6 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $currentUser = Auth::user();
-
         // Vérifie la permission
         if (!$currentUser->can('SYSTEM_USER_VIEW')) {
             abort(403, "Vous n'avez pas la permission de voir les utilisateurs.");

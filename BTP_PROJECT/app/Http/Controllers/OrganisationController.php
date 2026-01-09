@@ -20,6 +20,7 @@ class OrganisationController extends Controller
     public function index(OrganisationService $organisationService)
     {
         $user = Auth::user();
+        
         $currentTeamId = getPermissionsTeamId();
 
         // ===== Vérification SUPER ADMIN dans le contexte SYSTEM =====
@@ -119,7 +120,7 @@ class OrganisationController extends Controller
      | CREATE / STORE
      ========================================================== */
     public function create()
-    {
+    {       
         $user = Auth::user();
         $currentTeamId = getPermissionsTeamId();
 
@@ -136,11 +137,10 @@ class OrganisationController extends Controller
         return Inertia::render('Organisations/Create');
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request)
     {
         $user = Auth::user();
         $currentTeamId = getPermissionsTeamId();
-
         // Vérifier permission si dans un contexte organisation
         if ($currentTeamId !== null) {
             setPermissionsTeamId($currentTeamId);
@@ -242,7 +242,7 @@ class OrganisationController extends Controller
         ]);
     }
 
-    public function update(Request $request, Organisation $organisation): RedirectResponse
+    public function update(Request $request, Organisation $organisation)
     {
         $user = Auth::user();
         $currentTeamId = getPermissionsTeamId();
@@ -281,7 +281,7 @@ class OrganisationController extends Controller
     /* ==========================================================
      | DESTROY
      ========================================================== */
-    public function destroy(Organisation $organisation): RedirectResponse
+    public function destroy(Organisation $organisation)
     {
         $user = Auth::user();
         $currentTeamId = getPermissionsTeamId();
