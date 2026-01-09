@@ -1,5 +1,4 @@
 <template>
-
     <Head title="Inscription" />
 
     <div class="min-h-screen flex">
@@ -129,10 +128,13 @@
 </template>
 
 <script setup lang="ts">
-import FullScreenLayout from '@/components/layout/FullScreenLayout.vue'
-import CommonGridShape from '@/components/common/CommonGridShape.vue'
-import { ref } from 'vue'
+import { Head, Link, useForm } from '@inertiajs/vue3'
 import InputError from '@/components/InputError.vue'
+
+// Définir le layout si nécessaire (selon votre configuration Inertia)
+// Si vous utilisez un layout, ajoutez :
+// import Layout from '@/Layouts/AuthLayout.vue'
+// defineOptions({ layout: Layout })
 
 const form = useForm({
     name: '',

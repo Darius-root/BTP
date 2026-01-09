@@ -37,7 +37,7 @@
                             >
                                 <!-- Nom -->
                                 <div class="space-y-2">
-                                    <Label for="name">
+                                    <Label for="nom">
                                         Nom <span class="text-red-500">*</span>
                                     </Label>
                                     <div class="relative">
@@ -45,17 +45,17 @@
                                             <Building2 class="w-4 h-4 text-gray-400" />
                                         </div>
                                         <Input
-                                            id="name"
-                                            v-model="form.name"
+                                            id="nom"
+                                            v-model="form.nom"
                                             type="text"
                                             placeholder="Ex : Mon Organisation"
                                             class="pl-10 w-full"
-                                            :class="{ 'border-red-300': form.errors.name }"
+                                            :class="{ 'border-red-300': form.errors.nom }"
                                             required
                                         />
                                     </div>
-                                    <p v-if="form.errors.name" class="text-sm text-red-600">
-                                        {{ form.errors.name }}
+                                    <p v-if="form.errors.nom" class="text-sm text-red-600">
+                                        {{ form.errors.nom }}
                                     </p>
                                 </div>
 
@@ -223,7 +223,7 @@ import { Button } from '@/components/ui/button'
 const currentPageTitle = ref('Nouvelle Organisation')
 
 const form = useForm({
-    name: '',
+    nom: '',
     raison_sociale: '',
     logo: null,
     adresse: '',

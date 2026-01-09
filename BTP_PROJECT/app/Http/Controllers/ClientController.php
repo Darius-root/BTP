@@ -3,130 +3,225 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\Organisation;
+use App\Services\OrganisationContext;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
-use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
+use Throwable;
 
 class ClientController extends Controller
 {
     /**
-     * Organisation active (EN DUR)
+     * Liste des clients de l'organisation active
      */
-    private const ACTIVE_ORGANISATION_ID = 2;
-
-    /**
-     * Liste des clients de l'organisation active uniquement
-     */
-    public function index(): Response
+    public function index()
     {
-        $clients = Client::with('organisation')
-            ->where('organisation_id', self::ACTIVE_ORGANISATION_ID)
-            ->latest()
-            ->paginate(10);
+        try {
+            $activeOrg = getPermissionsTeamId();
 
-        return Inertia::render('Clients/Index', [
-            'clients' => $clients,
-        ]);
-    }
+            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'ORG_CLIENT_VIEW')) {
+                return back()->with('error', "Vous n'avez pas la permission de voir les clients.");
+            }
 
-    /**
-     * Formulaire de création (organisation imposée)
-     */
-    public function create(): Response
-    {
-        return Inertia::render('Clients/Create');
-    }
+            $clients = Client::with('organisation')
+                ->where('organisation_id', $activeOrg)
+                ->latest()
+                ->paginate(10);
 
-    /**
-     * Création d'un client rattaché à l'organisation active
-     */
-    public function store(Request $request): RedirectResponse
-    {
-        $validated = $request->validate([
-            'nom' => 'required|string|max:255',
-            'societe' => 'nullable|string|max:255',
-            'email' => 'required|email|unique:clients,email',
-            'telephone' => 'nullable|string|max:255',
-            'adresse' => 'nullable|string',
-        ]);
+            return Inertia::render('Clients/Index', [
+                'clients' => $clients,
+                'activeOrganisation' => $activeOrg,
+            ]);
 
-        $validated['organisation_id'] = self::ACTIVE_ORGANISATION_ID;
-
-        Client::create($validated);
-
-        return redirect()
-            ->route('clients.index')
-            ->with('success', 'Client créé avec succès.');
-    }
-
-    /**
-     * Affichage d'un client (uniquement s'il appartient à l'organisation active)
-     */
-    public function show(Client $client): Response
-    {
-        if ($client->organisation_id !== self::ACTIVE_ORGANISATION_ID) {
-            abort(403, 'Client non accessible.');
+        } catch (Throwable $e) {
+            return back()->with('error', $e->getMessage());
         }
-
-        $client->load(['organisation', 'projets']);
-
-        return Inertia::render('Clients/Show', [
-            'client' => $client,
-        ]);
     }
 
     /**
-     * Formulaire d'édition (organisation active uniquement)
+     * Formulaire de création
      */
-    public function edit(Client $client): Response
+    public function create()
     {
-        if ($client->organisation_id !== self::ACTIVE_ORGANISATION_ID) {
-            abort(403);
-        }
+        try {
+            $activeOrg = getPermissionsTeamId();
 
-        return Inertia::render('Clients/Edit', [
-            'client' => $client,
-        ]);
+            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'ORG_CLIENT_CREATE')) {
+                return back()->with('error', "Vous n'avez pas la permission de créer un client.");
+            }
+
+            return Inertia::render('Clients/Create', [
+                'activeOrganisation' => $activeOrg,
+            ]);
+
+        } catch (Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     /**
-     * Mise à jour d'un client de l'organisation active
+     * Création
      */
-    public function update(Request $request, Client $client): RedirectResponse
+    public function store(Request $request)
     {
-        if ($client->organisation_id !== self::ACTIVE_ORGANISATION_ID) {
-            abort(403);
+        try {
+            $activeOrg = getPermissionsTeamId();
+
+            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'ORG_CLIENT_CREATE')) {
+                return back()->with('error', "Vous n'avez pas la permission de créer un client.");
+            }
+
+            $validated = $request->validate([
+                'nom' => 'required|string|max:255',
+                'societe' => 'nullable|string|max:255',
+                'email' => 'required|email|unique:clients,email',
+                'telephone' => 'nullable|string|max:255',
+                'adresse' => 'nullable|string',
+            ]);
+
+            $validated['organisation_id'] = $activeOrg;
+
+            Client::create($validated);
+
+            return redirect()
+                ->route('clients.index')
+                ->with('success', 'Client créé avec succès.');
+
+        } catch (Throwable $e) {
+            return back()->with('error', $e->getMessage());
         }
-
-        $validated = $request->validate([
-            'nom' => 'required|string|max:255',
-            'societe' => 'nullable|string|max:255',
-            'email' => 'required|email|unique:clients,email,' . $client->id,
-            'telephone' => 'nullable|string|max:255',
-            'adresse' => 'nullable|string',
-        ]);
-
-        $client->update($validated);
-
-        return redirect()
-            ->route('clients.index')
-            ->with('success', 'Client mis à jour avec succès.');
     }
 
     /**
-     * Suppression d'un client de l'organisation active
+     * Détail
      */
-    public function destroy(Client $client): RedirectResponse
+    public function show(Client $client)
     {
-        if ($client->organisation_id !== self::ACTIVE_ORGANISATION_ID) {
-            abort(403);
+        try {
+            $activeOrg = getPermissionsTeamId();
+
+            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'ORG_CLIENT_VIEW')) {
+                return back()->with('error', "Vous n'avez pas la permission de consulter ce client.");
+            }
+
+            if ($client->organisation_id !== $activeOrg) {
+                return redirect()
+                    ->route('clients.index')
+                    ->with('error', 'Client non accessible.');
+            }
+
+            $client->load(['organisation', 'projets']);
+
+            return Inertia::render('Clients/Show', [
+                'client' => $client,
+                'activeOrganisation' => $activeOrg,
+            ]);
+
+        } catch (Throwable $e) {
+            return back()->with('error', $e->getMessage());
         }
+    }
 
-        $client->delete();
+    /**
+     * Formulaire d’édition
+     */
+    public function edit(Client $client)
+    {
+        try {
+            $activeOrg = getPermissionsTeamId();
 
-        return redirect()
-            ->route('clients.index')
-            ->with('success', 'Client supprimé avec succès.');
+            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'ORG_CLIENT_EDIT')) {
+                return back()->with('error', "Vous n'avez pas la permission de modifier ce client.");
+            }
+
+            if ($client->organisation_id !== $activeOrg) {
+                return redirect()
+                    ->route('clients.index')
+                    ->with('error', 'Accès interdit.');
+            }
+
+            return Inertia::render('Clients/Edit', [
+                'client' => $client->load('organisation'),
+                'activeOrganisation' => $activeOrg,
+            ]);
+
+        } catch (Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Mise à jour
+     */
+    public function update(Request $request, Client $client)
+    {
+        try {
+            $activeOrg = getPermissionsTeamId();
+
+            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'ORG_CLIENT_EDIT')) {
+                return back()->with('error', "Vous n'avez pas la permission de modifier ce client.");
+            }
+
+            if ($client->organisation_id !== $activeOrg) {
+                return redirect()
+                    ->route('clients.index')
+                    ->with('error', 'Accès interdit.');
+            }
+
+            $validated = $request->validate([
+                'nom' => 'required|string|max:255',
+                'societe' => 'nullable|string|max:255',
+                'email' => 'required|email|unique:clients,email,' . $client->id,
+                'telephone' => 'nullable|string|max:255',
+                'adresse' => 'nullable|string',
+            ]);
+
+            $client->update($validated);
+
+            return redirect()
+                ->route('clients.index')
+                ->with('success', 'Client mis à jour avec succès.');
+
+        } catch (Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Suppression
+     */
+    public function destroy(Client $client)
+    {
+        try {
+            $activeOrg = getPermissionsTeamId();
+
+            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'ORG_CLIENT_DELETE')) {
+                return back()->with('error', "Vous n'avez pas la permission de supprimer ce client.");
+            }
+
+            if ($client->organisation_id !== $activeOrg) {
+                return redirect()
+                    ->route('clients.index')
+                    ->with('error', 'Suppression non autorisée.');
+            }
+
+            if ($client->projets()->exists()) {
+                return back()->with(
+                    'error',
+                    'Impossible de supprimer ce client : il est lié à des projets.'
+                );
+            }
+
+            $client->delete();
+
+            return redirect()
+                ->route('clients.index')
+                ->with('success', 'Client supprimé avec succès.');
+
+        } catch (Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 }

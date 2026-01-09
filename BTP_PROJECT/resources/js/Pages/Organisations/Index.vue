@@ -106,7 +106,7 @@ function confirmActivation() {
 
     <SidebarProvider>
         <AdminLayout>
-            <PageBreadcrumb pageTitle="Organisations" /> 
+            <PageBreadcrumb pageTitle="Organisations" />
             <div>
             <div class="flex  mt-4 justify-end mb-4">
           <Button variant="outline" v-if="teamsWithRoles" @click="goToCreate">
@@ -115,7 +115,7 @@ function confirmActivation() {
           </Button>
         </div></div>
             <div class="rounded-xl border bg-background">
-               
+
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -168,7 +168,7 @@ function confirmActivation() {
 
                         <!-- ================= UTILISATEUR NORMAL ================= -->
                         <template v-else-if="teamsWithRoles">
-                            
+
                             <TableRow
                                 v-for="item in teamsWithRoles"
                                 :key="item.team.id"

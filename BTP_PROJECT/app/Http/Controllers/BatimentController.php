@@ -4,63 +4,123 @@ namespace App\Http\Controllers;
 
 use App\Models\Batiment;
 use App\Models\Projet;
+use App\Services\OrganisationContext;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
+use Throwable;
 
 class BatimentController extends Controller
 {
     /**
-     * Liste globale des bâtiments
+     * Liste globale des bâtiments de l'organisation active
      */
-    public function index(): Response
+    public function index()
     {
-        $batiments = Batiment::with('projet')
-            ->latest()
-            ->paginate(10);
+        try {
+            $activeOrg = getPermissionsTeamId();
 
-        return Inertia::render('Organisations/Projets/Batiments/Index', [
-            'batiments' => $batiments,
-        ]);
+            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'ORG_BATIMENT_VIEW')) {
+                return back()->with('error', "Vous n'avez pas la permission de consulter les bâtiments.");
+            }
+
+            $batiments = Batiment::with('projet')
+                ->whereHas('projet', fn ($q) => $q->where('organisation_id', $activeOrg))
+                ->latest()
+                ->paginate(10);
+
+            return Inertia::render('Organisations/Batiments/Index', [
+                'batiments' => $batiments,
+                'activeOrganisation' => $activeOrg,
+            ]);
+
+        } catch (Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     /**
      * Liste des bâtiments d'un projet précis
      */
-    public function indexByProjet(Projet $projet): Response
+    public function indexByProjet(Projet $projet)
     {
-        $batiments = Batiment::where('projet_id', $projet->id)
-            ->with('projet')
-            ->latest()
-            ->paginate(10);
+        try {
+            $activeOrg = getPermissionsTeamId();
 
-        return Inertia::render('Organisations/Projets/Batiments/Index', [
-            'batiments' => $batiments,
-            'projet' => $projet, // utilisé pour le titre et les boutons
-        ]);
+            if ($projet->organisation_id !== $activeOrg) {
+                return back()->with('error', 'Projet non accessible.');
+            }
+
+            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'ORG_BATIMENT_VIEW')) {
+                return back()->with('error', "Vous n'avez pas la permission de consulter les bâtiments.");
+            }
+
+            $batiments = Batiment::where('projet_id', $projet->id)
+                ->with('projet')
+                ->latest()
+                ->paginate(10);
+
+            return Inertia::render('Organisations/Batiments/Index', [
+                'batiments' => $batiments,
+                'projet' => $projet,
+                'activeOrganisation' => $activeOrg,
+            ]);
+
+        } catch (Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     /**
-     * Création globale (avec choix du projet)
+     * Création globale
      */
-    public function create(): Response
+    public function create()
     {
-        dd(Projet::all());
-        return Inertia::render('Organisations/Projets/Batiments/Create', [
-            'projets' => Projet::all(),
-        ]);
+        try {
+            $activeOrg = getPermissionsTeamId();
+
+            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'ORG_BATIMENT_CREATE')) {
+                return back()->with('error', "Vous n'avez pas la permission de créer un bâtiment.");
+            }
+
+            $projets = Projet::where('organisation_id', $activeOrg)->get();
+
+            return Inertia::render('Organisations/Batiments/Create', [
+                'projets' => $projets,
+                'activeOrganisation' => $activeOrg,
+            ]);
+
+        } catch (Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     /**
      * Création depuis un projet précis
      */
-    public function createFromProjet(Projet $projet): Response
+    public function createFromProjet(Projet $projet)
     {
-        // dd($projet);
-        return Inertia::render('Organisations/Projets/Batiments/Create', [
-            'projet' => $projet,
-        ]);
+        try {
+            $activeOrg = getPermissionsTeamId();
+
+            if ($projet->organisation_id !== $activeOrg) {
+                return back()->with('error', 'Projet non accessible.');
+            }
+
+            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'ORG_BATIMENT_CREATE')) {
+                return back()->with('error', "Vous n'avez pas la permission de créer un bâtiment.");
+            }
+
+            return Inertia::render('Organisations/Batiments/Create', [
+                'projet' => $projet,
+                'activeOrganisation' => $activeOrg,
+            ]);
+
+        } catch (Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     /**
@@ -68,64 +128,151 @@ class BatimentController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'code' => 'required|string|max:255|unique:batiments,code',
-            'nom' => 'required|string|max:255',
-            'localisation' => 'nullable|string|max:255',
-            'description' => 'nullable|string',
-            'projet_id' => 'required|exists:projets,id',
-        ]);
+        try {
+            $activeOrg = getPermissionsTeamId();
 
-        $batiment = Batiment::create($validated);
-// dd($batiment);
-        // 🔁 Retour intelligent vers le projet
-        return redirect()
-            ->route('projets.batiments.index', $batiment->projet_id)
-            ->with('success', 'Bâtiment créé avec succès.');
+            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'ORG_BATIMENT_CREATE')) {
+                return back()->with('error', "Vous n'avez pas la permission de créer un bâtiment.");
+            }
+
+            $validated = $request->validate([
+                'code' => 'required|string|max:255|unique:batiments,code',
+                'nom' => 'required|string|max:255',
+                'localisation' => 'nullable|string|max:255',
+                'description' => 'nullable|string',
+                'projet_id' => 'required|exists:projets,id',
+            ]);
+
+            $projet = Projet::findOrFail($validated['projet_id']);
+
+            if ($projet->organisation_id !== $activeOrg) {
+                return back()->with('error', 'Projet non autorisé.');
+            }
+
+            $batiment = Batiment::create($validated);
+
+            return redirect()
+                ->route('projets.batiments.index', $batiment->projet_id)
+                ->with('success', 'Bâtiment créé avec succès.');
+
+        } catch (Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
-    public function show(Batiment $batiment): Response
+    /**
+     * Détail
+     */
+    public function show(Batiment $batiment)
     {
-        $batiment->load('projet');
+        try {
+            $activeOrg = getPermissionsTeamId();
 
-        return Inertia::render('Organisations/Projets/Batiments/Show', [
-            'batiment' => $batiment,
-        ]);
+            if ($batiment->projet->organisation_id !== $activeOrg) {
+                return back()->with('error', 'Bâtiment non accessible.');
+            }
+
+            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'ORG_BATIMENT_VIEW')) {
+                return back()->with('error', "Vous n'avez pas la permission de consulter ce bâtiment.");
+            }
+
+            return Inertia::render('Organisations/Batiments/Show', [
+                'batiment' => $batiment->load('projet'),
+                'activeOrganisation' => $activeOrg,
+            ]);
+
+        } catch (Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
-    public function edit(Batiment $batiment): Response
+    /**
+     * Édition
+     */
+    public function edit(Batiment $batiment)
     {
-        return Inertia::render('Organisations/Projets/Batiments/Edit', [
-            'batiment' => $batiment,
-            'projets' => Projet::all(),
-        ]);
+        try {
+            $activeOrg = getPermissionsTeamId();
+
+            if ($batiment->projet->organisation_id !== $activeOrg) {
+                return back()->with('error', 'Accès interdit.');
+            }
+
+            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'ORG_BATIMENT_EDIT')) {
+                return back()->with('error', "Vous n'avez pas la permission de modifier ce bâtiment.");
+            }
+
+            return Inertia::render('Organisations/Batiments/Edit', [
+                'batiment' => $batiment,
+                'projets' => Projet::where('organisation_id', $activeOrg)->get(),
+                'activeOrganisation' => $activeOrg,
+            ]);
+
+        } catch (Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
+    /**
+     * Mise à jour
+     */
     public function update(Request $request, Batiment $batiment): RedirectResponse
     {
-        $validated = $request->validate([
-            'code' => 'required|string|max:255|unique:batiments,code,' . $batiment->id,
-            'nom' => 'required|string|max:255',
-            'localisation' => 'nullable|string|max:255',
-            'description' => 'nullable|string',
-            'projet_id' => 'required|exists:projets,id',
-        ]);
+        try {
+            $activeOrg = getPermissionsTeamId();
 
-        $batiment->update($validated);
+            if ($batiment->projet->organisation_id !== $activeOrg) {
+                return back()->with('error', 'Accès interdit.');
+            }
 
-        return redirect()
-            ->route('projets.batiments.index', $batiment->projet_id)
-            ->with('success', 'Bâtiment mis à jour avec succès.');
+            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'ORG_BATIMENT_EDIT')) {
+                return back()->with('error', "Vous n'avez pas la permission de modifier ce bâtiment.");
+            }
+
+            $validated = $request->validate([
+                'code' => 'required|string|max:255|unique:batiments,code,' . $batiment->id,
+                'nom' => 'required|string|max:255',
+                'localisation' => 'nullable|string|max:255',
+                'description' => 'nullable|string',
+                'projet_id' => 'required|exists:projets,id',
+            ]);
+
+            $batiment->update($validated);
+
+            return redirect()
+                ->route('projets.batiments.index', $batiment->projet_id)
+                ->with('success', 'Bâtiment mis à jour avec succès.');
+
+        } catch (Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
+    /**
+     * Suppression
+     */
     public function destroy(Batiment $batiment): RedirectResponse
     {
-        $projetId = $batiment->projet_id;
+        try {
+            $activeOrg = getPermissionsTeamId();
 
-        $batiment->delete();
+            if ($batiment->projet->organisation_id !== $activeOrg) {
+                return back()->with('error', 'Suppression non autorisée.');
+            }
 
-        return redirect()
-            ->route('projets.batiments.index', $projetId)
-            ->with('success', 'Bâtiment supprimé avec succès.');
+            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'ORG_BATIMENT_DELETE')) {
+                return back()->with('error', "Vous n'avez pas la permission de supprimer ce bâtiment.");
+            }
+
+            $projetId = $batiment->projet_id;
+            $batiment->delete();
+
+            return redirect()
+                ->route('projets.batiments.index', $projetId)
+                ->with('success', 'Bâtiment supprimé avec succès.');
+
+        } catch (Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 }

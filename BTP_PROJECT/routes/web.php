@@ -74,7 +74,7 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
     ])->name('organisations.deactivate');
 
 
-    Route::get('/organisations', [OrganisationController::class, 'index'])->name('organisations.index');
+        Route::resource('organisations', OrganisationController::class);
 
 
 
@@ -86,14 +86,14 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
         Route::resource('organisations/users', OrganisationUserController::class)
             ->names('organisations.users');
 
-
+        //  Projets
+        Route::resource('projets', ProjetController::class);
 
 
 
         // Organisations
 
         //  Organisations
-        Route::resource('organisations', OrganisationController::class)->except('index');
 
         //  Clients
         Route::resource('clients', ClientController::class);
