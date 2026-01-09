@@ -26,6 +26,13 @@ class RolePermissionSeeder extends Seeder
 
         $systemPermissions = [
 
+
+
+            //Utilisateurs
+            'SYSTEM_USER_VIEW',
+            'SYSTEM_USER_CREATE',
+            'SYSTEM_USER_EDIT',
+            'SYSTEM_USER_DELETE',
             // Rôles
             'SYSTEM_ROLE_VIEW',
             'SYSTEM_ROLE_CREATE',
@@ -102,6 +109,13 @@ class RolePermissionSeeder extends Seeder
             'ORG_ORGANISATIONUSER_CREATE',
             'ORG_ORGANISATIONUSER_EDIT',
             'ORG_ORGANISATIONUSER_DELETE',
+
+            //organisation role
+            'ORG_ORGANISATION_USER_ROLE_ASSIGN',
+            'ORG_ORGANISATION_ROLE_VIEW',
+            'ORG_ORGANISATION_ROLE_CREATE',
+            'ORG_ORGANISATION_ROLE_EDIT',
+            'ORG_ORGANISATION_ROLE_DELETE',
 
             //client
             'ORG_CLIENT_VIEW',
