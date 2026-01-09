@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use Spatie\Permission\PermissionRegistrar;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -27,21 +28,38 @@ class HandleInertiaRequests extends Middleware
      *
      * @return array<string, mixed>
      */
+
     public function share(Request $request): array
     {
+        //  Important : définir la team AVANT de lire les permissions
+        if ($request->session()->has('active_organisation_id')) {
+            app(PermissionRegistrar::class)
+                ->setPermissionsTeamId(
+                    $request->session()->get('active_organisation_id')
+                );
+        }
+
         return [
             ...parent::share($request),
+
             'auth' => [
                 'user' => $request->user(),
+                'permissions' => $request->user()
+                    ? $request->user()->permissions->pluck('name')
+                    : [],
             ],
+
+            'session' => [
+                'active_organisation_id' =>
+                $request->session()->get('active_organisation_id'),
+
+                'active_organisation_name' =>
+                $request->session()->get('active_organisation_name'),
+            ],
+
             'flash' => [
                 'success' => fn() => $request->session()->get('success'),
                 'error' => fn() => $request->session()->get('error'),
-            ],
-            'session' => fn() => [
-                'active_organisation_id' => $request->session()->get('active_organisation_id'),
-                'active_organisation_name' => $request->session()->get('active_organisation_name'),
-
             ],
         ];
     }

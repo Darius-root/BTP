@@ -13,17 +13,7 @@ class RolePermissionSeeder extends Seeder
         // =========================
         // PERMISSIONS SYSTEME
         // =========================
-        $systemPermissions = [
-            'SYSTEM_USER_CREATE',
-            'SYSTEM_USER_DELETE',
-            'SYSTEM_ROLE_MANAGE',
-        ];
-        $systemPermissions = [
-            'SYSTEM_USER_CREATE',
-            'SYSTEM_USER_DELETE',
-            'SYSTEM_ROLE_MANAGE',
-        ];
-
+     
         $systemPermissions = [
 
             // Rôles
@@ -103,6 +93,10 @@ class RolePermissionSeeder extends Seeder
             'ORG_ORGANISATIONUSER_EDIT',
             'ORG_ORGANISATIONUSER_DELETE',
 
+             //organisation role
+            'ORG_ORGANISATION_ROLE_VIEW',
+            
+
             //client
             'ORG_CLIENT_VIEW',
             'ORG_CLIENT_CREATE',
@@ -143,9 +137,7 @@ class RolePermissionSeeder extends Seeder
         // ROLES ORGANISATION
         // =========================
         $orgRoles = [
-
-            'ORG_ADMIN',
-            'ORG_COLLECTEUR',
+            'ORG_ADMIN',        
         ];
 
         foreach ($orgRoles as $roleName) {
@@ -164,10 +156,5 @@ class RolePermissionSeeder extends Seeder
         $owner = Role::findByName('ORG_ADMIN');
         $owner->givePermissionTo($orgPermissions);
 
-
-
-        // ORG_LECTEUR → lecture uniquement
-        $lecteur = Role::findByName('ORG_COLLECTEUR');
-        $lecteur->givePermissionTo(['ORG_DEVIS_VALIDATE', 'ORG_PRIX_VALIDATE']);
     }
 }
