@@ -107,20 +107,9 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
         Route::resource('batiments', BatimentController::class);
 
         //  Niveaux
-        Route::resource('niveaux-batiment', NiveauBatimentController::class)
-            ->names('niveaux-batiment')
-            ->parameters(['niveaux-batiment' => 'niveauBatiment']);
+        Route::resource('niveaux-batiment', NiveauBatimentController::class)->parameters(['niveaux-batiment' => 'niveauBatiment']);
+        ;
 
-        //  Niveaux par bâtiment
-        Route::get(
-            'batiments/{batiment}/niveaux',
-            [NiveauBatimentController::class, 'indexByBatiment']
-        )->name('batiments.niveaux.index');
-
-        Route::get(
-            'batiments/{batiment}/niveaux/create',
-            [NiveauBatimentController::class, 'createFromBatiment']
-        )->name('batiments.niveaux.create');
 
 
         Route::get(

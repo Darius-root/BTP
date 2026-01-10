@@ -1,6 +1,6 @@
 <template>
 
-    <Head title="Détails du niveau" />
+    <Head :title="currentPageTitle" />
 
     <SidebarProvider>
         <AdminLayout>
@@ -13,16 +13,13 @@
                         <CardHeader class="px-0 pt-0">
                             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                 <div>
-                                    <CardTitle class="text-3xl">
-                                        {{ niveau.nom }}
-                                    </CardTitle>
+                                    <CardTitle class="text-3xl">{{ niveau.nom }}</CardTitle>
                                     <CardDescription class="mt-1">
                                         Informations détaillées du niveau
                                     </CardDescription>
                                 </div>
 
-                                <Link
-                                    :href="route('batiments.niveaux.index', niveau.batiment_id)"
+                                <Link :href="route('niveaux-batiment.index')"
                                     class="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
                                 >
                                     <ArrowLeft class="w-4 h-4 mr-2" />
@@ -45,16 +42,6 @@
                                         <p>{{ niveau.code }}</p>
                                     </div>
 
-                                    <div>
-                                        <Label class="font-semibold">Bâtiment :</Label>
-                                        <p>{{ niveau.batiment?.nom ?? '—' }}</p>
-                                    </div>
-
-                                    <div>
-                                        <Label class="font-semibold">Projet :</Label>
-                                        <p>{{ niveau.batiment?.projet?.nom ?? '—' }}</p>
-                                    </div>
-
                                     <div class="md:col-span-2">
                                         <Label class="font-semibold">Description :</Label>
                                         <p>{{ niveau.description ?? '—' }}</p>
@@ -65,6 +52,7 @@
 
                             <!-- Actions -->
                             <div class="flex items-center justify-end gap-3 mt-6">
+                                <!-- EDIT -->
                                 <Link
                                     :href="route('niveaux-batiment.edit', niveau.id)"
                                     class="inline-flex items-center px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
@@ -73,8 +61,8 @@
                                     Modifier
                                 </Link>
 
-                                <button
-                                    @click="confirmDelete"
+                                <!-- DELETE -->
+                                <button type="button" @click="confirmDelete"
                                     class="inline-flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors"
                                 >
                                     <Trash2 class="w-4 h-4 mr-1" />
@@ -88,7 +76,6 @@
             </div>
         </AdminLayout>
     </SidebarProvider>
-
 </template>
 
 <script setup>
@@ -110,16 +97,26 @@ const props = defineProps({
     },
 })
 
-const currentPageTitle = ref('Détails du niveau')
+const currentPageTitle = ref(`Détails du niveau "${props.niveau.nom}"`)
 
+/**
+ * Suppression sécurisée via Inertia + Ziggy
+ */
 const confirmDelete = () => {
     if (
         confirm(
             `Êtes-vous sûr de vouloir supprimer le niveau "${props.niveau.nom}" ? Cette action est irréversible.`
         )
     ) {
-        router.delete(route('niveaux-batiment.destroy', props.niveau.id))
+        router.delete(
+            route('niveaux-batiment.destroy', props.niveau.id),
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => console.log('Niveau supprimé'),
+                onError: (errors) => console.error('Erreur lors de la suppression:', errors),
+            }
+        )
     }
 }
 </script>
-

@@ -17,19 +17,12 @@
                                         Créer un niveau
                                     </CardTitle>
                                     <CardDescription class="mt-1">
-                                        {{ props.batiment?.nom
-                                            ? `Ajoutez un niveau au bâtiment "${props.batiment.nom}"`
-                                            : 'Ajoutez un nouveau niveau de bâtiment'
-                                        }}
+                                        Ajoutez un nouveau niveau de bâtiment
                                     </CardDescription>
                                 </div>
 
-                                <Link
-                                    :href="props.batiment
-                                        ? route('batiments.niveaux.index', props.batiment.id)
-                                        : route('niveaux-batiment.index')"
-                                    class="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
-                                >
+                                <Link :href="route('niveaux-batiment.index')"
+                                    class="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors">
                                     <ArrowLeft class="w-4 h-4 mr-2" />
                                     Retour à la liste
                                 </Link>
@@ -39,44 +32,13 @@
                         <CardContent class="px-0">
                             <form @submit.prevent="submit" class="space-y-6">
 
-                                <!-- Bâtiment -->
-                                <div v-if="!props.batiment" class="space-y-2">
-                                    <Label for="batiment_id">
-                                        Bâtiment <span class="text-red-500">*</span>
-                                    </Label>
-                                    <select
-                                        id="batiment_id"
-                                        v-model="form.batiment_id"
-                                        class="flex h-10 w-full rounded-md border bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
-                                        :class="{ 'border-red-300': form.errors.batiment_id }"
-                                    >
-                                        <option value="">Sélectionner un bâtiment</option>
-                                        <option
-                                            v-for="bat in safeBatiments"
-                                            :key="bat.id"
-                                            :value="bat.id"
-                                        >
-                                            {{ bat.nom }} — {{ bat.projet?.nom }}
-                                        </option>
-                                    </select>
-                                    <p v-if="form.errors.batiment_id" class="text-sm text-red-600">
-                                        {{ form.errors.batiment_id }}
-                                    </p>
-                                </div>
-
                                 <!-- Code -->
                                 <div class="space-y-2">
                                     <Label for="code">
                                         Code <span class="text-red-500">*</span>
                                     </Label>
-                                    <Input
-                                        id="code"
-                                        v-model="form.code"
-                                        type="text"
-                                        placeholder="Ex : NIV-RDC, NIV-01"
-                                        :class="{ 'border-red-300': form.errors.code }"
-                                        required
-                                    />
+                                    <Input id="code" v-model="form.code" type="text" placeholder="Ex : NIV-RDC, NIV-01"
+                                        :class="{ 'border-red-300': form.errors.code }" required />
                                 </div>
 
                                 <!-- Nom -->
@@ -84,44 +46,27 @@
                                     <Label for="nom">
                                         Nom du niveau <span class="text-red-500">*</span>
                                     </Label>
-                                    <Input
-                                        id="nom"
-                                        v-model="form.nom"
-                                        type="text"
-                                        placeholder="Ex : Rez-de-chaussée"
-                                        :class="{ 'border-red-300': form.errors.nom }"
-                                        required
-                                    />
+                                    <Input id="nom" v-model="form.nom" type="text" placeholder="Ex : Rez-de-chaussée"
+                                        :class="{ 'border-red-300': form.errors.nom }" required />
                                 </div>
 
                                 <!-- Description -->
                                 <div class="space-y-2">
                                     <Label for="description">Description</Label>
-                                    <textarea
-                                        id="description"
-                                        v-model="form.description"
-                                        rows="4"
+                                    <textarea id="description" v-model="form.description" rows="4"
                                         class="w-full border rounded-md p-2"
-                                        :class="{ 'border-red-300': form.errors.description }"
-                                    />
+                                        :class="{ 'border-red-300': form.errors.description }" />
                                 </div>
 
                                 <!-- Actions -->
                                 <div class="flex items-center justify-between pt-4 border-t border-gray-100">
-                                    <Link
-                                        :href="props.batiment
-                                            ? route('batiments.niveaux.index', props.batiment.id)
-                                            : route('niveaux-batiment.index')"
-                                        class="text-sm text-gray-600 hover:text-gray-900 transition-colors"
-                                    >
+                                    <Link :href="route('niveaux-batiment.index')"
+                                        class="text-sm text-gray-600 hover:text-gray-900 transition-colors">
                                         Annuler
                                     </Link>
 
-                                    <Button
-                                        type="submit"
-                                        :disabled="form.processing"
-                                        class="bg-blue-600 hover:bg-blue-700"
-                                    >
+                                    <Button type="submit" :disabled="form.processing"
+                                        class="bg-blue-600 hover:bg-blue-700">
                                         <span v-if="form.processing" class="flex items-center">
                                             <Loader2 class="w-4 h-4 mr-2 animate-spin" />
                                             Création...
@@ -141,10 +86,7 @@
             </div>
         </AdminLayout>
     </SidebarProvider>
-
 </template>
-
-
 
 <script setup>
 import { computed } from 'vue'
@@ -160,33 +102,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 
-const props = defineProps({
-    batiment: {
-        type: Object,
-        default: null,
-    },
-    batiments: {
-        type: Array,
-        default: () => [],
-    },
-})
-
-/**
- * Normalisation défensive
- */
-const safeBatiments = computed(() => Array.isArray(props.batiments) ? props.batiments : [])
-
-/**
- * Titre dérivé (pas un ref)
- */
-const currentPageTitle = computed(() =>
-    props.batiment?.nom
-        ? `Créer un niveau pour ${props.batiment.nom}`
-        : 'Créer un niveau'
-)
+const currentPageTitle = computed(() => 'Créer un niveau')
 
 const form = useForm({
-    batiment_id: props.batiment?.id ?? '',
     code: '',
     nom: '',
     description: '',
@@ -200,6 +118,3 @@ const submit = () => {
     })
 }
 </script>
-
-
-

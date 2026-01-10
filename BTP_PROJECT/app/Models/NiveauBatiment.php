@@ -13,7 +13,7 @@ class NiveauBatiment extends Model
     protected $table = 'niveaux_batiment';
 
     protected $fillable = [
-        'batiment_id',
+        
         'code',
         'nom',
         'description',
