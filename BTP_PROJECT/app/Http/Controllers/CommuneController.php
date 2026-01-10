@@ -15,9 +15,9 @@ class CommuneController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        
+
         if (!$user->can('SYSTEM_COMMUNE_VIEW')) {
-            return redirect()->back()->with('error', 'Permission refusée.');
+            return redirect()->back()->with('error', 'Vous n’avez pas la permission de consulter les communes.');
         }
 
         $query = Commune::withCount(['arrondissements', 'collectionsPrix']);
@@ -43,7 +43,7 @@ class CommuneController extends Controller
     public function create()
     {
         if (!Auth::user()->can('SYSTEM_COMMUNE_CREATE')) {
-            return redirect()->back()->with('error', 'Permission refusée.');
+            return redirect()->back()->with('error', 'Vous n’avez pas la permission de créer une commune.');
         }
 
         return Inertia::render('Communes/Create');
@@ -55,23 +55,30 @@ class CommuneController extends Controller
     public function store(Request $request)
     {
         if (!Auth::user()->can('SYSTEM_COMMUNE_CREATE')) {
-            return redirect()->back()->with('error', 'Permission refusée.');
+            return redirect()->back()->with('error', 'Vous n’avez pas la permission de créer une commune.');
         }
 
         $validated = $request->validate([
             'libelle' => 'required|string|max:255|unique:communes,libelle',
         ], [
-            'libelle.required' => 'Le libellé est obligatoire.',
-            'libelle.unique' => 'Cette commune existe déjà.',
+            'libelle.required' => 'Le libellé de la commune est obligatoire.',
+            'libelle.unique' => 'Une commune avec ce libellé existe déjà.',
         ]);
 
         $validated['code'] = $this->generateCommuneCode($validated['libelle']);
 
-        Commune::create($validated);
+        try {
+            Commune::create($validated);
 
-        return redirect()
-            ->route('communes.index')
-            ->with('success', 'Commune créée avec succès.');
+            return redirect()
+                ->route('communes.index')
+                ->with('success', 'La commune a été créée avec succès.');
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->with('error', 'Une erreur est survenue lors de la création de la commune. Veuillez réessayer.')
+                ->withInput();
+        }
     }
 
     /**
@@ -80,7 +87,7 @@ class CommuneController extends Controller
     public function edit(Commune $commune)
     {
         if (!Auth::user()->can('SYSTEM_COMMUNE_EDIT')) {
-            return redirect()->back()->with('error', 'Permission refusée.');
+            return redirect()->back()->with('error', 'Vous n’avez pas la permission de modifier cette commune.');
         }
 
         return Inertia::render('Communes/Edit', [
@@ -94,21 +101,31 @@ class CommuneController extends Controller
     public function update(Request $request, Commune $commune)
     {
         if (!Auth::user()->can('SYSTEM_COMMUNE_EDIT')) {
-            return redirect()->back()->with('error', 'Permission refusée.');
+            return redirect()->back()->with('error', 'Vous n’avez pas la permission de modifier cette commune.');
         }
 
         $validated = $request->validate([
             'code' => 'required|string|max:20|unique:communes,code,' . $commune->id,
             'libelle' => 'required|string|max:255|unique:communes,libelle,' . $commune->id,
         ], [
-            'libelle.unique' => 'Cette commune existe déjà.',
+            'code.required' => 'Le code de la commune est obligatoire.',
+            'code.unique' => 'Ce code est déjà utilisé par une autre commune.',
+            'libelle.required' => 'Le libellé est obligatoire.',
+            'libelle.unique' => 'Une commune avec ce libellé existe déjà.',
         ]);
 
-        $commune->update($validated);
+        try {
+            $commune->update($validated);
 
-        return redirect()
-            ->route('communes.index')
-            ->with('success', 'Commune mise à jour avec succès.');
+            return redirect()
+                ->route('communes.index')
+                ->with('success', 'La commune a été mise à jour avec succès.');
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->with('error', 'Une erreur est survenue lors de la mise à jour de la commune. Veuillez réessayer.')
+                ->withInput();
+        }
     }
 
     /**
@@ -117,7 +134,7 @@ class CommuneController extends Controller
     public function destroy(Commune $commune)
     {
         if (!Auth::user()->can('SYSTEM_COMMUNE_DELETE')) {
-            return redirect()->back()->with('error', 'Permission refusée.');
+            return redirect()->back()->with('error', 'Vous n’avez pas la permission de supprimer cette commune.');
         }
 
         if ($commune->arrondissements()->exists()) {
@@ -130,11 +147,17 @@ class CommuneController extends Controller
                 ->with('error', 'Impossible de supprimer cette commune car elle est utilisée dans des collections de prix.');
         }
 
-        $commune->delete();
+        try {
+            $commune->delete();
 
-        return redirect()
-            ->route('communes.index')
-            ->with('success', 'Commune supprimée avec succès.');
+            return redirect()
+                ->route('communes.index')
+                ->with('success', 'La commune a été supprimée avec succès.');
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->with('error', 'Une erreur est survenue lors de la suppression de la commune. Veuillez réessayer.');
+        }
     }
 
     /**
@@ -143,7 +166,7 @@ class CommuneController extends Controller
     public function stats(Commune $commune)
     {
         if (!Auth::user()->can('SYSTEM_COMMUNE_VIEW')) {
-            abort(403);
+            abort(403, 'Vous n’avez pas la permission de consulter les statistiques.');
         }
 
         return response()->json([
@@ -161,7 +184,7 @@ class CommuneController extends Controller
     public function previewCode(Request $request)
     {
         if (!Auth::user()->can('SYSTEM_COMMUNE_VIEW')) {
-            abort(403);
+            abort(403, 'Vous n’avez pas la permission de prévisualiser le code.');
         }
 
         $libelle = $request->input('libelle');

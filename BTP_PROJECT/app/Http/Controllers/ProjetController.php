@@ -171,7 +171,7 @@ class ProjetController extends Controller
     /**
      * Détail d'un projet
      */
-    public function show(Projet $projet): Response|RedirectResponse
+    public function show(Projet $projet)
     {
         try {
             $activeOrg = getPermissionsTeamId();
@@ -200,7 +200,7 @@ class ProjetController extends Controller
     /**
      * Formulaire d'édition
      */
-    public function edit(Projet $projet): Response|RedirectResponse
+    public function edit(Projet $projet)
     {
         try {
             $activeOrg = getPermissionsTeamId();

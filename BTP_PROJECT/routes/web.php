@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\NiveauBatimentController;
 use App\Http\Controllers\OrganisationController;
 use App\Http\Controllers\OrganisationRoleController;
 use App\Http\Controllers\PermissionCrontroller;
@@ -87,19 +88,6 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
             ->names('organisations.users');
 
         Route::resource('organisations', OrganisationController::class)->names('organisations')->only(['show', 'edit', 'update', 'destroy']);
-        //Roles organisationnels
-
-        //Utilisateurs dans une organisation
-
-
-        //  Projets
-        Route::resource('projets', ProjetController::class);
-
-
-
-        // Organisations
-
-        //  Organisations
 
         //  Clients
         Route::resource('clients', ClientController::class);
@@ -110,6 +98,23 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
         //  Bâtiments
         Route::resource('batiments', BatimentController::class);
 
+        //  Niveaux
+        Route::resource('niveaux-batiment', NiveauBatimentController::class)
+            ->names('niveaux-batiment')
+            ->parameters(['niveaux-batiment' => 'niveauBatiment']);
+
+        //  Niveaux par bâtiment
+        Route::get(
+            'batiments/{batiment}/niveaux',
+            [NiveauBatimentController::class, 'indexByBatiment']
+        )->name('batiments.niveaux.index');
+
+        Route::get(
+            'batiments/{batiment}/niveaux/create',
+            [NiveauBatimentController::class, 'createFromBatiment']
+        )->name('batiments.niveaux.create');
+
+        
         Route::get(
             'projets/{projet}/batiments',
             [BatimentController::class, 'indexByProjet']

@@ -20,7 +20,7 @@ class OrganisationController extends Controller
     public function index(OrganisationService $organisationService)
     {
         $user = Auth::user();
-        
+
         $currentTeamId = getPermissionsTeamId();
 
         // ===== Vérification SUPER ADMIN dans le contexte SYSTEM =====
@@ -58,9 +58,9 @@ class OrganisationController extends Controller
             $user->unsetRelation('roles')->unsetRelation('permissions');
 
             return [
-                'team'   => $ou->organisation,
+                'team' => $ou->organisation,
                 // Récupérer tous les rôles Spatie dans ce team
-                'roles'  => $user->getRoleNames()->toArray(),
+                'roles' => $user->getRoleNames()->toArray(),
                 'statut' => $ou->organisation->id === $currentTeamId,
             ];
         })->all();
@@ -81,46 +81,73 @@ class OrganisationController extends Controller
     public function activate(Organisation $organisation)
     {
         $user = Auth::user();
+        $currentTeamId = getPermissionsTeamId();
 
-        // Vérifier dans la table pivot organisation_users
+        // ===== Vérifier appartenance =====
         $exists = OrganisationUser::where('organisation_id', $organisation->id)
             ->where('user_id', $user->id)
             ->exists();
 
         if (!$exists) {
-            return back()->with('error', "Accès refusé.");
+            return back()->with('error', 'Accès refusé.');
         }
 
-        // Fixer le contexte Spatie pour ce team
         setPermissionsTeamId($organisation->id);
+        $user->unsetRelation('roles')->unsetRelation('permissions');
 
-        // Mettre à jour la session
+        if (!$user->can('ORG_ORGANISATION_ACTIVATE')) {
+            setPermissionsTeamId($currentTeamId);
+            $user->unsetRelation('roles')->unsetRelation('permissions');
+
+            return back()->with('error', 'Permission refusée.');
+        }
+
         session([
-            'active_organisation_id'   => $organisation->id,
+            'active_organisation_id' => $organisation->id,
             'active_organisation_name' => $organisation->nom,
         ]);
 
-        // Réinitialiser les relations pour forcer Spatie à recalculer
-        $user->unsetRelation('roles')->unsetRelation('permissions');
-
-        return to_route('organisations.index')
+        return redirect()
+            ->route('organisations.index')
             ->with('success', 'Organisation activée');
     }
 
     public function deactivate()
     {
+        $user = Auth::user();
+        $currentTeamId = getPermissionsTeamId();
+
+        if ($currentTeamId === null) {
+            return back()->with('error', 'Aucune organisation active.');
+        }
+
+        // ===== Contexte organisation =====
+        setPermissionsTeamId($currentTeamId);
+        $user->unsetRelation('roles')->unsetRelation('permissions');
+
+        // ===== Permission =====
+        if (!$user->can('ORG_ORGANISATION_DEACTIVATE')) {
+            return back()->with('error', 'Permission refusée.');
+        }
+
+        // ===== Désactivation =====
         setPermissionsTeamId(null);
-        session()->forget(['active_organisation_id', 'active_organisation_name']);
-        Auth::user()->unsetRelation('roles')->unsetRelation('permissions');
+        session()->forget([
+            'active_organisation_id',
+            'active_organisation_name'
+        ]);
+
+        $user->unsetRelation('roles')->unsetRelation('permissions');
 
         return back()->with('success', 'Organisation désactivée');
     }
+
 
     /* ==========================================================
      | CREATE / STORE
      ========================================================== */
     public function create()
-    {       
+    {
         $user = Auth::user();
         $currentTeamId = getPermissionsTeamId();
 
@@ -128,9 +155,9 @@ class OrganisationController extends Controller
         if ($currentTeamId !== null) {
             setPermissionsTeamId($currentTeamId);
             $user->unsetRelation('roles')->unsetRelation('permissions');
-            
+
             if (!$user->can('ORG_ORGANISATION_CREATE')) {
-                return back()->with('error', "Permission refusée.");
+                return back()->with('error', "Vous n'avez pas les permissions pour créer une organisation");
             }
         }
 
@@ -145,7 +172,7 @@ class OrganisationController extends Controller
         if ($currentTeamId !== null) {
             setPermissionsTeamId($currentTeamId);
             $user->unsetRelation('roles')->unsetRelation('permissions');
-            
+
             if (!$user->can('ORG_ORGANISATION_CREATE')) {
                 return back()->with('error', "Permission refusée.");
             }
@@ -164,7 +191,7 @@ class OrganisationController extends Controller
             $validated['logo'] = $request->file('logo')->store('logos', 'public');
         }
 
-        $validated['created_by'] = $user->id;
+        $validated['user_id'] = $user->id;
 
         try {
             DB::transaction(function () use ($validated, $user, $currentTeamId) {
@@ -173,7 +200,7 @@ class OrganisationController extends Controller
 
                 // Créer la relation dans organisation_users
                 OrganisationUser::create([
-                    'user_id'         => $user->id,
+                    'user_id' => $user->id,
                     'organisation_id' => $organisation->id,
                 ]);
 
@@ -211,7 +238,6 @@ class OrganisationController extends Controller
 
         setPermissionsTeamId($currentTeamId);
         $user->unsetRelation('roles')->unsetRelation('permissions');
-
         if (!$user->can('ORG_ORGANISATION_VIEW')) {
             return back()->with('error', "Permission refusée.");
         }

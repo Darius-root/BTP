@@ -19,7 +19,9 @@ class CollectionPrixController extends Controller
      */
     public function index(Request $request)
     {
-
+        if (!Auth::user()->can('SYSTEM_COLLECTION_VIEW')) {
+            return redirect()->back()->with('error', 'Vous n’avez pas la permission de consulter les collections de prix.');
+        }
 
         $query = CollectionPrix::with([
             'commune',
@@ -30,7 +32,6 @@ class CollectionPrixController extends Controller
             'user'
         ]);
 
-        // Filtres
         if ($request->filled('commune_id')) {
             $query->where('commune_id', $request->commune_id);
         }
@@ -39,8 +40,7 @@ class CollectionPrixController extends Controller
             $query->where('categorie_id', $request->categorie_id);
         }
 
-        $collections = $query->orderBy('created_at', 'desc')
-            ->paginate(15);
+        $collections = $query->orderBy('created_at', 'desc')->paginate(15);
 
         $communes = Commune::orderBy('libelle')->get();
         $categories = CorpsEtat::where('user_id', Auth::id())->orderBy('intitule')->get();
@@ -58,6 +58,10 @@ class CollectionPrixController extends Controller
      */
     public function create()
     {
+        if (!Auth::user()->can('SYSTEM_COLLECTION_CREATE')) {
+            return redirect()->back()->with('error', 'Vous n’avez pas la permission de créer une collection de prix.');
+        }
+
         $communes = Commune::orderBy('libelle')->get();
         $materiaux = Materiau::with('unite')->orderBy('nom')->get();
         $devises = Devise::orderBy('libelle')->get();
@@ -88,6 +92,10 @@ class CollectionPrixController extends Controller
      */
     public function store(Request $request)
     {
+        if (!Auth::user()->can('SYSTEM_COLLECTION_CREATE')) {
+            return redirect()->back()->with('error', 'Vous n’avez pas la permission de créer une collection de prix.');
+        }
+
         $validated = $request->validate([
             'commune_id' => 'required|exists:communes,id',
             'arrondissement_id' => 'nullable|exists:arrondissements,id',
@@ -99,29 +107,41 @@ class CollectionPrixController extends Controller
             'detail' => 'nullable|string',
             'price' => 'required|numeric|min:0',
             'point_vente' => 'nullable|string|max:255',
+        ], [
+            'commune_id.required' => 'La commune est obligatoire.',
+            'materiau_id.required' => 'Le matériau est obligatoire.',
+            'devise_id.required' => 'La devise est obligatoire.',
+            'categorie_id.required' => 'La catégorie est obligatoire.',
+            'description_materiaux.required' => 'La description du matériau est obligatoire.',
+            'price.required' => 'Le prix est obligatoire.',
+            'price.numeric' => 'Le prix doit être un nombre.',
+            'price.min' => 'Le prix ne peut pas être négatif.',
         ]);
 
-        CollectionPrix::create(array_merge($validated, [
-            'user_id' => Auth::id(),
-            'status' => true,
-        ]));
+        try {
+            CollectionPrix::create(array_merge($validated, [
+                'user_id' => Auth::id(),
+                'status' => true,
+            ]));
 
-        return redirect()->route('collections-prix.index')
-            ->with('success', 'Prix ajouté à la collection avec succès.');
+            return redirect()->route('collections-prix.index')
+                ->with('success', 'Prix ajouté à la collection avec succès.');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Une erreur est survenue lors de l’ajout du prix. Veuillez réessayer.')
+                ->withInput();
+        }
     }
 
     /**
-     * Afficher le formulaire d'édition
-     */
-    /**
-     * Afficher le formulaire d'édition
-     */
-    /**
-     * Afficher le formulaire d'édition
+     * Afficher le formulaire d’édition
      */
     public function edit($id)
     {
-        // Utilisez findOrFail pour gérer le cas où l'ID n'existe pas
+        if (!Auth::user()->can('SYSTEM_COLLECTION_EDIT')) {
+            return redirect()->back()->with('error', 'Vous n’avez pas la permission de modifier cette collection de prix.');
+        }
+
         $collection = CollectionPrix::with([
             'commune',
             'arrondissement',
@@ -148,12 +168,12 @@ class CollectionPrixController extends Controller
     /**
      * Mettre à jour une collection de prix
      */
-    /**
-     * Mettre à jour une collection de prix
-     */
     public function update(Request $request, $id)
     {
-        // Trouver la collection
+        if (!Auth::user()->can('SYSTEM_COLLECTION_EDIT')) {
+            return redirect()->back()->with('error', 'Vous n’avez pas la permission de modifier cette collection de prix.');
+        }
+
         $collectionPrix = CollectionPrix::findOrFail($id);
 
         $validated = $request->validate([
@@ -170,10 +190,16 @@ class CollectionPrixController extends Controller
             'status' => 'required|boolean',
         ]);
 
-        $collectionPrix->update($validated);
+        try {
+            $collectionPrix->update($validated);
 
-        return redirect()->route('collections-prix.index')
-            ->with('success', 'Prix mis à jour avec succès.');
+            return redirect()->route('collections-prix.index')
+                ->with('success', 'Prix mis à jour avec succès.');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Une erreur est survenue lors de la mise à jour du prix. Veuillez réessayer.')
+                ->withInput();
+        }
     }
 
     /**
@@ -181,10 +207,20 @@ class CollectionPrixController extends Controller
      */
     public function destroy($id)
     {
-        $collectionPrix = CollectionPrix::findOrFail($id);
-        $collectionPrix->delete();
+        if (!Auth::user()->can('SYSTEM_COLLECTION_DELETE')) {
+            return redirect()->back()->with('error', 'Vous n’avez pas la permission de supprimer cette collection de prix.');
+        }
 
-        return redirect()->route('collections-prix.index')
-            ->with('success', 'Prix supprimé avec succès.');
+        $collectionPrix = CollectionPrix::findOrFail($id);
+
+        try {
+            $collectionPrix->delete();
+
+            return redirect()->route('collections-prix.index')
+                ->with('success', 'Prix supprimé avec succès.');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Une erreur est survenue lors de la suppression du prix. Veuillez réessayer.');
+        }
     }
 }

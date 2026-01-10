@@ -55,13 +55,22 @@
                             </div>
 
                             <!-- Actions -->
-                            <div class="flex items-center justify-end gap-3 mt-6">
+                            <div class="flex flex-wrap items-center justify-end gap-3 mt-6">
+                                <!-- Voir niveaux -->
+                                <Link :href="route('batiments.niveaux.index', batiment.id)"
+                                    class="inline-flex items-center px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors">
+                                    <Building2 class="w-4 h-4 mr-1" />
+                                    Voir niveaux
+                                </Link>
+
+                                <!-- Modifier -->
                                 <Link :href="route('batiments.edit', batiment.id)"
                                     class="inline-flex items-center px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-md transition-colors">
                                     <Edit class="w-4 h-4 mr-1" />
                                     Modifier
                                 </Link>
 
+                                <!-- Supprimer -->
                                 <button @click="confirmDelete(batiment)"
                                     class="inline-flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors">
                                     <Trash2 class="w-4 h-4 mr-1" />
@@ -79,7 +88,7 @@
 <script setup>
 import { ref } from 'vue'
 import { Head, Link, router } from '@inertiajs/vue3'
-import { ArrowLeft, Edit, Trash2 } from 'lucide-vue-next'
+import { ArrowLeft, Edit, Trash2, Building2 } from 'lucide-vue-next'
 
 import AdminLayout from '@/components/layout/AdminLayout.vue'
 import SidebarProvider from '@/components/layout/SidebarProvider.vue'

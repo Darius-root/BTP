@@ -80,6 +80,16 @@ class RolePermissionSeeder extends Seeder
             'SYSTEM_CORPS_ETAT_CREATE',
             'SYSTEM_CORPS_ETAT_EDIT',
             'SYSTEM_CORPS_ETAT_DELETE',
+
+            //Collections
+            'SYSTEM_COLLECTION_VIEW',
+            'SYSTEM_COLLECTION_CREATE',
+            'SYSTEM_COLLECTION_EDIT',
+            'SYSTEM_COLLECTION_DELETE',
+
+            
+
+        
         ];
 
 
@@ -103,6 +113,8 @@ class RolePermissionSeeder extends Seeder
             'ORG_ORGANISATION_CREATE',
             'ORG_ORGANISATION_EDIT',
             'ORG_ORGANISATION_DELETE',
+            'ORG_ORGANISATION_ACTIVATE',
+            'ORG_ORGANISATION_DEACTIVATE',
 
             //organisation user
             'ORG_ORGANISATIONUSER_VIEW',
@@ -134,6 +146,12 @@ class RolePermissionSeeder extends Seeder
             'ORG_BATIMENT_CREATE',
             'ORG_BATIMENT_EDIT',
             'ORG_BATIMENT_DELETE',
+
+            //niveau_batiment
+            'ORG_NIVEAU_VIEW',
+            'ORG_NIVEAU_CREATE',
+            'ORG_NIVEAU_EDIT',
+            'ORG_NIVEAU_DELETE',
 
         ];
 
