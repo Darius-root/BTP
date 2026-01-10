@@ -1,21 +1,23 @@
 <?php
 
-use App\Models\ComposantNiveau;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      */
     public function up(): void
     {
-        Schema::create('niveaux_batiment', function (Blueprint $table) {
+          Schema::create('template_devis', function (Blueprint $table) {
             $table->id();
-            $table->string('code');
             $table->string('nom');
             $table->text('description')->nullable();
+            $table->foreignId('created_by')
+                  ->constrained('users')
+                  ->cascadeOnDelete();
             $table->timestamps();
         });
     }
@@ -25,8 +27,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('niveaux_batiment');
+        Schema::dropIfExists('template_devis');
     }
-
-  
 };

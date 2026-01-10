@@ -15,6 +15,7 @@ use App\Http\Controllers\CollectionPrixController;
 use App\Http\Controllers\CommuneController;
 use App\Http\Controllers\CorpsEtatController;
 use App\Http\Controllers\DeviseController;
+use App\Http\Controllers\DevisEstimatifController;
 use App\Http\Controllers\MateriauController;
 use App\Http\Controllers\OrganisationUserController;
 use App\Http\Controllers\ProjetController;
@@ -79,8 +80,14 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
 
     Route::resource('organisations', OrganisationController::class)->names('organisations')->only(['index', 'create', 'store']);
 
+    // middleware  verification d'organisation actif
+
     Route::middleware(['organisation.active'])->group(function () {
+
+
+
         Route::resource('organisations/roles', OrganisationRoleController::class)->names('organisations.roles');
+
         Route::resource('organisations/users', OrganisationUserController::class)
             ->names('organisations.users');
 
@@ -125,6 +132,9 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
             'projets/{projet}/batiments/create',
             [BatimentController::class, 'createFromProjet']
         )->name('projets.batiments.create');
+
+
+        Route::resource('devis_estmatif', DevisEstimatifController::class)->names('devisEstimatif');
     });
 
 

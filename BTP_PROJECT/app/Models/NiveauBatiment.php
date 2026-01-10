@@ -14,19 +14,18 @@ class NiveauBatiment extends Model
 
     protected $fillable = [
         'batiment_id',
-        'user_id',
         'code',
         'nom',
         'description',
     ];
 
-    public function batiment(): BelongsTo
-    {
-        return $this->belongsTo(Batiment::class);
-    }
 
-    public function user(): BelongsTo
+
+   
+
+
+    public function composants()
     {
-        return $this->belongsTo(User::class);
+        return $this->hasMany(ComposantNiveau::class, 'niveau_id');
     }
 }
