@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useForm, usePage } from '@inertiajs/vue3';
-
 // shadcn/ui
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,6 +36,7 @@ interface PageProps {
 }
 // @ts-ignore
 const page = usePage<PageProps>();
+console.log(page.props);
 
 // -----------------------------
 // UI
@@ -61,7 +61,7 @@ const visiblePermissions = computed(() => {
     : page.props.orgPermissions;
 });
 
-// 🔥 reset dès qu’on change de catégorie
+//  reset dès qu’on change de catégorie
 const onCategoryChange = () => {
   form.permissions = [];
   popoverOpen.value = false;

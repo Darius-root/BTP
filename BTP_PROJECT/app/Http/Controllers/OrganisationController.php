@@ -36,8 +36,9 @@ class OrganisationController extends Controller
         // ============================================================
 
         if ($isSystemAdmin) {
-            $organisations = Organisation::where('is_system', false)->get();
-
+            $organisations = Organisation::where('is_system', false)
+                ->with(['clients', 'projets', 'user'])
+                ->get();
             return Inertia::render('Organisations/Index', [
                 'organisations' => $organisations,
             ]);
@@ -167,6 +168,7 @@ class OrganisationController extends Controller
     public function store(Request $request)
     {
         $user = Auth::user();
+
         $currentTeamId = getPermissionsTeamId();
         // Vérifier permission si dans un contexte organisation
         if ($currentTeamId !== null) {
@@ -218,7 +220,6 @@ class OrganisationController extends Controller
 
             return redirect()->route('organisations.index')
                 ->with('success', 'Organisation créée avec succès.');
-
         } catch (Throwable $e) {
             return back()->with('error', 'Erreur lors de la création : ' . $e->getMessage());
         }
@@ -350,7 +351,6 @@ class OrganisationController extends Controller
             return redirect()
                 ->route('organisations.index')
                 ->with('success', "Organisation supprimée avec succès.");
-
         } catch (Throwable $e) {
             return back()->with('error', 'Erreur lors de la suppression : ' . $e->getMessage());
         }

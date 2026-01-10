@@ -54,10 +54,13 @@ class RoleController extends Controller
         }
 
         $permissions = Permission::all();
+        $systemPermissions = Permission::where('name', 'like', 'SYSTEM_%')
+            ->select('id', 'name')
+            ->get();
 
-        $systemPermissions = $permissions->filter(function ($perm) {
-            return str_starts_with($perm->name, 'SYSTEM_');
-        });
+        $orgPermissions = Permission::where('name', 'like', 'ORG_%')
+            ->select('id', 'name')
+            ->get();
 
         $orgPermissions = $permissions->filter(function ($perm) {
             return str_starts_with($perm->name, 'ORG_');
@@ -65,7 +68,7 @@ class RoleController extends Controller
 
         return Inertia::render('Roles/Create', [
             'systemPermissions' => $systemPermissions,
-            'orgPermissions' => $orgPermissions,
+            'orgPermissions'    => $orgPermissions,
         ]);
     }
 
