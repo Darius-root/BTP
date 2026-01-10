@@ -13,7 +13,7 @@ class RolePermissionSeeder extends Seeder
         // =========================
         // PERMISSIONS SYSTEME
         // =========================
-     
+
         $systemPermissions = [
 
             'SYSTEM',
@@ -77,9 +77,16 @@ class RolePermissionSeeder extends Seeder
             'SYSTEM_COLLECTION_EDIT',
             'SYSTEM_COLLECTION_DELETE',
 
-            
+            //niveau_batiment
+            'SYSTEM_NIVEAU_BATIMENT_VIEW',
+            'SYSTEM_NIVEAU_BATIMENT_CREATE',
+            'SYSTEM_NIVEAU_BATIMENT_EDIT',
+            'SYSTEM_NIVEAU_BATIMENT_DELETE',
 
-        
+
+
+
+
         ];
 
 
@@ -137,11 +144,6 @@ class RolePermissionSeeder extends Seeder
             'ORG_BATIMENT_EDIT',
             'ORG_BATIMENT_DELETE',
 
-            //niveau_batiment
-            'ORG_NIVEAU_VIEW',
-            'ORG_NIVEAU_CREATE',
-            'ORG_NIVEAU_EDIT',
-            'ORG_NIVEAU_DELETE',
 
         ];
 
@@ -165,7 +167,7 @@ class RolePermissionSeeder extends Seeder
         // ROLES ORGANISATION
         // =========================
         $orgRoles = [
-            'ORG_ADMIN',        
+            'ORG_ADMIN',
         ];
 
         foreach ($orgRoles as $roleName) {

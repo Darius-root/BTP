@@ -12,7 +12,6 @@ return new class extends Migration {
     {
         Schema::create('niveaux_batiment', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('batiment_id')->constrained('batiments')->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('code');
             $table->string('nom');

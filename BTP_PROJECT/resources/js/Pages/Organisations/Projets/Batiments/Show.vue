@@ -56,12 +56,7 @@
 
                             <!-- Actions -->
                             <div class="flex flex-wrap items-center justify-end gap-3 mt-6">
-                                <!-- Voir niveaux -->
-                                <Link :href="route('batiments.niveaux.index', batiment.id)"
-                                    class="inline-flex items-center px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors">
-                                    <Building2 class="w-4 h-4 mr-1" />
-                                    Voir niveaux
-                                </Link>
+                                
 
                                 <!-- Modifier -->
                                 <Link :href="route('batiments.edit', batiment.id)"

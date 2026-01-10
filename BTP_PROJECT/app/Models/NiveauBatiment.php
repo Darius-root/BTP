@@ -13,17 +13,13 @@ class NiveauBatiment extends Model
     protected $table = 'niveaux_batiment';
 
     protected $fillable = [
-        'batiment_id',
         'user_id',
         'code',
         'nom',
         'description',
     ];
 
-    public function batiment(): BelongsTo
-    {
-        return $this->belongsTo(Batiment::class);
-    }
+
 
     public function user(): BelongsTo
     {
