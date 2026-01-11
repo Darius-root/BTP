@@ -27,6 +27,8 @@ class ProjetController extends Controller
     /**
      * Liste des projets de l'organisation active
      */
+
+    
     public function index()
     {
         try {

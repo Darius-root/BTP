@@ -144,7 +144,11 @@ class RolePermissionSeeder extends Seeder
             'ORG_BATIMENT_EDIT',
             'ORG_BATIMENT_DELETE',
 
-
+            // Devis ESTIMATIF
+            'ORG_DEVIS_ESTIMATIF_VIEW',
+            'ORG_DEVIS_ESTIMATIF_CREATE',
+            'ORG_DEVIS_ESTIMATIF_EDIT',
+            'ORG_DEVIS_ESTIMATIF_DELETE',
         ];
 
         foreach ($orgPermissions as $perm) {
@@ -185,6 +189,5 @@ class RolePermissionSeeder extends Seeder
         // ORG_OWNER → toutes les permissions organisationnelles
         $owner = Role::findByName('ORG_ADMIN');
         $owner->givePermissionTo($orgPermissions);
-
     }
 }

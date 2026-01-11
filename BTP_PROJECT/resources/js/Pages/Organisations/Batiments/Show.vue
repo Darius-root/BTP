@@ -1,3 +1,33 @@
+<script setup>
+import { ref } from 'vue'
+import { Head, Link, router } from '@inertiajs/vue3'
+import { ArrowLeft, Edit, Trash2, Building2 } from 'lucide-vue-next'
+
+import AdminLayout from '@/components/layout/AdminLayout.vue'
+import SidebarProvider from '@/components/layout/SidebarProvider.vue'
+import PageBreadcrumb from '@/components/common/PageBreadcrumb.vue'
+
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+
+const props = defineProps({
+    batiment: {
+        type: Object,
+        required: true
+    }
+})
+
+const currentPageTitle = ref('Détails Bâtiment')
+
+const confirmDelete = (batiment) => {
+    if (
+        confirm(
+            `Êtes-vous sûr de vouloir supprimer le bâtiment "${batiment.nom}" ? Cette action est irréversible.`
+        )
+    ) {
+        router.delete(route('batiments.destroy', batiment.id))
+    }
+}
+</script>
 <template>
 
     <Head title="Détails du bâtiment" />
@@ -54,6 +84,44 @@
                                 </div>
                             </div>
 
+
+
+
+
+
+
+<!-- Actions -->
+
+    <!-- ================= DEVIS ================= -->
+
+    <!-- Créer devis (si aucun devis) -->
+    <Link
+        :href="route('batiments.devis.create', { batiment: batiment.id })"
+        class="inline-flex items-center px-4 py-2 text-sm text-green-600 hover:bg-green-50 rounded-md transition-colors"
+    >
+        <Building2 class="w-4 h-4 mr-1" />
+        Créer un devis
+    </Link>
+
+    <!-- Voir devis (si déjà créé) -->
+    <Link
+       
+        :href="route('batiments.devis.show', { batiment: batiment.id, devi:1 })"
+        class="inline-flex items-center px-4 py-2 text-sm text-purple-600 hover:bg-purple-50 rounded-md transition-colors"
+    >
+        <Building2 class="w-4 h-4 mr-1" />
+        Voir le devis ESTIMATIF
+    </Link>
+
+
+   
+
+
+
+
+
+
+
                             <!-- Actions -->
                             <div class="flex flex-wrap items-center justify-end gap-3 mt-6">
                                 
@@ -80,33 +148,3 @@
     </SidebarProvider>
 </template>
 
-<script setup>
-import { ref } from 'vue'
-import { Head, Link, router } from '@inertiajs/vue3'
-import { ArrowLeft, Edit, Trash2, Building2 } from 'lucide-vue-next'
-
-import AdminLayout from '@/components/layout/AdminLayout.vue'
-import SidebarProvider from '@/components/layout/SidebarProvider.vue'
-import PageBreadcrumb from '@/components/common/PageBreadcrumb.vue'
-
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-
-const props = defineProps({
-    batiment: {
-        type: Object,
-        required: true
-    }
-})
-
-const currentPageTitle = ref('Détails Bâtiment')
-
-const confirmDelete = (batiment) => {
-    if (
-        confirm(
-            `Êtes-vous sûr de vouloir supprimer le bâtiment "${batiment.nom}" ? Cette action est irréversible.`
-        )
-    ) {
-        router.delete(route('batiments.destroy', batiment.id))
-    }
-}
-</script>

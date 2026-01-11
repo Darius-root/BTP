@@ -7,12 +7,14 @@ use App\Models\ComposantNiveau;
 use App\Models\DevisEstimatif;
 use App\Models\NiveauBatiment;
 use App\Models\UniteMesure;
+use App\Services\OrganisationContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
+use Symfony\Component\HttpFoundation\Response;
 
 class DevisEstimatifController extends Controller
 {
@@ -27,21 +29,41 @@ class DevisEstimatifController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
-    {
-        $niveaux = NiveauBatiment::all();      // niveaux disponibles
-        $unites = UniteMesure::all();
 
-        // unités de mesure
+
+    public function create(Batiment $batiment)
+    {
+       // $this->validateBatimentAccess($batiment, 'ORG_DEVIS_ESTIMATIF_VIEW');
+
+        // Vérifier qu'il n'y a pas déjà un devis
+        if ($batiment->devisEstimatif()->exists()) {
+            return redirect()
+                ->route('batiments.show', $batiment)
+                ->with('error', 'Ce bâtiment possède déjà un devis estimatif.');
+        }
+
+        // Charger les données nécessaires
+        $niveaux = NiveauBatiment::all();
+        $unites  = UniteMesure::all();
         return Inertia::render('Organisations/DevisEstimatif/Create', [
-            'niveaux' => $niveaux,
-            'unites' => $unites,
+            'batiment' => $batiment,
+            'niveaux'  => $niveaux,
+            'unites'   => $unites,
         ]);
     }
 
 
-    public function store(Request $request)
+    public function store(Request $request, Batiment $batiment)
     {
+
+
+       // $this->validateBatimentAccess($batiment, 'ORG_DEVIS_ESTIMATIF_VIEW');
+
+        if ($batiment->devisEstimatif()->exists()) {
+            return redirect()
+                ->route('batiments.show', $batiment)
+                ->with('error', 'Ce bâtiment possède déjà un devis estimatif.');
+        }
 
         $request->validate(
             [
@@ -106,27 +128,6 @@ class DevisEstimatifController extends Controller
             ]
         );
 
-        dd($request->all());
-
-        $batiment = Batiment::with('projet.organisation')->findOrFail(
-            $request->batiment_id
-        );
-
-        // Organisation active
-        if (
-            session('active_organisation_id') !==
-            $batiment->projet->organisation_id
-        ) {
-            abort(403, "Organisation invalide");
-        }
-
-        // Sécurité utilisateur
-        if (! auth()->user()
-            ->organisations
-            ->contains($batiment->projet->organisation_id)) {
-            abort(403, "Accès refusé");
-        }
-
 
         return DB::transaction(function () use ($request) {
 
@@ -178,7 +179,7 @@ class DevisEstimatifController extends Controller
             }
 
             return redirect()
-                ->route('devis.show', $devis->id)
+                ->route('batiments.devis.store', $request->batiment_id)
                 ->with('success', 'Devis estimatif créé avec succès.');
         });
     }
@@ -198,10 +199,79 @@ class DevisEstimatifController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
-    {
-        //
+
+   
+    public function show(Batiment $batiment)
+{
+
+       //$this->validateBatimentAccess($batiment, 'ORG_DEVIS_ESTIMATIF_VIEW');
+
+    $devis = $batiment->devisEstimatif;
+
+    if (! $devis) {
+        return redirect()
+            ->route('batiments.show', $batiment)
+            ->with('error', 'Ce bâtiment ne possède pas encore de devis estimatif.');
     }
+
+    $devis->load([
+        'batiment.projet.organisation',
+        'composants.niveau',
+        'composants.unite',
+    ]);
+
+    return Inertia::render('Organisations/DevisEstimatif/Show', [
+        'batiment' => [
+            'id' => $batiment->id,
+            'nom' => $batiment->nom,
+        ],
+
+        'devis' => [
+            'id' => $devis->id,
+            'intitule' => $devis->intitule,
+            'statut' => $devis->statut,
+
+            'batiment' => [
+                'nom' => $devis->batiment->nom,
+                'projet' => [
+                    'nom' => $devis->batiment->projet->nom,
+                    'organisation' => [
+                        'nom' => $devis->batiment->projet->organisation->nom,
+                    ],
+                ],
+            ],
+
+            'composants' => $devis->composants->map(fn ($c) => [
+                'id' => $c->id,
+                'code' => $c->code,
+                'piece' => $c->piece,
+                'qte' => $c->qte,
+                'prix_unitaire' => $c->prix_unitaire,
+                'montant' => $c->montant,
+
+                'niveau' => [
+                    'id' => $c->niveau->id,
+                    'nom' => $c->niveau->libelle,
+                ],
+
+                'unite' => [
+                    'id' => $c->unite->id,
+                    'nom' => $c->unite->nom,
+                ],
+            ]),
+        ],
+
+        'totauxParNiveau' => $devis->totalParNiveau()->map(fn ($row) => [
+            'niveau_id' => $row->niveau_id,
+            'niveau_nom' => $row->niveau->nom,
+            'total' => $row->total,
+        ])->values(),
+
+        'totalGeneral' => $devis->total(),
+    ]);
+}
+
+
 
     /**
      * Show the form for editing the specified resource.
@@ -225,5 +295,32 @@ class DevisEstimatifController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+
+
+    protected function validateBatimentAccess(Batiment $batiment, $permission): void
+    {
+        $activeOrganisationId = getPermissionsTeamId();
+
+        // Vérifier permission
+        if (!OrganisationContext::hasPermission(Auth::user(), $activeOrganisationId, $permission)) {
+            abort(Response::HTTP_FORBIDDEN, "Vous n'avez pas cette permission");
+        }
+
+        // Vérifier projet
+        if (!$batiment->projet) {
+            abort(Response::HTTP_NOT_FOUND, 'Projet introuvable pour ce bâtiment.');
+        }
+
+        // Vérifier organisation
+        if (!$batiment->projet->organisation) {
+            abort(Response::HTTP_NOT_FOUND, 'Organisation introuvable.');
+        }
+
+        // Vérifier organisation active
+        if ($batiment->projet->organisation->id !== $activeOrganisationId) {
+            abort(Response::HTTP_FORBIDDEN, 'Accès refusé à ce bâtiment.');
+        }
     }
 }

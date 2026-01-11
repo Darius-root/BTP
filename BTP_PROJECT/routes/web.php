@@ -107,8 +107,7 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
         Route::resource('batiments', BatimentController::class);
 
         //  Niveaux
-        Route::resource('niveaux-batiment', NiveauBatimentController::class)->parameters(['niveaux-batiment' => 'niveauBatiment']);
-        ;
+        Route::resource('niveaux-batiment', NiveauBatimentController::class)->parameters(['niveaux-batiment' => 'niveauBatiment']);;
 
 
 
@@ -122,8 +121,9 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
             [BatimentController::class, 'createFromProjet']
         )->name('projets.batiments.create');
 
+        Route::resource('batiments.devis', DevisEstimatifController::class);
 
-        Route::resource('devis_estmatif', DevisEstimatifController::class)->names('devis_estmatif');
+       
     });
 
 
