@@ -123,7 +123,7 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
         )->name('projets.batiments.create');
 
 
-        Route::resource('devis_estmatif', DevisEstimatifController::class)->names('devisEstimatif');
+        Route::resource('devis_estmatif', DevisEstimatifController::class)->names('devis_estmatif');
     });
 
 

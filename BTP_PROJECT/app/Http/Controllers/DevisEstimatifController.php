@@ -28,6 +28,7 @@ class DevisEstimatifController extends Controller
     {
         $niveaux = NiveauBatiment::all();      // niveaux disponibles
         $unites = UniteMesure::all();  
+      
         // unités de mesure
         return Inertia::render('Organisations/DevisEstimatif/Create', [
             'niveaux' => $niveaux,
@@ -38,6 +39,8 @@ class DevisEstimatifController extends Controller
 
     public function store(Request $request)
     {
+
+    dd($request->all());
         $request->validate([
             'intitule' => 'required|string|max:255',
             'batiment_id' => 'nullable|exists:batiments,id',

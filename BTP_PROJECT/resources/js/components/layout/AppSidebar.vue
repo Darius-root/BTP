@@ -62,6 +62,7 @@ const menuGroups = [
                 name: "Configurations",
                 icon: ListIcon,
                 subItems: [
+                    { name: "Niveau Batiment", path: "/niveaux-batiment", permission: "SYSTEM_NIVEAU_BATIMENT_VIEW" },
                     { name: "Corps d'état", path: "/corps-etat", permission: "SYSTEM_CORPS_ETAT_VIEW" },
                     { name: "Devises", path: "/devises", permission: "SYSTEM_DEVISE_VIEW" },
                     { name: "Matériaux", path: "/materiaux", permission: "SYSTEM_MATERIAU_VIEW" },

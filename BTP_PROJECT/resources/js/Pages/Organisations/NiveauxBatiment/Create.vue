@@ -1,6 +1,5 @@
 <template>
-
-    <Head :title="currentPageTitle" />
+    <Head title="Créer un niveau" />
 
     <SidebarProvider>
         <AdminLayout>
@@ -11,22 +10,10 @@
                     <Card class="border-0 shadow-none">
 
                         <CardHeader class="px-0 pt-0">
-                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                                <div>
-                                    <CardTitle class="text-3xl">
-                                        Créer un niveau
-                                    </CardTitle>
-                                    <CardDescription class="mt-1">
-                                        Ajoutez un nouveau niveau de bâtiment
-                                    </CardDescription>
-                                </div>
-
-                                <Link :href="route('niveaux-batiment.index')"
-                                    class="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors">
-                                    <ArrowLeft class="w-4 h-4 mr-2" />
-                                    Retour à la liste
-                                </Link>
-                            </div>
+                            <CardTitle class="text-3xl">Créer un niveau</CardTitle>
+                            <CardDescription class="mt-1">
+                                Ajoutez un nouveau niveau
+                            </CardDescription>
                         </CardHeader>
 
                         <CardContent class="px-0">
@@ -34,47 +21,60 @@
 
                                 <!-- Code -->
                                 <div class="space-y-2">
-                                    <Label for="code">
-                                        Code <span class="text-red-500">*</span>
-                                    </Label>
-                                    <Input id="code" v-model="form.code" type="text" placeholder="Ex : NIV-RDC, NIV-01"
-                                        :class="{ 'border-red-300': form.errors.code }" required />
+                                    <Label for="code">Code <span class="text-red-500">*</span></Label>
+                                    <Input
+                                        id="code"
+                                        v-model="form.code"
+                                        type="text"
+                                        placeholder="Ex : NIV-RDC, NIV-01"
+                                        :class="{ 'border-red-300': form.errors.code }"
+                                        required
+                                    />
+                                    <p v-if="form.errors.code" class="text-sm text-red-600">{{ form.errors.code }}</p>
                                 </div>
 
                                 <!-- Nom -->
                                 <div class="space-y-2">
-                                    <Label for="nom">
-                                        Nom du niveau <span class="text-red-500">*</span>
-                                    </Label>
-                                    <Input id="nom" v-model="form.nom" type="text" placeholder="Ex : Rez-de-chaussée"
-                                        :class="{ 'border-red-300': form.errors.nom }" required />
+                                    <Label for="nom">Nom du niveau <span class="text-red-500">*</span></Label>
+                                    <Input
+                                        id="nom"
+                                        v-model="form.nom"
+                                        type="text"
+                                        placeholder="Ex : Rez-de-chaussée"
+                                        :class="{ 'border-red-300': form.errors.nom }"
+                                        required
+                                    />
+                                    <p v-if="form.errors.nom" class="text-sm text-red-600">{{ form.errors.nom }}</p>
                                 </div>
 
                                 <!-- Description -->
                                 <div class="space-y-2">
                                     <Label for="description">Description</Label>
-                                    <textarea id="description" v-model="form.description" rows="4"
+                                    <textarea
+                                        id="description"
+                                        v-model="form.description"
+                                        rows="4"
                                         class="w-full border rounded-md p-2"
-                                        :class="{ 'border-red-300': form.errors.description }" />
+                                        :class="{ 'border-red-300': form.errors.description }"
+                                    />
                                 </div>
 
                                 <!-- Actions -->
                                 <div class="flex items-center justify-between pt-4 border-t border-gray-100">
-                                    <Link :href="route('niveaux-batiment.index')"
-                                        class="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                                    <Link
+                                        :href="route('niveaux-batiment.index')"
+                                        class="text-sm text-gray-600 hover:text-gray-900"
+                                    >
                                         Annuler
                                     </Link>
 
-                                    <Button type="submit" :disabled="form.processing"
-                                        class="bg-blue-600 hover:bg-blue-700">
-                                        <span v-if="form.processing" class="flex items-center">
-                                            <Loader2 class="w-4 h-4 mr-2 animate-spin" />
-                                            Création...
-                                        </span>
-                                        <span v-else class="flex items-center">
-                                            <Save class="w-4 h-4 mr-2" />
-                                            Enregistrer
-                                        </span>
+                                    <Button
+                                        type="submit"
+                                        :disabled="form.processing"
+                                        class="bg-blue-600 hover:bg-blue-700"
+                                    >
+                                        <span v-if="form.processing">Création...</span>
+                                        <span v-else>Enregistrer</span>
                                     </Button>
                                 </div>
 
@@ -89,9 +89,8 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref } from 'vue'
 import { Head, Link, useForm } from '@inertiajs/vue3'
-import { Save, ArrowLeft, Loader2 } from 'lucide-vue-next'
 
 import AdminLayout from '@/components/layout/AdminLayout.vue'
 import SidebarProvider from '@/components/layout/SidebarProvider.vue'
@@ -102,7 +101,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 
-const currentPageTitle = computed(() => 'Créer un niveau')
+const currentPageTitle = ref('Créer un niveau')
 
 const form = useForm({
     code: '',

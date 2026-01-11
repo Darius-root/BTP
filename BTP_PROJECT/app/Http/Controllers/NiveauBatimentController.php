@@ -3,11 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\NiveauBatiment;
-use App\Models\Batiment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
-use Illuminate\Http\RedirectResponse;
 
 class NiveauBatimentController extends Controller
 {
@@ -36,7 +34,6 @@ class NiveauBatimentController extends Controller
         if (!Auth::user()->can('SYSTEM_NIVEAU_BATIMENT_CREATE')) {
             abort(403, "Vous n'avez pas la permission de créer un niveau.");
         }
-
 
         return Inertia::render('Organisations/NiveauxBatiment/Create');
     }
@@ -87,11 +84,8 @@ class NiveauBatimentController extends Controller
             abort(403, "Vous n'avez pas la permission de modifier ce niveau.");
         }
 
-        $batiments = Batiment::all();
-
         return Inertia::render('Organisations/NiveauxBatiment/Edit', [
             'niveau' => $niveauBatiment,
-            'batiments' => $batiments,
         ]);
     }
 
@@ -113,7 +107,7 @@ class NiveauBatimentController extends Controller
         $niveauBatiment->update($validated);
 
         return redirect()
-            ->route('niveaux.index')
+            ->route('niveaux-batiment.index')
             ->with('success', 'Niveau mis à jour avec succès.');
     }
 

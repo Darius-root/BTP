@@ -1,111 +1,224 @@
-<script setup>
-import { reactive, ref } from 'vue';
+<script setup lang="ts">
+import { ref, computed } from 'vue';
 import { useForm } from '@inertiajs/vue3';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head } from '@inertiajs/vue3';
 
-const props = defineProps({
-    niveaux: Array,
-    unites: Array,
-});
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+// Icônes Lucide
+import { PlusCircle, Trash2, Plus, XCircle, CheckCircle, Calculator, Sigma } from 'lucide-vue-next';
+
+// Types explicites
+interface Niveau {
+  id: number;
+  nom: string;
+}
+
+interface Unite {
+  id: number;
+  nom: string;
+}
+
+const props = defineProps<{
+  niveaux: Niveau[];
+  unites: Unite[];
+}>();
 
 const form = useForm({
-    intitule: '',
-    batiment_id: null,
-    niveaux: [
+  intitule: '',
+  niveaux: [
+    {
+      niveau_id: null as number | null,
+      composants: [
         {
-            niveau_id: null,
-            composants: [
-                {
-                    code: '',
-                    piece: '',
-                    unite_id: null,
-                    qte: 0,
-                    prix_unitaire: 0,
-                },
-            ],
+          code: '',
+          piece: '',
+          unite_id: null as number | null,
+          qte: 0,
+          prix_unitaire: 0,
         },
-    ],
+      ],
+    },
+  ],
 });
 
+// Ajouter / Supprimer niveau
 const addNiveau = () => {
-    form.niveaux.push({
-        niveau_id: null,
-        composants: [
-            {
-                code: '',
-                piece: '',
-                unite_id: null,
-                qte: 0,
-                prix_unitaire: 0,
-            },
-        ],
-    });
-};
-
-const removeNiveau = (index) => {
-    form.niveaux.splice(index, 1);
-};
-
-const addComposant = (niveauIndex) => {
-    form.niveaux[niveauIndex].composants.push({
+  form.niveaux.push({
+    niveau_id: null,
+    composants: [
+      {
         code: '',
         piece: '',
         unite_id: null,
         qte: 0,
         prix_unitaire: 0,
-    });
+      },
+    ],
+  });
 };
 
-const removeComposant = (niveauIndex, compIndex) => {
-    form.niveaux[niveauIndex].composants.splice(compIndex, 1);
+const removeNiveau = (index: number) => {
+  form.niveaux.splice(index, 1);
 };
+
+// Ajouter / Supprimer composant
+const addComposant = (niveauIndex: number) => {
+  form.niveaux[niveauIndex].composants.push({
+    code: '',
+    piece: '',
+    unite_id: null,
+    qte: 0,
+    prix_unitaire: 0,
+  });
+};
+
+const removeComposant = (niveauIndex: number, compIndex: number) => {
+  form.niveaux[niveauIndex].composants.splice(compIndex, 1);
+};
+
+// Niveaux disponibles
+const availableNiveaux = (currentIndex: number) => {
+  const selectedIds = form.niveaux
+    .filter((_, i) => i !== currentIndex)
+    .map(n => n.niveau_id)
+    .filter((id): id is number => id !== null);
+  return props.niveaux.filter(n => !selectedIds.includes(n.id));
+};
+
+// Sous-totaux
+const niveauSubtotal = (niveau: typeof form.niveaux[number]) => {
+  return niveau.composants.reduce((sum, comp) => {
+    return sum + (comp.qte * comp.prix_unitaire);
+  }, 0);
+};
+
+// Total général
+const totalGeneral = computed(() => {
+  return form.niveaux.reduce((sum, niveau) => {
+    return sum + niveauSubtotal(niveau);
+  }, 0);
+});
 
 const submit = () => {
-    form.post(route('devis.store'));
+  form.post(route('devis_estmatif.store'));
 };
 </script>
 
 <template>
-    <Head title="Créer un Devis Estimatif" />
+  <Head title="Créer un Devis Estimatif" />
 
-    <div class="p-6">
-        <h1 class="text-2xl font-bold mb-4">Créer un Devis Estimatif</h1>
+  <div class="p-6 space-y-6">
+    <Card>
+      <CardHeader>
+        <CardTitle class="flex items-center gap-2">
+          <Calculator class="w-5 h-5 text-blue-600" />
+          Créer un Devis Estimatif
+        </CardTitle>
+      </CardHeader>
+      <CardContent class="space-y-4">
 
-        <div class="mb-4">
-            <label class="block mb-1">Intitulé</label>
-            <input v-model="form.intitule" class="border p-2 w-full" />
+        <!-- Intitulé -->
+        <div class="space-y-1">
+          <Label for="intitule">Intitulé</Label>
+          <Input id="intitule" v-model="form.intitule" placeholder="Nom du devis" />
         </div>
 
-        <div v-for="(niveau, nIndex) in form.niveaux" :key="nIndex" class="border p-4 mb-4 rounded">
-            <div class="flex justify-between items-center mb-2">
-                <label>Niveau</label>
-                <button type="button" @click="removeNiveau(nIndex)" class="text-red-500">Supprimer Niveau</button>
+        <!-- Niveaux -->
+        <div v-for="(niveau, nIndex) in form.niveaux" :key="nIndex" class="border p-4 rounded space-y-4 bg-gray-50">
+          
+          <div class="flex justify-between items-center">
+            <Label class="font-semibold">Niveau</Label>
+            <Button size="sm" variant="destructive" @click="removeNiveau(nIndex)">
+              <Trash2 class="w-4 h-4 mr-1" /> Supprimer Niveau
+            </Button>
+          </div>
+
+          <Select v-model="niveau.niveau_id">
+            <SelectTrigger class="w-full">
+              <SelectValue placeholder="-- Choisir un niveau --" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem
+                v-for="n in availableNiveaux(nIndex)"
+                :key="n.id"
+                :value="n.id"
+              >
+                {{ n.nom }}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+
+          <!-- Composants -->
+          <div v-for="(comp, cIndex) in niveau.composants" :key="cIndex" class="grid grid-cols-7 gap-2 items-end">
+            <div>
+              <Label>Code</Label>
+              <Input v-model="comp.code" placeholder="ASxx" />
+            </div>
+            <div class="col-span-2">
+              <Label>Pièce</Label>
+              <Input v-model="comp.piece" placeholder="Nom de la pièce" />
+            </div>
+            <div>
+              <Label>Unité</Label>
+              <Select v-model="comp.unite_id">
+                <SelectTrigger class="w-full">
+                  <SelectValue placeholder="-- Unité --" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="u in props.unites" :key="u.id" :value="u.id">{{ u.nom }}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Qté</Label>
+              <Input type="number" v-model.number="comp.qte" placeholder="0" />
+            </div>
+            <div>
+              <Label>Prix Unitaire</Label>
+              <Input type="number" v-model.number="comp.prix_unitaire" placeholder="0" />
             </div>
 
-            <select v-model="niveau.niveau_id" class="border p-2 w-full mb-2">
-                <option value="">-- Choisir un niveau --</option>
-                <option v-for="n in niveaux" :key="n.id" :value="n.id">{{ n.nom }}</option>
-            </select>
-
-            <div v-for="(comp, cIndex) in niveau.composants" :key="cIndex" class="flex gap-2 mb-2 items-end">
-                <input v-model="comp.code" placeholder="Code ASxx" class="border p-2 w-24" />
-                <input v-model="comp.piece" placeholder="Pièce" class="border p-2 flex-1" />
-                <select v-model="comp.unite_id" class="border p-2 w-32">
-                    <option value="">-- Unité --</option>
-                    <option v-for="u in unites" :key="u.id" :value="u.id">{{ u.nom }}</option>
-                </select>
-                <input v-model.number="comp.qte" placeholder="Qté" class="border p-2 w-24" type="number" />
-                <input v-model.number="comp.prix_unitaire" placeholder="Prix Unitaire" class="border p-2 w-32" type="number" />
-                <button type="button" @click="removeComposant(nIndex, cIndex)" class="text-red-500">Supprimer</button>
+            <!-- Bouton sur la même ligne -->
+            <div class="flex items-center justify-center">
+              <Button size="sm" variant="destructive" @click="removeComposant(nIndex, cIndex)">
+                <XCircle class="w-4 h-4 mr-1" /> Supprimer
+              </Button>
             </div>
+          </div>
 
-            <button type="button" @click="addComposant(nIndex)" class="text-blue-500 mt-2">Ajouter un composant</button>
+          <Button size="sm" variant="outline" @click="addComposant(nIndex)">
+            <Plus class="w-4 h-4 mr-1" /> Ajouter un composant
+          </Button>
+
+          <!-- Sous-total -->
+          <div class="flex justify-end items-center bg-white p-2 rounded mt-2 shadow-sm">
+            <Calculator class="w-4 h-4 mr-2 text-gray-600" />
+            <span class="font-semibold">Sous-total : {{ niveauSubtotal(niveau).toLocaleString() }} FCFA</span>
+          </div>
         </div>
 
-        <button type="button" @click="addNiveau" class="text-green-500 mb-4">Ajouter un niveau</button>
+        <Button size="sm" variant="secondary" @click="addNiveau">
+          <PlusCircle class="w-4 h-4 mr-1" /> Ajouter un niveau
+        </Button>
 
-        <div>
-            <button @click="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Créer Devis</button>
+        <!-- Total général -->
+        <div class="flex justify-end items-center text-green-600 font-bold text-lg mt-6">
+          <Sigma class="w-5 h-5 mr-2" />
+          Total Général : {{ totalGeneral.toLocaleString() }} FCFA
         </div>
-    </div>
+
+        <div class="mt-4 flex justify-end">
+          <Button @click="submit" class="bg-blue-600 text-white hover:bg-blue-700">
+            <CheckCircle class="w-4 h-4 mr-1" /> Créer Devis
+          </Button>
+        </div>
+
+      </CardContent>
+    </Card>
+  </div>
 </template>
