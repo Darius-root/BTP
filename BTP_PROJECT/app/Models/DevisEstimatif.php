@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 
 class DevisEstimatif extends Model
 {
@@ -26,10 +27,12 @@ class DevisEstimatif extends Model
     // RELATIONS
     // =====================
 
+
     public function batiment()
     {
         return $this->belongsTo(Batiment::class);
     }
+
 
     public function template()
     {
@@ -45,6 +48,11 @@ class DevisEstimatif extends Model
     {
         return $this->hasMany(ComposantNiveau::class);
     }
+
+
+
+
+
 
     // =====================
     // MÉTHODES MÉTIER

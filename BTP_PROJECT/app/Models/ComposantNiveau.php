@@ -32,7 +32,7 @@ class ComposantNiveau extends Model
     // RELATIONS
     // =====================
 
-    public function devis()
+    public function devisEstimatif()
     {
         return $this->belongsTo(DevisEstimatif::class, 'devis_estimatif_id');
     }

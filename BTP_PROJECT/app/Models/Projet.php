@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Projet extends Model
 {
@@ -50,4 +51,15 @@ class Projet extends Model
     {
         return $this->hasMany(Batiment::class);
     }
+
+    
+
+    public function devisEstimatif(): HasManyThrough
+{
+    return $this->hasManyThrough(
+        DevisEstimatif::class,
+        Batiment::class
+    );
+}
+
 }
