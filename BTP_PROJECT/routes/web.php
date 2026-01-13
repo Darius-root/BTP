@@ -121,9 +121,18 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
             [BatimentController::class, 'createFromProjet']
         )->name('projets.batiments.create');
 
-        Route::resource('batiments.devis', DevisEstimatifController::class);
+        Route::resource('batiments.devisestimatif', DevisEstimatifController::class);
 
-       
+
+        Route::post(
+            '/batiments/{batiment}/devis/{devis}/valider',
+            [DevisEstimatifController::class, 'valider']
+        )->name('devisestimatif.valider');
+
+        Route::post(
+            '/batiments/{batiment}/devis/{devis}/brouillon',
+            [DevisEstimatifController::class, 'brouillon']
+        )->name('devisestimatif.brouillon');
     });
 
 

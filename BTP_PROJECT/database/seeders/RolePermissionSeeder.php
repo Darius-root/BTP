@@ -98,12 +98,7 @@ class RolePermissionSeeder extends Seeder
         // PERMISSIONS ORGANISATION
         // =========================
         $orgPermissions = [
-            'ORG_ADD_USER_TO_ORGANISATION',
-            'ORG_DEVIS_CREATE',
-            'ORG_DEVIS_EDIT',
-            'ORG_DEVIS_VALIDATE',
-            'ORG_PRIX_CREATE',
-            'ORG_PRIX_VALIDATE',
+            
 
             //organisation
             'ORG_ORGANISATION_VIEW',
@@ -149,6 +144,8 @@ class RolePermissionSeeder extends Seeder
             'ORG_DEVIS_ESTIMATIF_CREATE',
             'ORG_DEVIS_ESTIMATIF_EDIT',
             'ORG_DEVIS_ESTIMATIF_DELETE',
+            'ORG_DEVIS_ESTIMATIF_VALIDE',
+            'ORG_DEVIS_ESTIMATIF_NOVALIDE'
         ];
 
         foreach ($orgPermissions as $perm) {
@@ -185,6 +182,27 @@ class RolePermissionSeeder extends Seeder
         // SYSTEM_ADMIN_PLATEFORME → toutes les permissions système
         $adminPlateforme = Role::findByName('SYSTEM_ADMIN_PLATEFORME');
         $adminPlateforme->givePermissionTo($systemPermissions);
+
+
+        //Permissions org pour admin
+        $adminPlateforme->givePermissionTo([  
+              //projet
+            'ORG_PROJET_VIEW',
+            'ORG_PROJET_CREATE',
+            'ORG_PROJET_EDIT',
+            'ORG_PROJET_DELETE',
+
+            //batiment
+            'ORG_BATIMENT_VIEW',
+            'ORG_BATIMENT_CREATE',
+            'ORG_BATIMENT_EDIT',
+            'ORG_BATIMENT_DELETE',
+
+            // Devis ESTIMATIF
+            'ORG_DEVIS_ESTIMATIF_VIEW',
+            'ORG_DEVIS_ESTIMATIF_CREATE',
+            'ORG_DEVIS_ESTIMATIF_EDIT',
+            'ORG_DEVIS_ESTIMATIF_DELETE',]);
 
         // ORG_OWNER → toutes les permissions organisationnelles
         $owner = Role::findByName('ORG_ADMIN');

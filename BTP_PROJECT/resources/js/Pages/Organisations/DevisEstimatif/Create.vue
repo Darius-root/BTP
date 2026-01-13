@@ -52,6 +52,7 @@ const props = defineProps<{
     niveaux: Niveau[];
     unites: Unite[];
     batiment: Batiment;
+    devise: String
 }>();
 
 const form = useForm({
@@ -132,7 +133,7 @@ const totalGeneral = computed(() => {
 });
 
 const submit = () => {
-    form.post(route("batiments.devis.store", { batiment: props.batiment.id }));
+    form.post(route("batiments.devisestimatif.store", { batiment: props.batiment.id }));
 };
 </script>
 
@@ -145,7 +146,7 @@ const submit = () => {
             />
             <div class="p-6 space-y-6">
                      <form @submit.prevent="submit" >
-                        {{ form.errors }}
+                      
                 <Card>
                     <CardHeader>
                         <CardTitle class="flex items-center gap-2">
@@ -375,7 +376,7 @@ const submit = () => {
                                     {{
                                         niveauSubtotal(niveau).toLocaleString()
                                     }}
-                                    FCFA</span
+                                    {{devise}}</span
                                 >
                             </div>
                         </div>
@@ -395,7 +396,7 @@ const submit = () => {
                         >
                             <Sigma class="w-5 h-5 mr-2" />
                             Total Général :
-                            {{ totalGeneral.toLocaleString() }} FCFA
+                            {{ totalGeneral.toLocaleString() }} {{devise}}
                         </div>
 
                         <div class="mt-4 flex justify-end">

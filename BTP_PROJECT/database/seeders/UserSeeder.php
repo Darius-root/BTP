@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Client;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
@@ -37,6 +38,17 @@ class UserSeeder extends Seeder
                 'pays' => 'Bénin',
                 'devise' => 'XOF',
                 'user_id' => $user->id,
+            ]
+        );
+
+        Client::firstOrCreate(
+            [
+                'nom' => 'Client Système',
+                'societe' => 'Système',
+                'email' => 'client@systeme.com',
+                'telephone' => '',
+                'adresse' => '',
+                'organisation_id' => $org->id,
             ]
         );
         
