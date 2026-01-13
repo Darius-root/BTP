@@ -123,7 +123,7 @@ const confirmDelete = (batiment) => {
                                 class="inline-flex items-center px-4 py-2 text-sm text-green-600 hover:bg-green-50 rounded-md transition-colors"
                             >
                                 <Building2 class="w-4 h-4 mr-1" />
-                                Créer un devis
+                                Créer un devis estimatif
                             </Link>
 
                             <!-- Voir devis (si déjà créé) -->
@@ -139,7 +139,17 @@ const confirmDelete = (batiment) => {
                                 <Building2 class="w-4 h-4 mr-1" />
                                 Voir le devis ESTIMATIF
                             </Link>
-
+ <Link
+                                :href="
+                                    route('batiments.devis-estimatif-quantitatif.create', {
+                                        batiment: batiment.id,
+                                    })
+                                "
+                                class="inline-flex items-center px-4 py-2 text-sm text-green-600 hover:bg-green-50 rounded-md transition-colors"
+                            >
+                                <Building2 class="w-4 h-4 mr-1" />
+                                Créer un devis estimatif_quantitatitif
+                            </Link>
                             <!-- Actions -->
                             <div
                                 class="flex flex-wrap items-center justify-end gap-3 mt-6"
