@@ -149,14 +149,26 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
             // CRUD via resource
             Route::resource('devis-estimatif-quantitatif', DevisEstimatifQuantitatifController::class);
 
-            // Actions métier
-            Route::post('devis-estimatif-quantitatif/{devis}/valider', 
-                [DevisEstimatifQuantitatifController::class, 'valider']
-            )->name('devis-quantitatif.valider');
+            Route::get(
+                'devis-quantitatif/{devis_estimatif_quantitatif}/corps-etat',
+                [DevisEstimatifQuantitatifController::class, 'editCorpsEtat']
+            )->name('devis-estimatif-quantitatif.editCorpsEtat');
 
-            Route::post('devis-estimatif-quantitatif/{devis}/brouillon', 
+            Route::put(
+                'devis-quantitatif/{devis_estimatif_quantitatif}/corps-etat',
+                [DevisEstimatifQuantitatifController::class, 'updateCorpsEtat']
+            )->name('devis-estimatif-quantitatif.updateCorpsEtat');
+
+            // Actions métier
+            Route::post(
+                'devis-estimatif-quantitatif/{devis_estimatif_quantitatif}/valider',
+                [DevisEstimatifQuantitatifController::class, 'valider']
+            )->name('devis-estimatif-quantitatif.valider');
+
+            Route::post(
+                'devis-estimatif-quantitatif/{devis_estimatif_quantitatif}/brouillon',
                 [DevisEstimatifQuantitatifController::class, 'brouillon']
-            )->name('devis-quantitatif.brouillon');
+            )->name('devis-estimatif-quantitatif.brouillon');
         });
 
 

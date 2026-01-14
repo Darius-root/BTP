@@ -139,16 +139,35 @@ const confirmDelete = (batiment) => {
                                 <Building2 class="w-4 h-4 mr-1" />
                                 Voir le devis ESTIMATIF
                             </Link>
- <Link
+                            <Link
                                 :href="
-                                    route('batiments.devis-estimatif-quantitatif.create', {
-                                        batiment: batiment.id,
-                                    })
+                                    route(
+                                        'batiments.devis-estimatif-quantitatif.create',
+                                        {
+                                            batiment: batiment.id,
+                                        }
+                                    )
                                 "
                                 class="inline-flex items-center px-4 py-2 text-sm text-green-600 hover:bg-green-50 rounded-md transition-colors"
                             >
                                 <Building2 class="w-4 h-4 mr-1" />
-                                Créer un devis estimatif_quantitatitif
+                                Créer un devis estimatif_quantitatif
+                            </Link>
+
+                            <Link
+                                :href="
+                                    route(
+                                        'batiments.devis-estimatif-quantitatif.show',
+                                        {
+                                            batiment: batiment.id,
+                                            devis_estimatif_quantitatif: 1,
+                                        }
+                                    )
+                                "
+                                class="inline-flex items-center px-4 py-2 text-sm text-green-600 hover:bg-green-50 rounded-md transition-colors"
+                            >
+                                <Building2 class="w-4 h-4 mr-1" />
+                                Voir le devis estimatif_quantitatif
                             </Link>
                             <!-- Actions -->
                             <div

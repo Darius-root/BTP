@@ -23,6 +23,10 @@ class DevisEstimatifQuantitatifController extends Controller
         //  Sécurité métier
         // $this->validateBatimentAccess($batiment, 'DEVIS_QUANTITATIF_CREATE');
 
+
+        if ($batiment->devisEstimatifQuantitatif()->exists()) {
+            return redirect()->route('batiments.devis-estimatif-quantitatif.editCorpsEtat', ['batiment' => $batiment->id, 'devis_estimatif_quantitatif' => $batiment->devisEstimatifQuantitatif->id,])->with('error', 'Ce bâtiment possède déjà un devis. Vous avez été redirigé vers son édition.');
+        }
         return Inertia::render('Organisations/DevisEstimatifQte/Create', [
             'batiment' => [
                 'id'   => $batiment->id,
@@ -44,7 +48,7 @@ class DevisEstimatifQuantitatifController extends Controller
         // );
 
         if ($batiment->devisEstimatifQuantitatif()->exists()) {
-            return redirect()->route('batiments.devis-estimatif-quantitatif.edit', ['batiment' => $batiment->id, 'devis_estimatif_quantitatif' => $batiment->devisEstimatifQuantitatif->id,])->with('error', 'Ce bâtiment possède déjà un devis. Vous avez été redirigé vers son édition.');
+            return redirect()->route('batiments.devis-estimatif-quantitatif.editCorpsEtat', ['batiment' => $batiment->id, 'devis_estimatif_quantitatif' => $batiment->devisEstimatifQuantitatif->id,])->with('error', 'Ce bâtiment possède déjà un devis. Vous avez été redirigé vers son édition.');
         }
 
         $data = $request->validate([
@@ -71,42 +75,106 @@ class DevisEstimatifQuantitatifController extends Controller
     }
 
 
-    /**
-     * Affichage
-     */
-    public function show(Batiment $batiment, DevisEstimatifQuantitatif $devis)
+    public function edit(Batiment $batiment)
+{
+    //  Sécurité d’accès (optionnelle)
+    // $this->validateBatimentAccess(
+    //     $batiment,
+    //     'ORG_DEVIS_QUANTITATIF_EDIT'
+    // );
+
+    // Le bâtiment n’a qu’un seul devis
+    $devis = $batiment->devisEstimatifQuantitatif()->firstOrFail();
+
+    return Inertia::render('Organisations/DevisEstimatifQte/Edit', [
+        'batiment' => [
+            'id' => $batiment->id,
+            'nom' => $batiment->nom,
+        ],
+        'devis' => [
+            'id' => $devis->id,
+            'intitule' => $devis->intitule,
+            'code' => $devis->code,
+            'statut' => $devis->statut,
+        ],
+    ]);
+}
+
+    public function update(Request $request, Batiment $batiment)
     {
-        $this->assertBatimentDevis($batiment, $devis);
+     
+        //  Sécurité d’accès (optionnel)
+        // $this->validateBatimentAccess($batiment, 'ORG_DEVIS_QUANTITATIF_EDIT');
 
-        $devis->load([
-            'lots.corpsEtat',
-            'lots.composants.unite',
+        // On récupère le devis existant
+        $devis = $batiment->devisEstimatifQuantitatif()->firstOrFail();
+
+        // Validation
+        $data = $request->validate([
+            'intitule' => 'required|string|max:255',
+            'code' => 'required|string|max:50|unique:devis_estimatif_quantitatif,code,' . $devis->id,
+           
         ]);
 
-        return Inertia::render('Organisations/DevisEstimatifQte/Show', [
-            'batiment' => $batiment,
-            'devis' => $devis,
-            'totalGeneral' => $devis->total(),
+        // Mise à jour
+        $devis->update([
+            'intitule' => $data['intitule'],
+            'code' => $data['code'],
+            'updated_by' => Auth::user()->id, 
         ]);
+
+        return redirect()
+            ->route('batiments.devis-estimatif-quantitatif.show', ['batiment' => $batiment->id, 'devis_estimatif_quantitatif'=>$devis])
+            ->with('success', 'Devis mis à jour avec succès.');
     }
 
     /**
-     * Edition
+     * Affichage
      */
-    public function edit(Batiment $batiment, DevisEstimatifQuantitatif $devis)
+    public function show(Batiment $batiment)
     {
+        //  Sécurité d’accès (optionnel)
         // $this->validateBatimentAccess(
         //     $batiment,
-        //     'ORG_DEVIS_QUANTITATIF_EDIT'
+        //     'ORG_DEVIS_QUANTITATIF_VIEW'
         // );
 
-        $devis->load([
-            'lots.composants.unite',
-            'lots.corpsEtat',
-        ]);
+        $devis = $batiment->devisEstimatifQuantitatif()
+            ->with([
+                'lots.composants.unite',
+                'lots.corpsEtat',
+            ])
+            ->firstOrFail();
 
+        /**
+         * Tous les corps d’état,
+         * même ceux sans lots
+         */
+        $corpsEtats = CorpsEtat::orderBy('ordre')->get()->map(function ($ce) use ($devis) {
+            $lots = $devis->lots
+                ->where('corps_etat_id', $ce->id)
+                ->values()
+                ->map(fn($lot) => [
+                    'code' => $lot->code,
+                    'intitule' => $lot->intitule,
+                    'composants' => $lot->composants->map(fn($c) => [
+                        'designation' => $c->designation,
+                        'quantite' => $c->quantite,
+                        'prix_unitaire' => $c->prix_unitaire,
+                        'unite' => [
+                            'code' => $c->unite->code ?? null,
+                        ],
+                    ]),
+                ]);
 
-        return Inertia::render('Organisations/DevisEstimatifQte/Edit', [
+            return [
+                'id' => $ce->id,
+                'intitule' => $ce->intitule,
+                'lots' => $lots,
+            ];
+        });
+
+        return Inertia::render('Organisations/DevisEstimatifQte/Show', [
             'batiment' => [
                 'id' => $batiment->id,
                 'nom' => $batiment->nom,
@@ -116,102 +184,210 @@ class DevisEstimatifQuantitatifController extends Controller
                 'intitule' => $devis->intitule,
                 'statut' => $devis->statut,
             ],
-            'corpsEtats' => CorpsEtat::orderBy('ordre')->get(),
+            'corpsEtats' => $corpsEtats,
+            'devise' => $batiment->projet->devise['libelle'] ?? '__',
+        ]);
+    }
+
+    /**
+     * Edition
+     */
+    public function editCorpsEtat(Batiment $batiment,  $devis)
+    {
+        // $this->validateBatimentAccess(
+        //     $batiment,
+        //     'ORG_DEVIS_QUANTITATIF_EDIT'
+        // );
+
+        $devis = DevisEstimatifQuantitatif::find($devis);
+
+
+        $devis->load([
+            'lots.composants.unite',
+            'lots.corpsEtat',
+        ]);
+        $corpsEtats = CorpsEtat::orderBy('ordre')
+            ->with([
+                'lots' => function ($q) use ($devis) {
+                    $q->where('devis_id', $devis->id)
+                        ->with('composants');
+                }
+            ])
+            ->get();
+
+
+
+        return Inertia::render('Organisations/DevisEstimatifQte/EditCorpsEtat', [
+            'batiment' => [
+                'id' => $batiment->id,
+                'nom' => $batiment->nom,
+            ],
+            'devis' => [
+                'id' => $devis->id,
+                'intitule' => $devis->intitule,
+                'statut' => $devis->statut,
+            ],
+            'corpsEtats' => $corpsEtats,
             'unites' => UniteMesure::orderBy('libelle')->get(),
             'lots' => $devis->lots,
+            'devise' => $batiment->projet->devise['libelle'] ?? '__'
+
         ]);
     }
 
 
-    public function update(Request $request, DevisEstimatifQuantitatif $devis)
+
+    public function updateCorpsEtat(Request $request, Batiment $batiment, $devis)
     {
 
-    dd($request->all());
-        $data = $request->validate([
-            'corps_etats' => ['required', 'array'],
+        $devis = DevisEstimatifQuantitatif::find($devis);
 
-            'corps_etats.*.corps_etat_id' => ['required', 'exists:corps_etat,id'],
-            'corps_etats.*.lots' => ['nullable', 'array'],
+        //dd($request->all());
+        $data = $request->validate(
+            [
+                'corps_etat_id' => ['required', 'exists:corps_etat,id'],
 
-            'corps_etats.*.lots.*.code' => ['required', 'string'],
-            'corps_etats.*.lots.*.intitule' => ['required', 'string'],
-            'corps_etats.*.lots.*.composants' => ['nullable', 'array'],
+                'lots' => ['required', 'array', 'min:1'],
 
-            'corps_etats.*.lots.*.composants.*.designation' => ['required', 'string'],
-            'corps_etats.*.lots.*.composants.*.unite_id' => ['required', 'exists:unites_mesure,id'],
-            'corps_etats.*.lots.*.composants.*.quantite' => ['required', 'numeric', 'min:0'],
-            'corps_etats.*.lots.*.composants.*.prix_unitaire' => ['required', 'numeric', 'min:0'],
-        ]);
+                'lots.*.code' => ['required', 'string', 'max:50'],
+                'lots.*.intitule' => ['required', 'string', 'max:255'],
+
+                'lots.*.composants' => ['required', 'array', 'min:1'],
+
+                'lots.*.composants.*.designation' => ['required', 'string', 'max:255'],
+
+                'lots.*.composants.*.unite_id' => ['required', 'integer', 'exists:unites_mesure,id'],
+                'lots.*.composants.*.quantite' => ['required', 'numeric', 'gt:0'],
+                'lots.*.composants.*.prix_unitaire' => ['required', 'numeric', 'min:0'],
+            ],
+            [
+                // Corps d’état
+                'corps_etat_id.required' => 'Veuillez sélectionner un corps d’état',
+                'corps_etat_id.exists'   => 'Corps d’état invalide',
+
+                // Lots
+                'lots.required' => 'Au moins un lot est requis',
+                'lots.array'    => 'Le format des lots est invalide',
+                'lots.min'      => 'Vous devez ajouter au moins un lot',
+
+                // Code lot
+                'lots.*.code.required' => 'Le code du lot est obligatoire',
+                'lots.*.code.string'   => 'Le code du lot doit être une chaîne',
+                'lots.*.code.max'      => 'Le code du lot ne peut dépasser 50 caractères',
+
+                // Intitulé lot
+                'lots.*.intitule.required' => 'L’intitulé du lot est obligatoire',
+                'lots.*.intitule.string'   => 'L’intitulé doit être une chaîne',
+                'lots.*.intitule.max'      => 'L’intitulé ne peut dépasser 255 caractères',
+
+                // Composants
+                'lots.*.composants.required' => 'Chaque lot doit avoir au moins un composant',
+                'lots.*.composants.array'    => 'Le format des composants est invalide',
+                'lots.*.composants.min'      => 'Ajoutez au moins un composant',
+
+                // Désignation
+                'lots.*.composants.*.designation.required' => 'La désignation est obligatoire',
+                'lots.*.composants.*.designation.string'   => 'La désignation doit être une chaîne',
+                'lots.*.composants.*.designation.max'      => 'La désignation ne peut dépasser 255 caractères',
+
+                // Unité
+                'lots.*.composants.*.unite_id.required' => 'Veuillez sélectionner une unité',
+                'lots.*.composants.*.unite_id.exists'   => 'Unité invalide',
+
+                // Quantité
+                'lots.*.composants.*.quantite.required' => 'La quantité est obligatoire',
+                'lots.*.composants.*.quantite.numeric'  => 'La quantité doit être un nombre',
+                'lots.*.composants.*.quantite.gt'       => 'La quantité doit être supérieure à 0',
+
+                // Prix unitaire
+                'lots.*.composants.*.prix_unitaire.required' => 'Le prix unitaire est obligatoire',
+                'lots.*.composants.*.prix_unitaire.numeric'  => 'Le prix unitaire doit être un nombre',
+                'lots.*.composants.*.prix_unitaire.min'      => 'Le prix unitaire ne peut pas être négatif',
+            ]
+        );
+
+
+        if (collect($data['lots'])->isEmpty()) {
+
+
+            return back()->with([
+                'error' => 'Vous devez ajouter au moins un lot',
+            ]);
+        }
+
+        foreach ($data['lots'] as $index => $lot) {
+            if (empty($lot['composants'])) {
+                return back()->with([
+                    "error" => 'Chaque lot doit contenir au moins un composant',
+                ]);
+            }
+        }
+
+
 
         DB::transaction(function () use ($data, $devis) {
 
-            // Nettoyage (simple et fiable)
-            $devis->lots()->delete();
+            /** =========================
+             * 1️ Supprimer anciens lots du corps d’état */
 
-            foreach ($data['corps_etats'] as $ceData) {
+            $oldLots = DevisLot::where('devis_id', $devis->id)
+                ->where('corps_etat_id', $data['corps_etat_id'])
+                ->get();
 
-                $corpsEtatId = $ceData['corps_etat_id'];
-                $sousTotalCorpsEtat = 0;
+            foreach ($oldLots as $lot) {
+                $lot->composants()->delete();
+                $lot->delete();
+            }
 
-                foreach ($ceData['lots'] ?? [] as $lotData) {
+            /** =========================
+             * 2️ Recréer lots & composants  ========================= */
+            foreach ($data['lots'] as $lotIndex => $lotData) {
 
-                    $lot = DevisLot::create([
-                        'devis_id'      => $devis->id,
-                        'corps_etat_id' => $corpsEtatId,
-                        'code'          => $lotData['code'],
-                        'intitule'      => $lotData['intitule'],
-                        'ordre'         => 0,
-                        'sous_total'    => 0,
+                $lot = DevisLot::create([
+                    'devis_id' => $devis->id,
+                    'corps_etat_id' => $data['corps_etat_id'],
+                    'code' => $lotData['code'],
+                    'intitule' => $lotData['intitule'],
+                    'ordre' => $lotIndex + 1,
+                    'sous_total' => 0,
+                ]);
+
+                $sousTotalLot = 0;
+
+                foreach ($lotData['composants'] as $compIndex => $comp) {
+                    $montant = $comp['quantite'] * $comp['prix_unitaire'];
+
+                    LotComposant::create([
+                        'lot_id' => $lot->id,
+                        'code' => "{$lot->code}." . ($compIndex + 1),
+                        'designation' => $comp['designation'],
+                        'unite_id' => $comp['unite_id'],
+                        'quantite' => $comp['quantite'],
+                        'prix_unitaire' => $comp['prix_unitaire'],
+                        'montant' => $montant,
                     ]);
 
-                    $sousTotalLot = 0;
-
-                    foreach ($lotData['composants'] ?? [] as $compData) {
-
-                        $montant = $compData['quantite'] * $compData['prix_unitaire'];
-
-                        LotComposant::create([
-                            'lot_id'        => $lot->id,
-                            'code'          => null,
-                            'designation'   => $compData['designation'],
-                            'unite_id'      => $compData['unite_id'],
-                            'quantite'      => $compData['quantite'],
-                            'prix_unitaire' => $compData['prix_unitaire'],
-                            'montant'       => $montant,
-                        ]);
-
-                        $sousTotalLot += $montant;
-                    }
-
-                    // Mise à jour sous-total du lot
-                    $lot->update([
-                        'sous_total' => $sousTotalLot,
-                    ]);
-
-                    $sousTotalCorpsEtat += $sousTotalLot;
+                    $sousTotalLot += $montant;
                 }
 
-                // Mise à jour sous-total du corps d’état
-                DB::table('corps_etat')
-                    ->where('id', $corpsEtatId)
-                    ->update([
-                        'sous_total' => $sousTotalCorpsEtat,
-                    ]);
+                $lot->update(['sous_total' => $sousTotalLot]);
             }
         });
 
-        return redirect()
-            ->route('devis-quantitatif.edit', $devis)
-            ->with('success', 'Devis quantitatif enregistré avec succès.');
+        return back()->with('success', 'Corps d’état enregistré avec succès.');
     }
+
+
+
 
 
 
     /**
      * Validation
      */
-    public function valider(Batiment $batiment, DevisEstimatifQuantitatif $devis)
-    {
+    public function valider(Batiment $batiment,  $devis)
+    {        $devis = DevisEstimatifQuantitatif::find($devis);
+
         $this->assertBatimentDevis($batiment, $devis);
 
         $devis->update(['statut' => 'valide']);
@@ -222,8 +398,10 @@ class DevisEstimatifQuantitatifController extends Controller
     /**
      * Retour en brouillon
      */
-    public function brouillon(Batiment $batiment, DevisEstimatifQuantitatif $devis)
-    {
+    public function brouillon(Batiment $batiment,  $devis)
+    {        $devis = DevisEstimatifQuantitatif::find($devis);
+
+
         $this->assertBatimentDevis($batiment, $devis);
 
         $devis->update(['statut' => 'brouillon']);
@@ -232,9 +410,9 @@ class DevisEstimatifQuantitatifController extends Controller
     }
 
     /**
-     * Vérification cohérence bâtiment / devis
+     * Vérification cohérence bâtiment / devisdevis-quantitatif
      */
-    private function assertBatimentDevis(Batiment $batiment, DevisEstimatifQuantitatif $devis): void
+    private function assertBatimentDevis(Batiment $batiment,  $devis): void
     {
         if ($devis->batiment_id !== $batiment->id) {
             abort(403, 'Accès non autorisé.');
