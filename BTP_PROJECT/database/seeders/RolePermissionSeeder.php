@@ -76,6 +76,7 @@ class RolePermissionSeeder extends Seeder
             'SYSTEM_COLLECTION_CREATE',
             'SYSTEM_COLLECTION_EDIT',
             'SYSTEM_COLLECTION_DELETE',
+            'SYSTEM_COLLECTION_VALIDATE',
 
             //niveau_batiment
             'SYSTEM_NIVEAU_BATIMENT_VIEW',
@@ -143,6 +144,12 @@ class RolePermissionSeeder extends Seeder
             'ORG_BATIMENT_CREATE',
             'ORG_BATIMENT_EDIT',
             'ORG_BATIMENT_DELETE',
+
+            //collection
+            'ORG_COLLECTION_VIEW',
+            'ORG_COLLECTION_CREATE',
+            'ORG_COLLECTION_EDIT',
+        
 
 
         ];

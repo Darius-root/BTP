@@ -160,7 +160,7 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
     Route::resource('arrondissements', ArrondissementController::class);
 
     // Unités de mesure
-    Route::resource('unites-mesure', UniteMesureController::class);
+    Route::resource('unites-mesure', UniteMesureController::class)->parameters(['unites-mesure' => 'uniteMesure']);
 
     // Matériaux
     Route::resource('materiaux', MateriauController::class)->parameters(['materiaux' => 'materiau']);
@@ -172,9 +172,16 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
     Route::resource('corps-etat', CorpsEtatController::class)->parameters(['corps-etat' => 'corpsEtat']);
 
     //collections-prix
-    Route::resource('collections-prix', CollectionPrixController::class);
+    // Route pour les arrondissements - DOIT être avant resource
     Route::get('collections-prix/arrondissements/{communeId}', [CollectionPrixController::class, 'getArrondissements'])
         ->name('collections-prix.arrondissements');
+
+    // Route de validation - DOIT être avant resource
+    Route::post('collections-prix/{id}/validate', [CollectionPrixController::class, 'validateCollection'])
+        ->name('collections-prix.validate');
+
+    // Resource routes - DOIT être en dernier
+    Route::resource('collections-prix', CollectionPrixController::class);
 });
 
 require __DIR__ . '/auth.php';

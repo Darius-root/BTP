@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CorpsEtat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class CorpsEtatController extends Controller
@@ -27,6 +28,17 @@ class CorpsEtatController extends Controller
         ]);
     }
 
+    public function show(CorpsEtat $corpsEtat)
+    {
+        if (!Auth::user()->can('SYSTEM_CORPS_ETAT_VIEW')) {
+            return redirect()->back()->with('error', 'Vous n’avez pas la permission de consulter ce corps d’état.');
+        }
+
+        return Inertia::render('CorpsEtat/Show', [
+            'corpsEtat' => $corpsEtat
+        ]);
+    }
+
     /**
      * Afficher le formulaire de création
      */
@@ -44,40 +56,56 @@ class CorpsEtatController extends Controller
      */
     public function store(Request $request)
     {
+        
         if (!Auth::user()->can('SYSTEM_CORPS_ETAT_CREATE')) {
             return redirect()->back()->with('error', 'Vous n’avez pas la permission de créer un corps d’état.');
         }
 
         $validated = $request->validate([
-            'code' => 'required|string|max:10|unique:corps_etat',
-            'intitule' => 'required|string|max:255|unique:corps_etat',
-            'ordre' => 'required|integer',
+            'intitule'   => 'required|string|max:255|unique:corps_etat,intitule',
+            'ordre'      => 'required|integer',
             'sous_total' => 'nullable|numeric|min:0',
-        ], [
-            'code.required' => 'Le code est obligatoire.',
-            'code.unique' => 'Ce code existe déjà.',
-            'intitule.required' => 'L’intitulé est obligatoire.',
-            'intitule.unique' => 'Cet intitulé existe déjà.',
-            'ordre.required' => 'L’ordre est obligatoire.',
-            'ordre.integer' => 'L’ordre doit être un nombre entier.',
-            'sous_total.numeric' => 'Le sous-total doit être un nombre.',
-            'sous_total.min' => 'Le sous-total ne peut pas être négatif.',
         ]);
 
-        try {
-            CorpsEtat::create(array_merge($validated, [
-                'user_id' => Auth::id(),
-            ]));
+        $intituleClean = strtoupper(Str::ascii($validated['intitule']));
+        $words = preg_split('/\s+/', $intituleClean);
 
-            return redirect()
-                ->route('corps-etat.index')
-                ->with('success', 'Le corps d’état a été créé avec succès.');
-        } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->with('error', 'Une erreur est survenue lors de la création du corps d’état. Veuillez réessayer.')
-                ->withInput();
+        $letters = '';
+        if (count($words) > 1) {
+            foreach ($words as $word) {
+                if (strlen($word) <= 2) continue;
+                $letters .= substr($word, 0, 1);
+                if (strlen($letters) >= 3) break;
+            }
         }
+        if (strlen($letters) < 3) {
+            $letters = str_pad(
+                $letters,
+                3,
+                substr(preg_replace('/[^A-Z]/', '', $intituleClean), 0, 3 - strlen($letters)),
+                STR_PAD_RIGHT
+            );
+        }
+        $letters = substr($letters, 0, 3);
+
+        $prefix = "COR-{$letters}-";
+
+        do {
+            $randomNumber = str_pad(rand(0, 999), 3, '0', STR_PAD_LEFT);
+            $code = $prefix . $randomNumber;
+        } while (CorpsEtat::where('code', $code)->exists());
+
+        CorpsEtat::create([
+            'code'       => $code,
+            'intitule'   => $validated['intitule'],
+            'ordre'      => $validated['ordre'],
+            'sous_total' => $validated['sous_total'],
+            'user_id'    => Auth::id(),
+        ]);
+
+        return redirect()
+            ->route('corps-etat.index')
+            ->with('success', 'Corps d’état créé avec succès.');
     }
 
     /**
@@ -99,38 +127,60 @@ class CorpsEtatController extends Controller
      */
     public function update(Request $request, CorpsEtat $corpsEtat)
     {
+        
         if (!Auth::user()->can('SYSTEM_CORPS_ETAT_EDIT')) {
             return redirect()->back()->with('error', 'Vous n’avez pas la permission de modifier ce corps d’état.');
         }
 
+        
         $validated = $request->validate([
-            'code' => 'required|string|max:10|unique:corps_etat,code,' . $corpsEtat->id,
-            'intitule' => 'required|string|max:255|unique:corps_etat,intitule,' . $corpsEtat->id,
-            'ordre' => 'required|integer',
+            'intitule'   => 'required|string|max:255|unique:corps_etat,intitule,' . $corpsEtat->id,
+            'ordre'      => 'required|integer',
             'sous_total' => 'nullable|numeric|min:0',
-        ], [
-            'code.required' => 'Le code est obligatoire.',
-            'code.unique' => 'Ce code existe déjà.',
-            'intitule.required' => 'L’intitulé est obligatoire.',
-            'intitule.unique' => 'Cet intitulé existe déjà.',
-            'ordre.required' => 'L’ordre est obligatoire.',
-            'ordre.integer' => 'L’ordre doit être un nombre entier.',
-            'sous_total.numeric' => 'Le sous-total doit être un nombre.',
-            'sous_total.min' => 'Le sous-total ne peut pas être négatif.',
         ]);
 
-        try {
-            $corpsEtat->update($validated);
+        $intituleClean = strtoupper(Str::ascii($validated['intitule']));
+        $words = preg_split('/\s+/', $intituleClean);
 
-            return redirect()
-                ->route('corps-etat.index')
-                ->with('success', 'Le corps d’état a été mis à jour avec succès.');
-        } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->with('error', 'Une erreur est survenue lors de la mise à jour du corps d’état. Veuillez réessayer.')
-                ->withInput();
+        $letters = '';
+        if (count($words) > 1) {
+            foreach ($words as $word) {
+                if (strlen($word) <= 2) continue;
+                $letters .= substr($word, 0, 1);
+                if (strlen($letters) >= 3) break;
+            }
         }
+        if (strlen($letters) < 3) {
+            $letters = str_pad(
+                $letters,
+                3,
+                substr(preg_replace('/[^A-Z]/', '', $intituleClean), 0, 3 - strlen($letters)),
+                STR_PAD_RIGHT
+            );
+        }
+        $letters = substr($letters, 0, 3);
+
+        $prefix = "COR-{$letters}-";
+
+        do {
+            $randomNumber = str_pad(rand(0, 999), 3, '0', STR_PAD_LEFT);
+            $newCode = $prefix . $randomNumber;
+        } while (
+            CorpsEtat::where('code', $newCode)
+                ->where('id', '!=', $corpsEtat->id)
+                ->exists()
+        );
+
+        $corpsEtat->update([
+            'code'       => $newCode,
+            'intitule'   => $validated['intitule'],
+            'ordre'      => $validated['ordre'],
+            'sous_total' => $validated['sous_total'],
+        ]);
+
+        return redirect()
+            ->route('corps-etat.index')
+            ->with('success', 'Corps d’état mis à jour avec succès et code recalculé.');
     }
 
     /**
@@ -155,3 +205,6 @@ class CorpsEtatController extends Controller
         }
     }
 }
+
+
+

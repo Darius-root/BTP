@@ -64,7 +64,7 @@ const goToCreate = () => {
 }
 
 const editUser = (user: any) => {
-  // ⚠️ Ici tu peux décider de la logique : par ex. éditer le premier rôle
+  //  Ici tu peux décider de la logique : par ex. éditer le premier rôle
   const editableRole = user.roles.find(r => !r.readonly)
   if (editableRole) {
     router.visit(route("organisations.users.edit", user))

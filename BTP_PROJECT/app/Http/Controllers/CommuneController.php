@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Commune;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class CommuneController extends Controller
@@ -37,6 +38,26 @@ class CommuneController extends Controller
         ]);
     }
 
+    public function show(Commune $commune)
+    {
+        // 1. Vérification des permissions
+        if (!Auth::user()->can('SYSTEM_COMMUNE_VIEW')) {
+            return redirect()->back()
+                ->with('error', "Vous n'avez pas la permission de consulter cette commune.");
+        }
+
+        // 2. Charger la commune avec ses relations
+        $commune->load([
+            'arrondissements:id,code,libelle,commune_id',
+        ])->loadCount(['arrondissements', 'collectionsPrix']);
+
+        // 3. Retourner la vue Inertia
+        return Inertia::render('Communes/Show', [
+            'commune' => $commune,
+        ]);
+    }
+
+
     /**
      * Afficher le formulaire de création
      */
@@ -54,10 +75,12 @@ class CommuneController extends Controller
      */
     public function store(Request $request)
     {
+        // 1. Vérification des permissions
         if (!Auth::user()->can('SYSTEM_COMMUNE_CREATE')) {
             return redirect()->back()->with('error', 'Vous n’avez pas la permission de créer une commune.');
         }
 
+        // 2. Validation des données
         $validated = $request->validate([
             'libelle' => 'required|string|max:255|unique:communes,libelle',
         ], [
@@ -65,20 +88,52 @@ class CommuneController extends Controller
             'libelle.unique' => 'Une commune avec ce libellé existe déjà.',
         ]);
 
-        $validated['code'] = $this->generateCommuneCode($validated['libelle']);
+        // 3. Nettoyage du libellé
+        $libelleClean = strtoupper(Str::ascii($validated['libelle']));
+        $words = preg_split('/\s+/', $libelleClean);
 
-        try {
-            Commune::create($validated);
-
-            return redirect()
-                ->route('communes.index')
-                ->with('success', 'La commune a été créée avec succès.');
-        } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->with('error', 'Une erreur est survenue lors de la création de la commune. Veuillez réessayer.')
-                ->withInput();
+        // 4. Extraction des lettres
+        $letters = '';
+        if (count($words) > 1) {
+            foreach ($words as $word) {
+                if (strlen($word) <= 2)
+                    continue; // ignore mots très courts
+                $letters .= substr($word, 0, 1);
+                if (strlen($letters) >= 3)
+                    break;
+            }
         }
+
+        if (strlen($letters) < 3) {
+            $letters = str_pad(
+                $letters,
+                3,
+                substr(preg_replace('/[^A-Z]/', '', $libelleClean), 0, 3 - strlen($letters)),
+                STR_PAD_RIGHT
+            );
+        }
+
+        $letters = substr($letters, 0, 3);
+
+        // 5. Préfixe du code
+        $prefix = "COM-{$letters}-";
+
+        // 6. Générer un nombre aléatoire à 3 chiffres et vérifier unicité
+        do {
+            $randomNumber = str_pad(rand(0, 999), 3, '0', STR_PAD_LEFT);
+            $code = $prefix . $randomNumber;
+        } while (Commune::where('code', $code)->exists());
+
+        // 7. Création de la commune
+        Commune::create([
+            'code' => $code,
+            'libelle' => $validated['libelle'],
+        ]);
+
+        // 8. Redirection
+        return redirect()
+            ->route('communes.index')
+            ->with('success', 'Commune créée avec succès.');
     }
 
     /**
@@ -100,32 +155,66 @@ class CommuneController extends Controller
      */
     public function update(Request $request, Commune $commune)
     {
+        // 1. Vérification des permissions
         if (!Auth::user()->can('SYSTEM_COMMUNE_EDIT')) {
-            return redirect()->back()->with('error', 'Vous n’avez pas la permission de modifier cette commune.');
+            return redirect()->back()
+                ->with('error', 'Vous n’avez pas la permission de modifier cette commune.');
         }
 
+        // 2. Validation
         $validated = $request->validate([
-            'code' => 'required|string|max:20|unique:communes,code,' . $commune->id,
-            'libelle' => 'required|string|max:255|unique:communes,libelle,' . $commune->id,
+            'libelle' => 'required|string|max:255',
         ], [
-            'code.required' => 'Le code de la commune est obligatoire.',
-            'code.unique' => 'Ce code est déjà utilisé par une autre commune.',
             'libelle.required' => 'Le libellé est obligatoire.',
-            'libelle.unique' => 'Une commune avec ce libellé existe déjà.',
         ]);
 
-        try {
-            $commune->update($validated);
+        // 3. Nettoyage du libellé pour générer les lettres
+        $libelleClean = strtoupper(Str::ascii($validated['libelle']));
+        $words = preg_split('/\s+/', $libelleClean);
 
-            return redirect()
-                ->route('communes.index')
-                ->with('success', 'La commune a été mise à jour avec succès.');
-        } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->with('error', 'Une erreur est survenue lors de la mise à jour de la commune. Veuillez réessayer.')
-                ->withInput();
+        // 4. Extraction des 3 lettres pour le code
+        $letters = '';
+
+        if (count($words) > 1) {
+            foreach ($words as $word) {
+                if (strlen($word) <= 2)
+                    continue; // ignorer les petits mots
+                $letters .= substr($word, 0, 1);
+                if (strlen($letters) >= 3)
+                    break;
+            }
         }
+
+        if (strlen($letters) < 3) {
+            $letters = str_pad(
+                $letters,
+                3,
+                substr(preg_replace('/[^A-Z]/', '', $libelleClean), 0, 3 - strlen($letters)),
+                STR_PAD_RIGHT
+            );
+        }
+
+        $letters = substr($letters, 0, 3); // exactement 3 lettres
+
+        // 5. Préfixe du code
+        $prefix = "COM-{$letters}-";
+
+        // 6. Génération de 3 chiffres aléatoires uniques
+        do {
+            $randomNumber = str_pad(rand(0, 999), 3, '0', STR_PAD_LEFT);
+            $newCode = $prefix . $randomNumber;
+        } while (Commune::where('code', $newCode)->where('id', '!=', $commune->id)->exists());
+
+        // 7. Mise à jour de la commune
+        $commune->update([
+            'libelle' => $validated['libelle'],
+            'code' => $newCode,
+        ]);
+
+        // 8. Redirection
+        return redirect()
+            ->route('communes.index')
+            ->with('success', 'Commune mise à jour avec succès et code recalculé.');
     }
 
     /**
@@ -147,131 +236,10 @@ class CommuneController extends Controller
                 ->with('error', 'Impossible de supprimer cette commune car elle est utilisée dans des collections de prix.');
         }
 
-        try {
-            $commune->delete();
+        $commune->delete();
 
-            return redirect()
-                ->route('communes.index')
-                ->with('success', 'La commune a été supprimée avec succès.');
-        } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->with('error', 'Une erreur est survenue lors de la suppression de la commune. Veuillez réessayer.');
-        }
-    }
-
-    /**
-     * Statistiques d’une commune
-     */
-    public function stats(Commune $commune)
-    {
-        if (!Auth::user()->can('SYSTEM_COMMUNE_VIEW')) {
-            abort(403, 'Vous n’avez pas la permission de consulter les statistiques.');
-        }
-
-        return response()->json([
-            'arrondissements_count' => $commune->arrondissements()->count(),
-            'collections_prix_count' => $commune->collectionsPrix()->count(),
-            'arrondissements_with_collections' => $commune->arrondissements()
-                ->whereHas('collectionsPrix')
-                ->count(),
-        ]);
-    }
-
-    /**
-     * Prévisualisation du code généré
-     */
-    public function previewCode(Request $request)
-    {
-        if (!Auth::user()->can('SYSTEM_COMMUNE_VIEW')) {
-            abort(403, 'Vous n’avez pas la permission de prévisualiser le code.');
-        }
-
-        $libelle = $request->input('libelle');
-
-        if (empty($libelle)) {
-            return response()->json(['code' => '']);
-        }
-
-        return response()->json([
-            'code' => $this->generateCommuneCode($libelle),
-        ]);
-    }
-
-    /* ================== HELPERS ================== */
-
-    private function generateCommuneCode($libelle)
-    {
-        $libelle = $this->removeAccents($libelle);
-        $libelle = strtoupper(preg_replace('/[^A-Z0-9]/', '', $libelle));
-
-        $baseCode = substr($libelle, 0, 4);
-        $baseCode = strlen($baseCode) < 3 ? str_pad($baseCode, 3, 'X') : $baseCode;
-
-        $code = $baseCode;
-        $counter = 1;
-
-        while (Commune::where('code', $code)->exists()) {
-            $code = $baseCode . $counter++;
-        }
-
-        return $code;
-    }
-
-    private function removeAccents($string)
-    {
-        return strtr($string, [
-            'À' => 'A',
-            'Á' => 'A',
-            'Â' => 'A',
-            'Ã' => 'A',
-            'Ä' => 'A',
-            'Å' => 'A',
-            'Ç' => 'C',
-            'È' => 'E',
-            'É' => 'E',
-            'Ê' => 'E',
-            'Ë' => 'E',
-            'Ì' => 'I',
-            'Í' => 'I',
-            'Î' => 'I',
-            'Ï' => 'I',
-            'Ñ' => 'N',
-            'Ò' => 'O',
-            'Ó' => 'O',
-            'Ô' => 'O',
-            'Õ' => 'O',
-            'Ö' => 'O',
-            'Ù' => 'U',
-            'Ú' => 'U',
-            'Û' => 'U',
-            'Ü' => 'U',
-            'à' => 'a',
-            'á' => 'a',
-            'â' => 'a',
-            'ã' => 'a',
-            'ä' => 'a',
-            'å' => 'a',
-            'ç' => 'c',
-            'è' => 'e',
-            'é' => 'e',
-            'ê' => 'e',
-            'ë' => 'e',
-            'ì' => 'i',
-            'í' => 'i',
-            'î' => 'i',
-            'ï' => 'i',
-            'ñ' => 'n',
-            'ò' => 'o',
-            'ó' => 'o',
-            'ô' => 'o',
-            'õ' => 'o',
-            'ö' => 'o',
-            'ù' => 'u',
-            'ú' => 'u',
-            'û' => 'u',
-            'ü' => 'u',
-            'ÿ' => 'y'
-        ]);
+        return redirect()
+            ->route('communes.index')
+            ->with('success', 'Commune supprimée avec succès.');
     }
 }

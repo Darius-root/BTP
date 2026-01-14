@@ -12,14 +12,14 @@
                             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                 <div>
                                     <CardTitle class="text-3xl">
-                                        Modifier le bâtiment
+                                        Modifier le bâtiment du projet "{{ batiment.projet?.nom }}"
                                     </CardTitle>
                                     <CardDescription class="mt-1">
                                         Mettez à jour les informations du bâtiment
                                     </CardDescription>
                                 </div>
 
-                                <Link :href="route('batiments.index')"
+                                <Link :href="route('projets.batiments.index', batiment.projet_id)"
                                     class="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors">
                                     <ArrowLeft class="w-4 h-4 mr-2" />
                                     Retour à la liste
@@ -29,6 +29,8 @@
 
                         <CardContent class="px-0">
                             <form @submit.prevent="submit" class="space-y-6">
+
+
                                 <!-- Nom -->
                                 <div class="space-y-2">
                                     <Label for="nom">Nom <span class="text-red-500">*</span></Label>
@@ -88,29 +90,9 @@
                                     </p>
                                 </div>
 
-                                <!-- Projet -->
-                                <div class="space-y-2">
-                                    <Label for="projet_id">Projet <span class="text-red-500">*</span></Label>
-                                    <select
-                                        id="projet_id"
-                                        v-model="form.projet_id"
-                                        class="w-full border rounded-md p-2"
-                                        :class="{ 'border-red-300': form.errors.projet_id }"
-                                        required
-                                    >
-                                        <option value="" disabled>Choisir un projet</option>
-                                        <option v-for="projet in projets" :key="projet.id" :value="projet.id">
-                                            {{ projet.nom }}
-                                        </option>
-                                    </select>
-                                    <p v-if="form.errors.projet_id" class="text-sm text-red-600">
-                                        {{ form.errors.projet_id }}
-                                    </p>
-                                </div>
-
                                 <!-- Actions -->
                                 <div class="flex items-center justify-between pt-4 border-t border-gray-100">
-                                    <Link :href="route('batiments.index')"
+                                    <Link :href="route('projets.batiments.index', batiment.projet_id)"
                                         class="text-sm text-gray-600 hover:text-gray-900 transition-colors">
                                         Annuler
                                     </Link>
@@ -164,7 +146,6 @@ import { Button } from '@/components/ui/button'
 
 const props = defineProps({
     batiment: { type: Object, required: true },
-    projets: { type: Array, required: true },
 })
 
 const currentPageTitle = ref('Modifier Bâtiment')
@@ -174,12 +155,10 @@ const form = useForm({
     code: props.batiment.code,
     localisation: props.batiment.localisation,
     description: props.batiment.description,
-    projet_id: props.batiment.projet_id,
 })
 
 const submit = () => {
     form.put(route('batiments.update', props.batiment.id), {
-        forceFormData: true,
         preserveScroll: true,
     })
 }

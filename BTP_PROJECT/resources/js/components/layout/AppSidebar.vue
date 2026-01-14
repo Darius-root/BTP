@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { Link, usePage } from "@inertiajs/vue3";
 
 import {
@@ -13,28 +13,24 @@ import {
 import { useSidebar } from "../../composables/useSidebar";
 import BoxCubeIcon from "@/icons/BoxCubeIcon.vue";
 
-/**
- * PAGE PROPS (auth & permissions)
- */
+/* PAGE */
 const page = usePage();
 
-/**
- * Vérifie si l'utilisateur a la permission
- */
-const can = (permission) => {
-    return !permission || page.props.auth?.permissions?.includes(permission);
-};
+/* PERMISSIONS */
+const can = (permission) =>
+    !permission || page.props.auth?.permissions?.includes(permission);
 
-/**
- * Sidebar state
- */
-const { isExpanded, isMobileOpen, isHovered, openSubmenu } = useSidebar();
+/* SIDEBAR (SOURCE DE VÉRITÉ UNIQUE) */
+const {
+    isExpanded,
+    isMobileOpen,
+    showSidebar,
+    openSubmenu,
+    setIsHovered,
+    toggleSubmenu,
+} = useSidebar();
 
-/**
- * ===============================
- * MENU CONFIGURATION
- * ===============================
- */
+/* MENU CONFIG */
 const menuGroups = [
     {
         title: "Menu",
@@ -68,6 +64,8 @@ const menuGroups = [
                     { name: "Unités de mesure", path: "/unites-mesure", permission: "SYSTEM_UNITE_MESURE_VIEW" },
                     { name: "Communes", path: "/communes", permission: "SYSTEM_COMMUNE_VIEW" },
                     { name: "Arrondissements", path: "/arrondissements", permission: "SYSTEM_ARRONDISSEMENT_VIEW" },
+                    {name: "Niveaux Bâtiment", path: "/niveaux-batiment", permission: "SYSTEM_NIVEAU_BATIMENT_VIEW"},
+
                 ],
             },
         ],
@@ -88,204 +86,179 @@ const menuGroups = [
     },
 ];
 
-/**
- * ===============================
- * FILTER MENUS BY PERMISSIONS
- * ===============================
- */
-const filteredMenuGroups = computed(() => {
-    return menuGroups
-        .map((group) => {
+/* FILTER */
+const filteredMenuGroups = computed(() =>
+    menuGroups
+        .map(group => {
             const items = group.items
-                .map((item) => {
-                    // Filtrer les sous-items
+                .map(item => {
                     if (item.subItems) {
-                        const subItems = item.subItems.filter(sub => can(sub.permission));
-                        if (!subItems.length) return null;
-                        return { ...item, subItems };
+                        const subItems = item.subItems.filter(s => can(s.permission));
+                        return subItems.length ? { ...item, subItems } : null;
                     }
-                    // Filtrer l'item simple
-                    if (item.permission && !can(item.permission)) return null;
-                    return item;
+                    return item.permission && !can(item.permission) ? null : item;
                 })
                 .filter(Boolean);
-
             return items.length ? { ...group, items } : null;
         })
-        .filter(Boolean);
-});
+        .filter(Boolean)
+);
 
-/**
- * ===============================
- * UI HELPERS
- * ===============================
- */
-const isActive = (path) => page.url === path;
+/* HELPERS */
+const submenuKey = (g, i) => `${g}-${i}`;
+const isSubmenuOpen = (g, i) => openSubmenu.value === submenuKey(g, i);
 
-const toggleSubmenu = (groupIndex, itemIndex) => {
-    const key = `${groupIndex}-${itemIndex}`;
-    openSubmenu.value = openSubmenu.value === key ? null : key;
+/* HOVER ITEM (SIDEBAR RÉDUITE SEULEMENT) */
+const onItemHover = (g, i) => {
+    if (isExpanded.value || isMobileOpen.value) return;
+    openSubmenu.value = submenuKey(g, i);
 };
 
-const isSubmenuOpen = (groupIndex, itemIndex) =>
-    openSubmenu.value === `${groupIndex}-${itemIndex}`;
-
-// Helper pour déterminer si le logo complet doit être affiché
-const shouldShowFullLogo = computed(() => {
-    return isExpanded || isHovered || isMobileOpen;
-});
+const onItemLeave = (g, i) => {
+    if (isExpanded.value || isMobileOpen.value) return;
+    if (openSubmenu.value === submenuKey(g, i)) {
+        openSubmenu.value = null;
+    }
+};
 </script>
 
 <template>
-    <aside :class="[
-        'fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200',
-        {
-            'lg:w-[290px]': isExpanded || isHovered || isMobileOpen,
-            'lg:w-[90px]': !isExpanded && !isHovered,
-            'translate-x-0 w-[290px]': isMobileOpen,
-            '-translate-x-full': !isMobileOpen,
-            'lg:translate-x-0': true,
-        },
-    ]" @mouseenter="!isExpanded && (isHovered = true)" @mouseleave="isHovered = false">
-        <!-- LOGO SECTION -->
-        <div class="py-6 flex-shrink-0">
-            <!-- Logo complet (visible quand la sidebar est étendue) -->
-            <div v-if="shouldShowFullLogo" class="flex justify-center">
-                <Link href="/" class="flex items-center space-x-3 transition-all duration-300">
-                    <!-- Icône du logo -->
-                    <div
-                        class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-white" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" />
-                        </svg>
+<aside
+    :class="[
+        'fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 h-screen transition-all duration-300 ease-in-out z-50 border-r',
+        showSidebar ? 'lg:w-72.5' : 'lg:w-22.5',
+        isMobileOpen ? 'translate-x-0 w-72.5' : '-translate-x-full',
+        'lg:translate-x-0',
+        'bg-white dark:bg-gray-900 dark:border-gray-800 border-gray-200 text-gray-900 dark:text-gray-300',
+    ]"
+    @mouseenter="setIsHovered(true)"
+    @mouseleave="setIsHovered(false)"
+>
+    <!-- LOGO -->
+    <div class="py-6 shrink-0">
+        <div v-if="showSidebar" class="flex justify-center">
+            <Link href="/" class="flex items-center space-x-3">
+                <div class="w-12 h-12 rounded-xl bg-linear-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" />
+                    </svg>
+                </div>
+                <div class="leading-tight">
+                    <div class="text-xl font-extrabold dark:text-white">
+                        BTP<span class="text-blue-600 dark:text-blue-400"> Bénin</span>
                     </div>
-
-                    <!-- Texte du logo -->
-                    <div class="leading-tight overflow-hidden transition-all duration-300">
-                        <div
-                            class="text-xl font-extrabold text-gray-900 dark:text-white tracking-tight whitespace-nowrap">
-                            BTP<span class="text-blue-600 dark:text-blue-400"> Bénin</span>
-                        </div>
-                        <div class="text-xs text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">
-                            Gestion des Prix
-                        </div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">
+                        Gestion des Prix
                     </div>
-                </Link>
-            </div>
-
-            <!-- Icône seule (visible quand la sidebar est réduite) -->
-            <div v-else class="flex justify-center">
-                <Link href="/" class="flex items-center justify-center">
-                    <div
-                        class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-white" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" />
-                        </svg>
-                    </div>
-                </Link>
-            </div>
+                </div>
+            </Link>
         </div>
 
-        <!-- MENU -->
-        <nav class="flex-1 overflow-y-auto duration-300 ease-linear no-scrollbar">
-            <div class="flex flex-col gap-4">
-                <div v-for="(menuGroup, groupIndex) in filteredMenuGroups" :key="groupIndex">
-                    <h2 :class="[
-                        'mb-4 text-xs uppercase flex leading-[20px] text-gray-400 dark:text-gray-500',
-                        !isExpanded && !isHovered
-                            ? 'lg:justify-center'
-                            : 'justify-start',
-                    ]">
-                        <template v-if="shouldShowFullLogo">
-                            {{ menuGroup.title }}
-                        </template>
-                        <HorizontalDots v-else />
-                    </h2>
+        <div v-else class="flex justify-center">
+            <Link href="/" class="flex items-center justify-center">
+                <div class="w-12 h-12 rounded-xl bg-linear-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" />
+                    </svg>
+                </div>
+            </Link>
+        </div>
+    </div>
 
-                    <ul class="flex flex-col gap-4">
-                        <li v-for="(item, index) in menuGroup.items" :key="item.name">
-                            <!-- Item with Submenu -->
-                            <button v-if="item.subItems" @click="toggleSubmenu(groupIndex, index)" :class="[
-                                'menu-item group w-full',
-                                isSubmenuOpen(groupIndex, index)
-                                    ? 'menu-item-active'
-                                    : 'menu-item-inactive',
-                                !isExpanded && !isHovered
-                                    ? 'lg:justify-center'
-                                    : 'lg:justify-start',
-                            ]">
-                                <span :class="[
-                                    'menu-item-icon',
-                                    isSubmenuOpen(groupIndex, index)
-                                        ? 'menu-item-icon-active'
-                                        : 'menu-item-icon-inactive',
-                                ]">
-                                    <component :is="item.icon" />
-                                </span>
+    <!-- MENU -->
+    <nav class="flex-1 overflow-y-auto no-scrollbar">
+        <div class="flex flex-col gap-4">
+            <div v-for="(menuGroup, groupIndex) in filteredMenuGroups" :key="groupIndex">
+                <!-- TITRE SECTION -->
+                <h2
+                    class="mb-4 text-xs uppercase flex text-gray-400 dark:text-gray-500"
+                    :class="showSidebar ? 'justify-start' : 'justify-center'"
+                >
+                    <template v-if="showSidebar">{{ menuGroup.title }}</template>
+                    <HorizontalDots v-else class="w-5 h-5" />
+                </h2>
 
-                                <span v-if="shouldShowFullLogo" class="menu-item-text dark:text-gray-300">
-                                    {{ item.name }}
-                                </span>
-
-                                <ChevronDownIcon v-if="shouldShowFullLogo" :class="[
-                                    'ml-auto w-5 h-5 transition-transform duration-200',
-                                    {
-                                        'rotate-180 text-blue-500 dark:text-blue-400': isSubmenuOpen(
-                                            groupIndex,
-                                            index
-                                        ),
-                                    },
-                                ]" />
+                <ul class="flex flex-col gap-4">
+                    <li v-for="(item, index) in menuGroup.items" :key="item.name">
+                        <!-- ITEM AVEC SOUS-MENU -->
+                        <div
+                            v-if="item.subItems"
+                            class="relative"
+                            @mouseenter="onItemHover(groupIndex, index)"
+                            @mouseleave="onItemLeave(groupIndex, index)"
+                        >
+                            <button
+                                @click="toggleSubmenu(submenuKey(groupIndex, index))"
+                                class="menu-item group w-full flex items-center py-3 px-4 rounded-lg transition-colors duration-200"
+                                :class="{
+                                    'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400': isSubmenuOpen(groupIndex, index),
+                                    'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300': !isSubmenuOpen(groupIndex, index),
+                                    'justify-start': showSidebar,
+                                    'justify-center': !showSidebar,
+                                }"
+                            >
+                                <component :is="item.icon" class="w-5 h-5 shrink-0" />
+                                <span v-if="showSidebar" class="ml-3 font-medium">{{ item.name }}</span>
+                                <ChevronDownIcon
+                                    v-if="showSidebar"
+                                    class="ml-auto w-5 h-5 transition-transform"
+                                    :class="{ 'rotate-180': isSubmenuOpen(groupIndex, index) }"
+                                />
                             </button>
 
-                            <!-- Item without Submenu -->
-                            <Link v-else-if="item.path" :href="item.path" :class="[
-                                'menu-item group',
-                                isActive(item.path)
-                                    ? 'menu-item-active'
-                                    : 'menu-item-inactive',
-                                !isExpanded && !isHovered
-                                    ? 'lg:justify-center'
-                                    : 'lg:justify-start',
-                            ]">
-                                <span :class="[
-                                    'menu-item-icon',
-                                    isActive(item.path)
-                                        ? 'menu-item-icon-active'
-                                        : 'menu-item-icon-inactive',
-                                ]">
-                                    <component :is="item.icon" />
-                                </span>
+                            <!-- TOOLTIP SUBMENU -->
+                            <div
+                                v-if="isSubmenuOpen(groupIndex, index) && !showSidebar"
+                                class="fixed left-24.5 z-9999"
+                            >
+                                <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg py-2 min-w-50 border border-gray-200 dark:border-gray-700">
+                                    <ul>
+                                        <li v-for="subItem in item.subItems" :key="subItem.name">
+                                            <Link
+                                                :href="subItem.path"
+                                                class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                                            >
+                                                {{ subItem.name }}
+                                            </Link>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
 
-                                <span v-if="shouldShowFullLogo" class="menu-item-text dark:text-gray-300">
-                                    {{ item.name }}
-                                </span>
-                            </Link>
-
-                            <!-- Submenu -->
-                            <div v-if="item.subItems && isSubmenuOpen(groupIndex, index) && shouldShowFullLogo"
-                                class="mt-2">
-                                <ul class="space-y-1 ml-9">
+                            <!-- SUBMENU NORMAL -->
+                            <div v-if="isSubmenuOpen(groupIndex, index) && showSidebar" class="mt-2 ml-9">
+                                <ul class="space-y-2">
                                     <li v-for="subItem in item.subItems" :key="subItem.name">
-                                        <Link v-if="subItem.path" :href="subItem.path" :class="[
-                                            'menu-dropdown-item dark:text-gray-300',
-                                            isActive(subItem.path)
-                                                ? 'menu-dropdown-item-active'
-                                                : 'menu-dropdown-item-inactive',
-                                        ]">
+                                        <Link
+                                            :href="subItem.path"
+                                            class="block py-2 px-4 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                        >
                                             {{ subItem.name }}
                                         </Link>
                                     </li>
                                 </ul>
                             </div>
-                        </li>
-                    </ul>
-                </div>
+                        </div>
+
+                        <!-- ITEM SIMPLE -->
+                        <Link
+                            v-else
+                            :href="item.path"
+                            class="menu-item group flex items-center py-3 px-4 rounded-lg transition-colors duration-200 relative"
+                            :class="{
+                                'justify-start': showSidebar,
+                                'justify-center': !showSidebar,
+                                'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400': page.url === item.path,
+                                'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300': page.url !== item.path,
+                            }"
+                        >
+                            <component :is="item.icon" class="w-5 h-5 shrink-0" />
+                            <span v-if="showSidebar" class="ml-3 font-medium">{{ item.name }}</span>
+                        </Link>
+                    </li>
+                </ul>
             </div>
-        </nav>
-    </aside>
+        </div>
+    </nav>
+</aside>
 </template>

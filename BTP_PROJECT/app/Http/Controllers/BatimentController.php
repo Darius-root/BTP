@@ -17,29 +17,7 @@ class BatimentController extends Controller
     /**
      * Liste globale des bâtiments de l'organisation active
      */
-    public function index()
-    {
-        try {
-            $activeOrg = getPermissionsTeamId();
-
-            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'ORG_BATIMENT_VIEW')) {
-                return back()->with('error', "Vous n'avez pas la permission de consulter les bâtiments.");
-            }
-
-            $batiments = Batiment::with('projet')
-                ->whereHas('projet', fn ($q) => $q->where('organisation_id', $activeOrg))
-                ->latest()
-                ->paginate(10);
-
-            return Inertia::render('Organisations/Batiments/Index', [
-                'batiments' => $batiments,
-                'activeOrganisation' => $activeOrg,
-            ]);
-
-        } catch (Throwable $e) {
-            return back()->with('error', $e->getMessage());
-        }
-    }
+   
 
     /**
      * Liste des bâtiments d'un projet précis
@@ -73,29 +51,7 @@ class BatimentController extends Controller
         }
     }
 
-    /**
-     * Création globale
-     */
-    public function create()
-    {
-        try {
-            $activeOrg = getPermissionsTeamId();
 
-            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'ORG_BATIMENT_CREATE')) {
-                return back()->with('error', "Vous n'avez pas la permission de créer un bâtiment.");
-            }
-
-            $projets = Projet::where('organisation_id', $activeOrg)->get();
-
-            return Inertia::render('Organisations/Batiments/Create', [
-                'projets' => $projets,
-                'activeOrganisation' => $activeOrg,
-            ]);
-
-        } catch (Throwable $e) {
-            return back()->with('error', $e->getMessage());
-        }
-    }
 
     /**
      * Création depuis un projet précis
@@ -202,9 +158,11 @@ class BatimentController extends Controller
                 return back()->with('error', "Vous n'avez pas la permission de modifier ce bâtiment.");
             }
 
+            // Charger la relation projet pour l'afficher
+            $batiment->load('projet');
+
             return Inertia::render('Organisations/Batiments/Edit', [
                 'batiment' => $batiment,
-                'projets' => Projet::where('organisation_id', $activeOrg)->get(),
                 'activeOrganisation' => $activeOrg,
             ]);
 
@@ -234,7 +192,6 @@ class BatimentController extends Controller
                 'nom' => 'required|string|max:255',
                 'localisation' => 'nullable|string|max:255',
                 'description' => 'nullable|string',
-                'projet_id' => 'required|exists:projets,id',
             ]);
 
             $batiment->update($validated);

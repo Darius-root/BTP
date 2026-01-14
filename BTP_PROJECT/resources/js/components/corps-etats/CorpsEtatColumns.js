@@ -2,7 +2,7 @@
 import { h } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import { Button } from '@/components/ui/button'
-import { ArrowUpDown, Edit, Trash2 } from 'lucide-vue-next'
+import { ArrowUpDown, Edit, Trash2, Eye } from 'lucide-vue-next'
 
 export const createColumns = (confirmDelete) => [
     {
@@ -67,6 +67,14 @@ export const createColumns = (confirmDelete) => [
             const corpsEtat = row.original
 
             return h('div', { class: 'flex justify-end gap-2' }, [
+
+                h(Link, {
+                    href: route('corps-etat.show', corpsEtat.id),
+                    class: 'inline-flex items-center px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900/20 rounded-md transition-colors'
+                }, () => [
+                    h(Eye, { class: 'w-4 h-4 mr-1' }),
+                    'Voir'
+                ]),
                 h(Link, {
                     href: route('corps-etat.edit', corpsEtat.id),
                     class: 'inline-flex items-center px-3 py-1.5 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors'
