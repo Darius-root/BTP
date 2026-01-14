@@ -3,11 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\UniteMesure;
-use App\Services\OrganisationContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Throwable;
 
@@ -19,8 +18,7 @@ class UniteMesureController extends Controller
     public function index()
     {
         try {
-            $activeOrg = getPermissionsTeamId();
-            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'SYSTEM_UNITE_MESURE_VIEW')) {
+            if (!Auth::user()->can('SYSTEM_UNITE_MESURE_VIEW')) {
                 return back()->with('error', "Vous n'avez pas la permission de voir les unités de mesure.");
             }
 
@@ -29,7 +27,6 @@ class UniteMesureController extends Controller
             return Inertia::render('UnitesMesure/Index', [
                 'unites' => $unites,
             ]);
-
         } catch (Throwable $e) {
             Log::error('Erreur index unités de mesure: ' . $e->getMessage());
             return back()->with('error', 'Erreur lors du chargement des unités de mesure.');
@@ -42,17 +39,26 @@ class UniteMesureController extends Controller
     public function create()
     {
         try {
-            $activeOrg = getPermissionsTeamId();
-            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'SYSTEM_UNITE_MESURE_CREATE')) {
+            if (!Auth::user()->can('SYSTEM_UNITE_MESURE_CREATE')) {
                 return back()->with('error', "Vous n'avez pas la permission de créer une unité de mesure.");
             }
 
             return Inertia::render('UnitesMesure/Create');
-
         } catch (Throwable $e) {
             Log::error('Erreur create unité de mesure: ' . $e->getMessage());
             return back()->with('error', 'Erreur lors de l\'accès au formulaire.');
         }
+    }
+
+    public function show(UniteMesure $uniteMesure)
+    {
+        if (!Auth::user()->can('SYSTEM_UNITE_MESURE_VIEW')) {
+            return back()->with('error', "Vous n'avez pas la permission de voir cette unité de mesure.");
+        }
+        $uniteMesure->load('materiaux');
+        return Inertia::render('UnitesMesure/Show', [
+            'uniteMesure' => $uniteMesure,
+        ]);
     }
 
     /**
@@ -60,38 +66,73 @@ class UniteMesureController extends Controller
      */
     public function store(Request $request)
     {
-        try {
-            $activeOrg = getPermissionsTeamId();
-            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'SYSTEM_UNITE_MESURE_CREATE')) {
-                return back()->with('error', "Vous n'avez pas la permission de créer une unité de mesure.");
-            }
-
-            $validated = $request->validate([
-                'code' => 'required|string|max:10|unique:unites_mesure',
-                'libelle' => 'required|string|max:255|unique:unites_mesure',
-            ]);
-
-            DB::beginTransaction();
-
-            UniteMesure::create($validated);
-
-            DB::commit();
-
-            return redirect()->route('unites-mesure.index')
-                ->with('success', 'Unité de mesure créée avec succès.');
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return back()
-                ->withInput()
-                ->withErrors($e->errors());
-
-        } catch (Throwable $e) {
-            DB::rollBack();
-            Log::error('Erreur store unité de mesure: ' . $e->getMessage());
-            return back()
-                ->withInput()
-                ->with('error', 'Erreur lors de la création de l\'unité de mesure.');
+        if (!Auth::user()->can('SYSTEM_UNITE_MESURE_CREATE')) {
+            return back()->with('error', "Vous n’avez pas l’autorisation de créer une unité de mesure.");
         }
+
+        $validated = $request->validate([
+            'libelle' => 'required|string|max:255|unique:unites_mesure,libelle',
+        ]);
+
+        // Génération automatique du code
+        $libelleClean = strtoupper(Str::ascii($validated['libelle']));
+        $letters = substr(preg_replace('/[^A-Z]/', '', $libelleClean), 0, 3);
+        $letters = str_pad($letters, 3, 'X'); // si moins de 3 lettres
+
+        $prefix = "UNI-{$letters}-";
+
+        do {
+            $randomNumber = str_pad(rand(0, 999), 3, '0', STR_PAD_LEFT);
+            $code = $prefix . $randomNumber;
+        } while (UniteMesure::where('code', $code)->exists());
+
+        UniteMesure::create([
+            'code' => $code,
+            'libelle' => $validated['libelle'],
+        ]);
+
+        return redirect()
+            ->route('unites-mesure.index')
+            ->with('success', "L’unité de mesure a été créée avec succès.");
+    }
+
+    /**
+     * Mettre à jour une unité de mesure
+     */
+    public function update(Request $request, UniteMesure $unite)
+    {
+        if (!Auth::user()->can('SYSTEM_UNITE_MESURE_EDIT')) {
+            return back()->with('error', "Vous n’avez pas l’autorisation de modifier cette unité de mesure.");
+        }
+
+        $validated = $request->validate([
+            'libelle' => 'required|string|max:255|unique:unites_mesure,libelle,' . $unite->id,
+        ]);
+
+        // Génération automatique du code
+        $libelleClean = strtoupper(Str::ascii($validated['libelle']));
+        $letters = substr(preg_replace('/[^A-Z]/', '', $libelleClean), 0, 3);
+        $letters = str_pad($letters, 3, 'X');
+
+        $prefix = "UNI-{$letters}-";
+
+        do {
+            $randomNumber = str_pad(rand(0, 999), 3, '0', STR_PAD_LEFT);
+            $newCode = $prefix . $randomNumber;
+        } while (
+            UniteMesure::where('code', $newCode)
+                ->where('id', '!=', $unite->id)
+                ->exists()
+        );
+
+        $unite->update([
+            'code' => $newCode,
+            'libelle' => $validated['libelle'],
+        ]);
+
+        return redirect()
+            ->route('unites-mesure.index')
+            ->with('success', "L’unité de mesure a été mise à jour avec succès et code recalculé.");
     }
 
     /**
@@ -100,52 +141,16 @@ class UniteMesureController extends Controller
     public function edit(UniteMesure $uniteMesure)
     {
         try {
-            $activeOrg = getPermissionsTeamId();
-            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'SYSTEM_UNITE_MESURE_EDIT')) {
+            if (!Auth::user()->can('SYSTEM_UNITE_MESURE_EDIT')) {
                 return back()->with('error', "Vous n'avez pas la permission de modifier cette unité de mesure.");
             }
 
             return Inertia::render('UnitesMesure/Edit', [
                 'unite' => $uniteMesure,
             ]);
-
         } catch (Throwable $e) {
             Log::error('Erreur edit unité de mesure: ' . $e->getMessage());
             return back()->with('error', 'Erreur lors de l\'accès à l\'unité de mesure.');
-        }
-    }
-
-    /**
-     * Mettre à jour une unité de mesure
-     */
-    public function update(Request $request, UniteMesure $uniteMesure)
-    {
-        try {
-            $activeOrg = getPermissionsTeamId();
-            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'SYSTEM_UNITE_MESURE_EDIT')) {
-                return back()->with('error', "Vous n'avez pas la permission de modifier cette unité de mesure.");
-            }
-
-            $validated = $request->validate([
-                'code' => 'required|string|max:10|unique:unites_mesure,code,' . $uniteMesure->id,
-                'libelle' => 'required|string|max:255|unique:unites_mesure,libelle,' . $uniteMesure->id,
-            ]);
-
-            $uniteMesure->update($validated);
-
-            return redirect()->route('unites-mesure.index')
-                ->with('success', 'Unité de mesure mise à jour avec succès.');
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return back()
-                ->withInput()
-                ->withErrors($e->errors());
-
-        } catch (Throwable $e) {
-            Log::error('Erreur update unité de mesure: ' . $e->getMessage());
-            return back()
-                ->withInput()
-                ->with('error', 'Erreur lors de la mise à jour de l\'unité de mesure.');
         }
     }
 
@@ -155,8 +160,7 @@ class UniteMesureController extends Controller
     public function destroy(UniteMesure $uniteMesure)
     {
         try {
-            $activeOrg = getPermissionsTeamId();
-            if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'SYSTEM_UNITE_MESURE_DELETE')) {
+            if (!Auth::user()->can('SYSTEM_UNITE_MESURE_DELETE')) {
                 return back()->with('error', "Vous n'avez pas la permission de supprimer cette unité de mesure.");
             }
 
@@ -169,7 +173,6 @@ class UniteMesureController extends Controller
 
             return redirect()->route('unites-mesure.index')
                 ->with('success', 'Unité de mesure supprimée avec succès.');
-
         } catch (Throwable $e) {
             Log::error('Erreur destroy unité de mesure: ' . $e->getMessage());
             return back()->with('error', 'Erreur lors de la suppression de l\'unité de mesure.');

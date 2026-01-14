@@ -10,18 +10,18 @@ use Inertia\Inertia;
 class NiveauBatimentController extends Controller
 {
     /**
-     * Liste globale des niveaux
+     * Afficher la liste des niveaux de bâtiment
      */
     public function index()
     {
         if (!Auth::user()->can('SYSTEM_NIVEAU_BATIMENT_VIEW')) {
-            abort(403, "Vous n'avez pas la permission de consulter les niveaux.");
+            return redirect()->back()->with('error', "Vous n'avez pas la permission de consulter les niveaux de bâtiment.");
         }
 
         $niveaux = NiveauBatiment::latest()
             ->paginate(10);
 
-        return Inertia::render('Organisations/NiveauxBatiment/Index', [
+        return Inertia::render('NiveauxBatiment/Index', [
             'niveaux' => $niveaux,
         ]);
     }
@@ -67,7 +67,7 @@ class NiveauBatimentController extends Controller
     public function show(NiveauBatiment $niveauBatiment)
     {
         if (!Auth::user()->can('SYSTEM_NIVEAU_BATIMENT_VIEW')) {
-            abort(403, "Vous n'avez pas la permission de consulter ce niveau.");
+            return redirect()->back()->with('error', "Vous n'avez pas la permission de consulter ce niveau de bâtiment.");
         }
 
         return Inertia::render('Organisations/NiveauxBatiment/Show', [
@@ -75,55 +75,84 @@ class NiveauBatimentController extends Controller
         ]);
     }
 
+
     /**
-     * Formulaire d'édition
+     * Afficher le formulaire de création
+     */
+   
+
+    /**
+     * Enregistrer un nouveau niveau
+     */
+    
+
+    /**
+     * Afficher le formulaire d'édition
      */
     public function edit(NiveauBatiment $niveauBatiment)
     {
         if (!Auth::user()->can('SYSTEM_NIVEAU_BATIMENT_EDIT')) {
-            abort(403, "Vous n'avez pas la permission de modifier ce niveau.");
+            return redirect()->back()->with('error', "Vous n'avez pas la permission de modifier ce niveau de bâtiment.");
         }
 
-        return Inertia::render('Organisations/NiveauxBatiment/Edit', [
+        return Inertia::render('NiveauxBatiment/Edit', [
             'niveau' => $niveauBatiment,
         ]);
     }
 
     /**
-     * Mise à jour d'un niveau
+     * Mettre à jour un niveau
      */
     public function update(Request $request, NiveauBatiment $niveauBatiment)
     {
         if (!Auth::user()->can('SYSTEM_NIVEAU_BATIMENT_EDIT')) {
-            abort(403, "Vous n'avez pas la permission de modifier ce niveau.");
+            return redirect()->back()->with('error', "Vous n'avez pas la permission de modifier ce niveau de bâtiment.");
         }
 
         $validated = $request->validate([
-            'code' => 'required|string|max:255|unique:niveaux_batiment,code,' . $niveauBatiment->id,
+            'code' => 'required|string|max:10|unique:niveaux_batiment,code,' . $niveauBatiment->id,
             'nom' => 'required|string|max:255|unique:niveaux_batiment,nom,' . $niveauBatiment->id,
             'description' => 'nullable|string',
+        ], [
+            'code.required' => 'Le code est obligatoire.',
+            'code.unique' => 'Ce code existe déjà.',
+            'nom.required' => 'Le nom est obligatoire.',
+            'nom.unique' => 'Ce nom existe déjà.',
         ]);
 
-        $niveauBatiment->update($validated);
+        try {
+            $niveauBatiment->update($validated);
 
-        return redirect()
-            ->route('niveaux-batiment.index')
-            ->with('success', 'Niveau mis à jour avec succès.');
+            return redirect()
+                ->route('niveaux-batiment.index')
+                ->with('success', 'Le niveau de bâtiment a été mis à jour avec succès.');
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->with('error', 'Une erreur est survenue lors de la mise à jour du niveau de bâtiment. Veuillez réessayer.')
+                ->withInput();
+        }
     }
 
     /**
-     * Suppression d'un niveau
+     * Supprimer un niveau
      */
     public function destroy(NiveauBatiment $niveauBatiment)
     {
         if (!Auth::user()->can('SYSTEM_NIVEAU_BATIMENT_DELETE')) {
-            abort(403, "Vous n'avez pas la permission de supprimer ce niveau.");
+            return redirect()->back()->with('error', "Vous n'avez pas la permission de supprimer ce niveau de bâtiment.");
         }
 
-        $niveauBatiment->delete();
+        try {
+            $niveauBatiment->delete();
 
-        return redirect()
-            ->route('niveaux-batiment.index')
-            ->with('success', 'Niveau supprimé avec succès.');
+            return redirect()
+                ->route('niveaux-batiment.index')
+                ->with('success', 'Le niveau de bâtiment a été supprimé avec succès.');
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->with('error', 'Une erreur est survenue lors de la suppression du niveau de bâtiment. Veuillez réessayer.');
+        }
     }
 }

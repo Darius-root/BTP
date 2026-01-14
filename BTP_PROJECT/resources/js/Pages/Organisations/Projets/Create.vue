@@ -88,7 +88,7 @@
 
                                 <!-- Devise -->
                                 <div class="space-y-2">
-                                    <Label for="devise_id">Devise</Label>
+                                    <Label for="devise_id">Devise  <span class="text-red-500">*</span></Label>
                                     <select
                                         id="devise_id"
                                         v-model="form.devise_id"

@@ -31,33 +31,7 @@
                             <form @submit.prevent="form.post(route('devises.store'))" class="space-y-6">
 
                                 <!-- Code -->
-                                <div class="space-y-2">
-                                    <Label for="code" class="text-sm font-medium">
-                                        Code ISO <span class="text-red-500">*</span>
-                                    </Label>
-                                    <div class="relative">
-                                        <div class="absolute left-3 top-1/2 transform -translate-y-1/2">
-                                            <Globe class="w-4 h-4 text-gray-400" />
-                                        </div>
-                                        <Input
-                                            id="code"
-                                            type="text"
-                                            v-model="form.code"
-                                            placeholder="Ex: XOF, EUR, USD"
-                                            required
-                                            maxlength="3"
-                                            class="pl-10 w-full font-mono text-center uppercase"
-                                            :class="{ 'border-red-300': form.errors.code }"
-                                        />
-                                    </div>
-                                    <p v-if="form.errors.code" class="text-sm text-red-600">
-                                        {{ form.errors.code }}
-                                    </p>
-                                    <p class="text-xs text-gray-500">
-                                        Code ISO 4217 (3 lettres majuscules)
-                                    </p>
-                                </div>
-
+                               
                                 <!-- Libellé -->
                                 <div class="space-y-2">
                                     <Label for="libelle" class="text-sm font-medium">
@@ -188,7 +162,6 @@ import { Button } from '@/components/ui/button'
 const currentPageTitle = ref("Nouvelle Devise")
 
 const form = useForm({
-    code: '',
     libelle: '',
     symbole: ''
 })

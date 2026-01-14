@@ -37,14 +37,7 @@
 
                         <CardContent class="px-0">
                             <form @submit.prevent="form.put(route('materiaux.update', materiau.id))" class="space-y-6">
-                                <!-- Code -->
-                                <div class="space-y-2">
-                                    <Label for="code">Code *</Label>
-                                    <Input id="code" v-model="form.code" placeholder="Ex : CEM, FER, BOIS" />
-                                    <p v-if="form.errors.code" class="text-sm text-red-600">
-                                        {{ form.errors.code }}
-                                    </p>
-                                </div>
+                                
 
                                 <!-- Nom -->
                                 <div class="space-y-2">
@@ -71,12 +64,8 @@
                                 </div>
 
                                 <!-- Actions -->
-                                <div class="flex items-center justify-between border-t pt-6">
-                                    <button type="button" @click="confirmDelete"
-                                        class="text-sm text-red-600 hover:text-red-800">
-                                        <Trash2 class="inline mr-1 h-4 w-4" />
-                                        Supprimer
-                                    </button>
+                                <div class="flex items-center justify-end border-t pt-6">
+                                   
 
                                     <Button type="submit" :disabled="form.processing"
                                         class="bg-blue-600 hover:bg-blue-700">
@@ -126,7 +115,6 @@ const { materiau, unites } = defineProps({
 
 
 const form = useForm({
-    code: materiau.code,
     nom: materiau.nom,
     unite_id: materiau.unite_id,
 })

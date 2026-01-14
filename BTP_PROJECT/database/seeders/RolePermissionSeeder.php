@@ -76,6 +76,7 @@ class RolePermissionSeeder extends Seeder
             'SYSTEM_COLLECTION_CREATE',
             'SYSTEM_COLLECTION_EDIT',
             'SYSTEM_COLLECTION_DELETE',
+            'SYSTEM_COLLECTION_VALIDATE',
 
             //niveau_batiment
             'SYSTEM_NIVEAU_BATIMENT_VIEW',
@@ -145,7 +146,14 @@ class RolePermissionSeeder extends Seeder
             'ORG_DEVIS_ESTIMATIF_EDIT',
             'ORG_DEVIS_ESTIMATIF_DELETE',
             'ORG_DEVIS_ESTIMATIF_VALIDE',
-            'ORG_DEVIS_ESTIMATIF_NOVALIDE'
+            'ORG_DEVIS_ESTIMATIF_NOVALIDE',
+            //collection
+            'ORG_COLLECTION_VIEW',
+            'ORG_COLLECTION_CREATE',
+            'ORG_COLLECTION_EDIT',
+        
+
+
         ];
 
         foreach ($orgPermissions as $perm) {

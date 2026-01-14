@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('projets', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('devise_id')->nullable()->constrained('devises')->onDelete('set null');
+            $table->foreignId('devise_id')->constrained('devises')->onDelete('cascade');
             $table->integer('tva')->default(0);
             $table->string('code_projet')->unique();
             $table->string('nom');
