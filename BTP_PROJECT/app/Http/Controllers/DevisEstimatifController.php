@@ -479,6 +479,13 @@ class DevisEstimatifController extends Controller
     public function destroy(Batiment $batiment,  $devis)
     {
         $this->validateBatimentAccess($batiment, 'ORG_DEVIS_ESTIMATIF_DELETE');
+         
+        
+        if ($devis->statut === 'valide') {
+            return redirect()
+                ->route('batiments.devis-quantitatif.show', $batiment)
+                ->with('error', 'Un devis validé ne peut pas être supprimé.');
+        }
 
         $devis = DevisEstimatif::find($devis);
 

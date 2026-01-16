@@ -145,7 +145,17 @@ class RolePermissionSeeder extends Seeder
             'ORG_DEVIS_ESTIMATIF_EDIT',
             'ORG_DEVIS_ESTIMATIF_DELETE',
             'ORG_DEVIS_ESTIMATIF_VALIDE',
-            'ORG_DEVIS_ESTIMATIF_NOVALIDE'
+            'ORG_DEVIS_ESTIMATIF_NOVALIDE',
+
+            //DEVIS QTE ESTIMATIF
+
+            'ORG_DEVIS_QUANTITATIF_CREATE',
+            'ORG_DEVIS_QUANTITATIF_EDIT',
+            'ORG_DEVIS_QUANTITATIF_VIEW',
+            'ORG_DEVIS_QUANTITATIF_DELETE',
+            'ORG_DEVIS_QUANTITATIF_VALIDE'
+           
+
         ];
 
         foreach ($orgPermissions as $perm) {
