@@ -24,4 +24,9 @@ class CorpsEtat extends Model
     {
         return $this->hasMany(CollectionPrix::class, 'categorie_id');
     }
+
+     public function lots()
+    {
+        return $this->hasMany(DevisLot::class);
+    }
 }

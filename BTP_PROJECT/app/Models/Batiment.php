@@ -34,6 +34,11 @@ class Batiment extends Model
         return $this->hasOne(DevisEstimatif::class);
     }
 
+    public function devisEstimatifQuantitatif(): HasOne
+    {
+        return $this->hasOne(DevisEstimatifQuantitatif::class);
+    }
+
 
 
   

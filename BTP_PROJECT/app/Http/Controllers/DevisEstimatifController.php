@@ -482,6 +482,13 @@ class DevisEstimatifController extends Controller
     public function destroy(Batiment $batiment, $devis)
     {
         $this->validateBatimentAccess($batiment, 'ORG_DEVIS_ESTIMATIF_DELETE');
+         
+        
+        if ($devis->statut === 'valide') {
+            return redirect()
+                ->route('batiments.devis-quantitatif.show', $batiment)
+                ->with('error', 'Un devis validé ne peut pas être supprimé.');
+        }
 
         $devis = DevisEstimatif::find($devis);
 
@@ -514,7 +521,7 @@ class DevisEstimatifController extends Controller
 
     public function valider(Batiment $batiment, DevisEstimatif $devis)
     {
-        //  $this->validateBatimentAccess($batiment, 'ORG_DEVIS_ESTIMATIF_VALIDE');
+        $this->validateBatimentAccess($batiment, 'ORG_DEVIS_ESTIMATIF_VALIDE');
 
         // sécurité métier
         if ($devis->statut === 'valide') {
@@ -535,7 +542,7 @@ class DevisEstimatifController extends Controller
 
     public function brouillon(Batiment $batiment, DevisEstimatif $devis)
     {
-        //  $this->validateBatimentAccess($batiment, 'ORG_DEVIS_ESTIMATIF_NOVALIDE');
+        $this->validateBatimentAccess($batiment, 'ORG_DEVIS_ESTIMATIF_NOVALIDE');
 
         if ($devis->statut === 'brouillon') {
             return back()->with('error', 'Ce devis est déjà en brouillon.');

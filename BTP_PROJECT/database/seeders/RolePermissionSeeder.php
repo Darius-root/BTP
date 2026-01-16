@@ -154,6 +154,15 @@ class RolePermissionSeeder extends Seeder
         
 
 
+            //DEVIS QTE ESTIMATIF
+
+            'ORG_DEVIS_QUANTITATIF_CREATE',
+            'ORG_DEVIS_QUANTITATIF_EDIT',
+            'ORG_DEVIS_QUANTITATIF_VIEW',
+            'ORG_DEVIS_QUANTITATIF_DELETE',
+            'ORG_DEVIS_QUANTITATIF_VALIDE'
+           
+
         ];
 
         foreach ($orgPermissions as $perm) {
@@ -206,11 +215,13 @@ class RolePermissionSeeder extends Seeder
             'ORG_BATIMENT_EDIT',
             'ORG_BATIMENT_DELETE',
 
-            // Devis ESTIMATIF
+             // Devis ESTIMATIF
             'ORG_DEVIS_ESTIMATIF_VIEW',
             'ORG_DEVIS_ESTIMATIF_CREATE',
             'ORG_DEVIS_ESTIMATIF_EDIT',
-            'ORG_DEVIS_ESTIMATIF_DELETE',]);
+            'ORG_DEVIS_ESTIMATIF_DELETE',
+            'ORG_DEVIS_ESTIMATIF_VALIDE',
+            'ORG_DEVIS_ESTIMATIF_NOVALIDE',]);
 
         // ORG_OWNER → toutes les permissions organisationnelles
         $owner = Role::findByName('ORG_ADMIN');

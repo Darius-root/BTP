@@ -18,6 +18,7 @@ use App\Http\Controllers\CommuneController;
 use App\Http\Controllers\CorpsEtatController;
 use App\Http\Controllers\DeviseController;
 use App\Http\Controllers\DevisEstimatifController;
+use App\Http\Controllers\DevisEstimatifQuantitatifController;
 use App\Http\Controllers\MateriauController;
 use App\Http\Controllers\OrganisationUserController;
 use App\Http\Controllers\ProjetController;
@@ -124,6 +125,9 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
             [BatimentController::class, 'createFromProjet']
         )->name('projets.batiments.create');
 
+
+
+        // Devis estimatif
         Route::resource('batiments.devisestimatif', DevisEstimatifController::class);
 
 
@@ -190,6 +194,40 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
                 ->name('projets.batiments-disponibles');
         });
     });
+
+
+    //devis estimatif quantitatif  
+
+    Route::prefix('batiments/{batiment}')
+        ->name('batiments.')
+        ->group(function () {
+
+            // CRUD via resource
+            Route::resource('devis-estimatif-quantitatif', DevisEstimatifQuantitatifController::class);
+
+            Route::get(
+                'devis-quantitatif/{devis_estimatif_quantitatif}/corps-etat',
+                [DevisEstimatifQuantitatifController::class, 'editCorpsEtat']
+            )->name('devis-estimatif-quantitatif.editCorpsEtat');
+
+            Route::put(
+                'devis-quantitatif/{devis_estimatif_quantitatif}/corps-etat',
+                [DevisEstimatifQuantitatifController::class, 'updateCorpsEtat']
+            )->name('devis-estimatif-quantitatif.updateCorpsEtat');
+
+            // Actions métier
+            Route::post(
+                'devis-estimatif-quantitatif/{devis_estimatif_quantitatif}/valider',
+                [DevisEstimatifQuantitatifController::class, 'valider']
+            )->name('devis-estimatif-quantitatif.valider');
+
+            Route::post(
+                'devis-estimatif-quantitatif/{devis_estimatif_quantitatif}/brouillon',
+                [DevisEstimatifQuantitatifController::class, 'brouillon']
+            )->name('devis-estimatif-quantitatif.brouillon');
+        });
+
+
 
 
 
