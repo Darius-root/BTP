@@ -206,9 +206,11 @@ class ProjetController extends Controller
     {
         try {
             $activeOrg = getPermissionsTeamId();
+
             if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'ORG_PROJET_EDIT')) {
                 return back()->with('error', "Vous n'avez pas la permission de modifier ce projet.");
             }
+
             if ($projet->organisation_id !== $activeOrg) {
                 return redirect()
                     ->route('projets.index')
@@ -236,18 +238,22 @@ class ProjetController extends Controller
     {
         try {
             $activeOrg = getPermissionsTeamId();
+
             if (!OrganisationContext::hasPermission(Auth::user(), $activeOrg, 'ORG_PROJET_EDIT')) {
                 return back()->with('error', "Vous n'avez pas la permission de modifier ce projet.");
             }
+
             if ($projet->organisation_id !== $activeOrg) {
                 return back()->with('error', 'Accès interdit à ce projet.');
             }
 
             $validated = $request->validate([
-                'nom' => 'required|string|max:255|unique:projets,nom,' . $projet,
+                'nom' => 'required|string|max:255|unique:projets,nom,' . $projet->id,
+                'code_projet' => 'required|string|max:255|unique:projets,code_projet,' . $projet->id,
                 'client_id' => 'required|exists:clients,id',
+                'organisation_id' => 'required|exists:organisations,id',
                 'devise_id' => 'nullable|exists:devises,id',
-                'tva' => 'required|integer|min:0|max:100',
+                'tva' => 'required|numeric|min:0|max:100',
                 'localisation' => 'nullable|string|max:255',
                 'resume' => 'nullable|string',
                 'budget_previsionnel' => 'nullable|numeric|min:0',
@@ -265,6 +271,13 @@ class ProjetController extends Controller
                 ]);
             }
 
+            // Vérification que l'organisation_id correspond à l'organisation active
+            if ($validated['organisation_id'] != $activeOrg) {
+                return back()->withInput()->withErrors([
+                    'organisation_id' => 'Vous ne pouvez modifier que les projets de votre organisation.',
+                ]);
+            }
+
             $projet->update($validated);
 
             return redirect()
@@ -276,11 +289,10 @@ class ProjetController extends Controller
             return back()
                 ->withInput()
                 ->withErrors([
-                    'global' => 'Erreur lors de la mise à jour.',
-                    'exception' => $e->getMessage(),
+                    'global' => 'Erreur lors de la mise à jour: ' . $e->getMessage(),
                 ]);
         }
-    }
+    }   
 
     /**
      * Suppression

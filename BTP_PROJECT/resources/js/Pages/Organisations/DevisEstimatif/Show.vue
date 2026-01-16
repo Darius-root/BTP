@@ -102,23 +102,62 @@ const brouillon = () => {
         })
     );
 };
+
+const { batiment, devis } = props
+
+const sendDevis = () => {
+    router.post(
+        route('devisestimatif.send', { batiment: batiment.id, devis: devis.id }),
+        {},
+        {
+            onSuccess: () => toast.success('Devis envoyé au client avec succès'),
+            onError: () => toast.error('Erreur lors de l\'envoi du devis')
+        }
+    )
+}
+
+
+const printDevis = () => {
+    window.open(route('devisestimatif.pdf', {
+        batiment: props.batiment.id,
+        devis: props.devis.id
+    }), '_blank')
+}
+
+
+const reuseDevis = () => {
+    router.post(route('devisestimatif.reuse', {
+        batiment: props.batiment.id,
+        devis: props.devis.id
+    }))
+}
+
+
+
 </script>
 <template>
     <SidebarProvider>
         <AdminLayout>
+
             <Head :title="`Devis estimatif – ${devis.intitule}`" />
 
             <PageBreadcrumb :pageTitle="'Détail du devis estimatif'" />
             <!-- ACTIONS -->
             <div class="mt-6 flex justify-end gap-3 my-4">
-                <Button
-                    @click.prevent="editDevis()"
-                    :v-if="devis.statut !== 'valide'"
-                    variant="secondary"
-                    >Modifier
+                <Button @click.prevent="editDevis()" :v-if="devis.statut !== 'valide'" variant="secondary">Modifier
+                </Button>
+                <Button variant="outline" @click="sendDevis">
+                    <PaperAirplaneIcon class="w-4 h-4 mr-1 text-blue-600" />
+                    Envoyer au client
                 </Button>
 
-              
+
+                <!-- Imprimer (sans logique) -->
+                <Button variant="outline" @click="printDevis">
+                    Imprimer
+                </Button>
+
+
                 <Button variant="outline" class="" @click="openModal">
                     <TrashIcon class="w-4 h-4 mr-1 text-red-600" />
                     Supprimer
@@ -126,22 +165,25 @@ const brouillon = () => {
 
                 <div class="flex gap-2">
                     <!-- Bouton VALIDER -->
-                    <Button
-                        v-if="devis.statut === 'brouillon'"
-                        class="bg-green-600 hover:bg-green-700"
-                        @click="valider"
-                    >
+                    <Button v-if="devis.statut === 'brouillon'" class="bg-green-600 hover:bg-green-700"
+                        @click="valider">
                         Valider le devis
                     </Button>
 
                     <!-- Bouton BROUILLON -->
-                    <Button
-                        v-if="devis.statut === 'valide'"
-                        variant="destructive"
-                        @click="brouillon"
-                    >
+                    <Button v-if="devis.statut === 'valide'" variant="destructive" @click="brouillon">
                         Repasser en brouillon
                     </Button>
+
+
+                    <!-- Dans la section ACTIONS de Show.vue -->
+                    <Button variant="outline"
+                        @click="$inertia.visit(route('batiments.devisestimatif.reuse', devis.id))">
+                        <Copy class="w-4 h-4 mr-2" />
+                        Réutiliser ce devis
+                    </Button>
+
+
                 </div>
             </div>
 
@@ -149,9 +191,7 @@ const brouillon = () => {
                 <CardHeader>
                     <CardTitle>{{ devis.intitule }}</CardTitle>
                 </CardHeader>
-                <CardContent
-                    class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm"
-                >
+                <CardContent class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
                         <strong>Organisation</strong><br />
                         {{ devis.batiment.projet.organisation.nom }}
@@ -166,14 +206,12 @@ const brouillon = () => {
                     </div>
                     <div>
                         <strong>Statut</strong><br />
-                        <span
-                            :class="[
-                                'px-2 py-1 rounded text-xs font-semibold',
-                                devis.statut === 'valide'
-                                    ? 'bg-green-100 text-green-700'
-                                    : 'bg-yellow-100 text-yellow-700',
-                            ]"
-                        >
+                        <span :class="[
+                            'px-2 py-1 rounded text-xs font-semibold',
+                            devis.statut === 'valide'
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-yellow-100 text-yellow-700',
+                        ]">
                             {{ devis.statut }}
                         </span>
                     </div>
@@ -182,11 +220,8 @@ const brouillon = () => {
 
             <!-- NIVEAUX -->
             <Accordion type="multiple" class="space-y-4">
-                <AccordionItem
-                    v-for="bloc in composantsParNiveau"
-                    :key="bloc.niveau.id"
-                    :value="`niveau-${bloc.niveau.id}`"
-                >
+                <AccordionItem v-for="bloc in composantsParNiveau" :key="bloc.niveau.id"
+                    :value="`niveau-${bloc.niveau.id}`">
                     <!-- HEADER -->
                     <AccordionTrigger class="px-4 py-3 bg-gray-50 rounded-xl">
                         <div class="flex justify-between w-full items-center">
@@ -203,7 +238,7 @@ const brouillon = () => {
                                         )
                                         ?.total.toLocaleString()
                                 }}
-                                {{devise}}
+                                {{ devise }}
                             </span>
                         </div>
                     </AccordionTrigger>
@@ -212,9 +247,7 @@ const brouillon = () => {
                     <AccordionContent>
                         <Card class="mt-3">
                             <CardContent class="overflow-x-auto p-0">
-                                <table
-                                    class="w-full text-sm border border-gray-200"
-                                >
+                                <table class="w-full text-sm border border-gray-200">
                                     <thead class="bg-gray-100">
                                         <tr>
                                             <th class="border p-2">Code</th>
@@ -233,11 +266,7 @@ const brouillon = () => {
                                     </thead>
 
                                     <tbody>
-                                        <tr
-                                            v-for="comp in bloc.composants"
-                                            :key="comp.id"
-                                            class="hover:bg-gray-50"
-                                        >
+                                        <tr v-for="comp in bloc.composants" :key="comp.id" class="hover:bg-gray-50">
                                             <td class="border p-2">
                                                 {{ comp.code }}
                                             </td>
@@ -255,9 +284,7 @@ const brouillon = () => {
                                                     comp.prix_unitaire.toLocaleString()
                                                 }}
                                             </td>
-                                            <td
-                                                class="border p-2 text-right font-semibold"
-                                            >
+                                            <td class="border p-2 text-right font-semibold">
                                                 {{
                                                     comp.montant.toLocaleString()
                                                 }}
@@ -267,10 +294,7 @@ const brouillon = () => {
 
                                     <tfoot>
                                         <tr class="bg-gray-50 font-bold">
-                                            <td
-                                                colspan="5"
-                                                class="border p-2 text-right"
-                                            >
+                                            <td colspan="5" class="border p-2 text-right">
                                                 Total {{ bloc.niveau.nom }}
                                             </td>
                                             <td class="border p-2 text-right">
@@ -295,11 +319,9 @@ const brouillon = () => {
 
             <!-- TOTAL GÉNÉRAL -->
             <Card>
-                <CardContent
-                    class="flex justify-between items-center text-xl font-bold"
-                >
+                <CardContent class="flex justify-between items-center text-xl font-bold">
                     <span>Total général</span>
-                    <span>{{ totalGeneral.toLocaleString() }} {{devise}}</span>
+                    <span>{{ totalGeneral.toLocaleString() }} {{ devise }}</span>
                 </CardContent>
             </Card>
             <!-- Modal de suppression -->
@@ -307,9 +329,7 @@ const brouillon = () => {
                 <AlertDialogTrigger as-child> </AlertDialogTrigger>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle
-                            >Confirmer la suppression</AlertDialogTitle
-                        >
+                        <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
                         <AlertDialogDescription>
                             Voulez-vous vraiment supprimer le ce devis Estimatif
                             <strong>{{ devis.intitule }}</strong> ? Cette action
@@ -318,9 +338,7 @@ const brouillon = () => {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction @click.prevent="confirmDelete"
-                            >Continue</AlertDialogAction
-                        >
+                        <AlertDialogAction @click.prevent="confirmDelete">Continue</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

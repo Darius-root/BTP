@@ -1,4 +1,5 @@
 <template>
+
     <Head :title="`Modifier Devise - ${devise.code}`" />
 
     <SidebarProvider>
@@ -28,10 +29,8 @@
                                     </CardDescription>
                                 </div>
 
-                                <Link
-                                    :href="route('devises.index')"
-                                    class="inline-flex items-center text-gray-600 hover:text-gray-900"
-                                >
+                                <Link :href="route('devises.index')"
+                                    class="inline-flex items-center text-gray-600 hover:text-gray-900">
                                     <ArrowLeft class="mr-2 h-4 w-4" />
                                     Retour à la liste
                                 </Link>
@@ -39,31 +38,11 @@
                         </CardHeader>
 
                         <CardContent class="px-0">
-                            <form
-                                @submit.prevent="form.put(route('devises.update', devise.id))"
-                                class="space-y-6"
-                            >
-                                <!-- Code -->
-                                <div class="space-y-2">
-                                    <Label for="code">Code *</Label>
-                                    <Input
-                                        id="code"
-                                        v-model="form.code"
-                                        placeholder="Ex : XOF, EUR, USD"
-                                    />
-                                    <p v-if="form.errors.code" class="text-sm text-red-600">
-                                        {{ form.errors.code }}
-                                    </p>
-                                </div>
-
+                            <form @submit.prevent="form.put(route('devises.update', devise.id))" class="space-y-6">
                                 <!-- Libellé -->
                                 <div class="space-y-2">
                                     <Label for="libelle">Libellé *</Label>
-                                    <Input
-                                        id="libelle"
-                                        v-model="form.libelle"
-                                        placeholder="Ex : Franc CFA"
-                                    />
+                                    <Input id="libelle" v-model="form.libelle" placeholder="Ex : Franc CFA" />
                                     <p v-if="form.errors.libelle" class="text-sm text-red-600">
                                         {{ form.errors.libelle }}
                                     </p>
@@ -72,11 +51,7 @@
                                 <!-- Symbole -->
                                 <div class="space-y-2">
                                     <Label for="symbole">Symbole</Label>
-                                    <Input
-                                        id="symbole"
-                                        v-model="form.symbole"
-                                        placeholder="Ex : ₣, €, $"
-                                    />
+                                    <Input id="symbole" v-model="form.symbole" placeholder="Ex : ₣, €, $" />
                                     <p v-if="form.errors.symbole" class="text-sm text-red-600">
                                         {{ form.errors.symbole }}
                                     </p>
@@ -84,24 +59,16 @@
 
                                 <!-- Actions -->
                                 <div class="flex items-center justify-between border-t pt-6">
-                                    <button
-                                        type="button"
-                                        @click="confirmDelete"
-                                        class="text-sm text-red-600 hover:text-red-800"
-                                    >
+                                    <!-- ✅ Bouton suppression ouvre le DeleteDialog -->
+                                    <button type="button" @click="deleteOpen = true"
+                                        class="text-sm text-red-600 hover:text-red-800">
                                         <Trash2 class="inline mr-1 h-4 w-4" />
                                         Supprimer
                                     </button>
 
-                                    <Button
-                                        type="submit"
-                                        :disabled="form.processing"
-                                        class="bg-blue-600 hover:bg-blue-700"
-                                    >
-                                        <Loader2
-                                            v-if="form.processing"
-                                            class="mr-2 h-4 w-4 animate-spin"
-                                        />
+                                    <Button type="submit" :disabled="form.processing"
+                                        class="bg-blue-600 hover:bg-blue-700 text-white">
+                                        <Loader2 v-if="form.processing" class="mr-2 h-4 w-4 animate-spin" />
                                         <Save v-else class="mr-2 h-4 w-4" />
                                         Mettre à jour
                                     </Button>
@@ -111,13 +78,17 @@
                     </Card>
                 </div>
             </div>
+
+            <!-- ✅ Dialog suppression -->
+            <DeleteDialog :open="deleteOpen" :item="devise" resource="devises"
+                :label="`la devise ${devise.libelle} (${devise.code})`" @update:open="deleteOpen = $event" />
         </AdminLayout>
     </SidebarProvider>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
-import { Head, Link, useForm, router } from '@inertiajs/vue3'
+import { Head, Link, useForm } from '@inertiajs/vue3'
 import { ArrowLeft, Loader2, Save, Trash2 } from 'lucide-vue-next'
 
 import AdminLayout from '@/components/layout/AdminLayout.vue'
@@ -135,26 +106,23 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import DeleteDialog from '@/components/DeleteDialog.vue'
 
 const currentPageTitle = ref('Modifier Devise')
 
-const { devise } = defineProps({
-    devise: Object,
-})
+const { devise } = defineProps < {
+    devise: {
+        id: number
+    code: string
+    libelle: string
+    symbole?: string
+    }
+} > ()
 
 const form = useForm({
-    code: devise.code,
     libelle: devise.libelle,
     symbole: devise.symbole,
 })
 
-const confirmDelete = () => {
-    if (
-        confirm(
-            `Supprimer définitivement la devise "${devise.libelle}" (${devise.code}) ?`
-        )
-    ) {
-        router.delete(route('devises.destroy', devise.id))
-    }
-}
+const deleteOpen = ref(false)
 </script>

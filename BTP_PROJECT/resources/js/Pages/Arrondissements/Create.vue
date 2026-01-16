@@ -30,28 +30,6 @@
                         <CardContent class="px-0">
                             <form @submit.prevent="form.post(route('arrondissements.store'))" class="space-y-6">
 
-                                <!-- Code -->
-                                <div class="space-y-2">
-                                    <Label for="code" class="text-sm font-medium">
-                                        Code <span class="text-red-500">*</span>
-                                    </Label>
-                                    <Input
-                                        id="code"
-                                        type="text"
-                                        v-model="form.code"
-                                        placeholder="Ex: ARR001"
-                                        required
-                                        class="w-full"
-                                        :class="{ 'border-red-300': form.errors.code }"
-                                    />
-                                    <p v-if="form.errors.code" class="text-sm text-red-600">
-                                        {{ form.errors.code }}
-                                    </p>
-                                    <p class="text-xs text-gray-500">
-                                        Code unique identifiant l'arrondissement
-                                    </p>
-                                </div>
-
                                 <!-- Libellé -->
                                 <div class="space-y-2">
                                     <Label for="libelle" class="text-sm font-medium">
@@ -178,8 +156,8 @@ const props = defineProps({
     }
 })
 
+// Formulaire simplifié : plus de champ 'code'
 const form = useForm({
-    code: '',
     libelle: '',
     commune_id: ''
 })

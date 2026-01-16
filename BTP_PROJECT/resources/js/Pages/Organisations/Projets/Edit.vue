@@ -35,12 +35,12 @@
                                 </div>
 
                                 <!-- Code projet -->
-                                <div class="space-y-2">
+                                <!-- <div class="space-y-2">
                                     <Label for="code_projet">Code projet <span class="text-red-500">*</span></Label>
                                     <Input id="code_projet" v-model="form.code_projet" type="text"
                                         :class="{ 'border-red-300': form.errors.code_projet }" required />
                                     <p v-if="form.errors.code_projet" class="text-sm text-red-600">{{ form.errors.code_projet }}</p>
-                                </div>
+                                </div> -->
 
                                 <!-- Client & Organisation -->
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">

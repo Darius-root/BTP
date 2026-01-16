@@ -53,11 +53,11 @@
                                 </div>
 
                                 <!-- Table -->
-                                <div class="overflow-x-auto border rounded-md">
+                                <div class="overflow-x-auto border rounded-md ">
                                     <Table>
-                                        <TableHeader>
+                                        <TableHeader class="font-medium">
                                             <TableRow>
-                                                <TableHead>Bâtiment</TableHead>
+                                                <TableHead >Bâtiment</TableHead>
                                                 <TableHead>Code</TableHead>
                                                 <TableHead class="text-right">Actions</TableHead>
                                             </TableRow>

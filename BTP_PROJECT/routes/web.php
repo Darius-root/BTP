@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DevisEstimatifReUseController;
 use App\Http\Controllers\NiveauBatimentController;
 use App\Http\Controllers\OrganisationController;
 use App\Http\Controllers\OrganisationRoleController;
@@ -108,7 +109,8 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
         Route::resource('batiments', BatimentController::class);
 
         //  Niveaux
-        Route::resource('niveaux-batiment', NiveauBatimentController::class)->parameters(['niveaux-batiment' => 'niveauBatiment']);;
+        Route::resource('niveaux-batiment', NiveauBatimentController::class)->parameters(['niveaux-batiment' => 'niveauBatiment']);
+        ;
 
 
 
@@ -137,6 +139,26 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
             '/batiments/{batiment}/devis/{devis}/brouillon',
             [DevisEstimatifController::class, 'brouillon']
         )->name('devisestimatif.brouillon');
+
+        Route::post('/batiments/{batiment}/devis/{devis}/send', [DevisEstimatifController::class, 'sendToClient'])
+            ->name('devisestimatif.send');
+
+        // routes/web.php
+        Route::get('/batiments/{batiment}/devis/{devis}/pdf', [DevisEstimatifController::class, 'downloadPdf'])
+            ->name('devisestimatif.pdf');
+
+        // Routes pour la réutilisation de devis
+        Route::get('/devis-estimatif/{devis}/reuse', [DevisEstimatifController::class, 'reuse'])
+            ->name('batiments.devisestimatif.reuse');
+
+        Route::post('/devis-estimatif/{devis}/reuse', [DevisEstimatifController::class, 'storeReuse'])
+            ->name('batiments.devisestimatif.reuse.store');
+            
+        Route::get('/api/projets/{projet}/batiments-disponibles', [DevisEstimatifController::class, 'getBatimentsDisponibles'])
+            ->name('api.projets.batiments-disponibles');
+
+
+
     });
 
 
@@ -217,7 +239,7 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
     Route::resource('arrondissements', ArrondissementController::class);
 
     // Unités de mesure
-    Route::resource('unites-mesure', UniteMesureController::class);
+    Route::resource('unites-mesure', UniteMesureController::class)->parameters(['unites-mesure' => 'uniteMesure']);
 
     // Matériaux
     Route::resource('materiaux', MateriauController::class)->parameters(['materiaux' => 'materiau']);
@@ -229,9 +251,16 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
     Route::resource('corps-etat', CorpsEtatController::class)->parameters(['corps-etat' => 'corpsEtat']);
 
     //collections-prix
-    Route::resource('collections-prix', CollectionPrixController::class);
+    // Route pour les arrondissements - DOIT être avant resource
     Route::get('collections-prix/arrondissements/{communeId}', [CollectionPrixController::class, 'getArrondissements'])
         ->name('collections-prix.arrondissements');
+
+    // Route de validation - DOIT être avant resource
+    Route::post('collections-prix/{id}/validate', [CollectionPrixController::class, 'validateCollection'])
+        ->name('collections-prix.validate');
+
+    // Resource routes - DOIT être en dernier
+    Route::resource('collections-prix', CollectionPrixController::class);
 });
 
 require __DIR__ . '/auth.php';

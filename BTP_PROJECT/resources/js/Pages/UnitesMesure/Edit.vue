@@ -1,4 +1,5 @@
 <template>
+
     <Head :title="`Modifier Unité - ${unite.libelle}`" />
 
     <SidebarProvider>
@@ -7,7 +8,8 @@
 
             <div class="space-y-6">
                 <!-- Card du formulaire -->
-                <div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3 lg:p-6 shadow-sm">
+                <div
+                    class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3 lg:p-6 shadow-sm">
                     <Card class="border-0 shadow-none">
                         <CardHeader class="px-0 pt-0">
                             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -23,10 +25,8 @@
                                         </span>
                                     </CardDescription>
                                 </div>
-                                <Link
-                                    :href="route('unites-mesure.index')"
-                                    class="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
-                                >
+                                <Link :href="route('unites-mesure.index')"
+                                    class="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors">
                                     <ArrowLeft class="w-4 h-4 mr-2" />
                                     Retour à la liste
                                 </Link>
@@ -37,41 +37,16 @@
                             <form @submit.prevent="form.put(route('unites-mesure.update', unite.id))" class="space-y-6">
 
                                 <!-- Code -->
-                                <div class="space-y-2">
-                                    <Label for="code" class="text-sm font-medium">
-                                        Code <span class="text-red-500">*</span>
-                                    </Label>
-                                    <Input
-                                        id="code"
-                                        type="text"
-                                        v-model="form.code"
-                                        placeholder="Ex: KG, M, L..."
-                                        required
-                                        class="w-full"
-                                        :class="{ 'border-red-300': form.errors.code }"
-                                    />
-                                    <p v-if="form.errors.code" class="text-sm text-red-600">
-                                        {{ form.errors.code }}
-                                    </p>
-                                    <p class="text-xs text-gray-500">
-                                        Code unique identifiant l'unité
-                                    </p>
-                                </div>
+
 
                                 <!-- Libellé -->
                                 <div class="space-y-2">
                                     <Label for="libelle" class="text-sm font-medium">
                                         Libellé <span class="text-red-500">*</span>
                                     </Label>
-                                    <Input
-                                        id="libelle"
-                                        type="text"
-                                        v-model="form.libelle"
-                                        placeholder="Ex: Kilogramme, Mètre, Litre..."
-                                        required
-                                        class="w-full"
-                                        :class="{ 'border-red-300': form.errors.libelle }"
-                                    />
+                                    <Input id="libelle" type="text" v-model="form.libelle"
+                                        placeholder="Ex: Kilogramme, Mètre, Litre..." required class="w-full"
+                                        :class="{ 'border-red-300': form.errors.libelle }" />
                                     <p v-if="form.errors.libelle" class="text-sm text-red-600">
                                         {{ form.errors.libelle }}
                                     </p>
@@ -81,7 +56,8 @@
                                 </div>
 
                                 <!-- Informations supplémentaires -->
-                                <div class="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                                <div
+                                    class="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                         <div>
                                             <div class="text-gray-500 dark:text-gray-400">Date de création</div>
@@ -99,42 +75,27 @@
                                 </div>
 
                                 <!-- Actions -->
-                                <div class="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
+                                <div
+                                    class="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
                                     <div class="flex items-center gap-4">
-                                        <button
-                                            type="button"
-                                            @click="confirmDelete"
-                                            class="text-sm text-red-600 hover:text-red-800 dark:hover:text-red-400 transition-colors"
-                                        >
-                                            <Trash2 class="w-4 h-4 inline mr-1" />
-                                            Supprimer cette unité
-                                        </button>
-                                        <Link
-                                            :href="route('unites-mesure.index')"
-                                            class="text-sm text-gray-600 hover:text-gray-900 dark:hover:text-gray-300 transition-colors"
-                                        >
+
+                                        <Link :href="route('unites-mesure.index')"
+                                            class="text-sm text-gray-600 hover:text-gray-900 dark:hover:text-gray-300 transition-colors">
                                             Annuler
                                         </Link>
                                     </div>
                                     <div class="flex items-center gap-3">
-                                        <Transition
-                                            enter-active-class="transition-opacity duration-300"
+                                        <Transition enter-active-class="transition-opacity duration-300"
                                             enter-from-class="opacity-0"
                                             leave-active-class="transition-opacity duration-300"
-                                            leave-to-class="opacity-0"
-                                        >
-                                            <p
-                                                v-if="form.recentlySuccessful"
-                                                class="text-sm text-green-600 dark:text-green-400"
-                                            >
+                                            leave-to-class="opacity-0">
+                                            <p v-if="form.recentlySuccessful"
+                                                class="text-sm text-green-600 dark:text-green-400">
                                                 Unité mise à jour avec succès !
                                             </p>
                                         </Transition>
-                                        <Button
-                                            type="submit"
-                                            :disabled="form.processing"
-                                            class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 px-6"
-                                        >
+                                        <Button type="submit" :disabled="form.processing"
+                                            class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 px-6">
                                             <span v-if="form.processing" class="flex items-center">
                                                 <Loader2 class="w-4 h-4 mr-2 animate-spin" />
                                                 Mise à jour...
@@ -184,7 +145,6 @@ const props = defineProps({
 
 // Initialiser le formulaire avec les données existantes
 const form = useForm({
-    code: props.unite.code || '',
     libelle: props.unite.libelle || ''
 })
 
@@ -193,11 +153,7 @@ const pageTitle = computed(() => {
     return `Modifier Unité - ${props.unite.libelle}`
 })
 
-const confirmDelete = () => {
-    if (confirm(`Êtes-vous sûr de vouloir supprimer définitivement l'unité "${props.unite.libelle}" (${props.unite.code}) ? Cette action est irréversible.`)) {
-        router.delete(route('unites-mesure.destroy', props.unite.id))
-    }
-}
+
 
 const formatDate = (dateString) => {
     if (!dateString) return 'Non spécifié'

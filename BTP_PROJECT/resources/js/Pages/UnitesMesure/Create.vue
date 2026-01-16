@@ -31,31 +31,7 @@
                             <form @submit.prevent="form.post(route('unites-mesure.store'))" class="space-y-6">
 
                                 <!-- Code -->
-                                <div class="space-y-2">
-                                    <Label for="code" class="text-sm font-medium">
-                                        Code <span class="text-red-500">*</span>
-                                    </Label>
-                                    <div class="relative">
-                                        <div class="absolute left-3 top-1/2 transform -translate-y-1/2">
-                                            <Ruler class="w-4 h-4 text-gray-400" />
-                                        </div>
-                                        <Input
-                                            id="code"
-                                            type="text"
-                                            v-model="form.code"
-                                            placeholder="Ex: KG, M, L"
-                                            required
-                                            class="pl-10 w-full"
-                                            :class="{ 'border-red-300': form.errors.code }"
-                                        />
-                                    </div>
-                                    <p v-if="form.errors.code" class="text-sm text-red-600">
-                                        {{ form.errors.code }}
-                                    </p>
-                                    <p class="text-xs text-gray-500">
-                                        Code court et unique identifiant l'unité de mesure
-                                    </p>
-                                </div>
+                                
 
                                 <!-- Libellé -->
                                 <div class="space-y-2">
@@ -147,7 +123,6 @@ import { Button } from '@/components/ui/button'
 const currentPageTitle = ref("Nouvelle Unité de Mesure")
 
 const form = useForm({
-    code: '',
     libelle: ''
 })
 </script>
