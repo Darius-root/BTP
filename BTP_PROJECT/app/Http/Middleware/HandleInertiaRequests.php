@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use Laravolt\Avatar\Avatar;
 use Spatie\Permission\PermissionRegistrar;
 
 class HandleInertiaRequests extends Middleware
@@ -29,38 +30,40 @@ class HandleInertiaRequests extends Middleware
      * @return array<string, mixed>
      */
 
-public function share(Request $request): array
-{
-    // Important : définir la team AVANT de lire les permissions
-    if ($request->session()->has('active_organisation_id')) {
-        app(PermissionRegistrar::class)
-            ->setPermissionsTeamId(
-                $request->session()->get('active_organisation_id')
-            );
+    public function share(Request $request): array
+    {
+        // Important : définir la team AVANT de lire les permissions
+        if ($request->session()->has('active_organisation_id')) {
+            app(PermissionRegistrar::class)
+                ->setPermissionsTeamId(
+                    $request->session()->get('active_organisation_id')
+                );
+        }
+
+        $user = $request->user();
+
+        return [
+            ...parent::share($request),
+
+            'auth' => [
+                'user' => $user,
+                'avatar' => $user
+                    ? app(Avatar::class)->create($user->name)->toBase64()
+                    : null,
+                'permissions' => $user
+                    ? $user->getAllPermissions()->pluck('name')
+                    : [],
+            ],
+
+            'session' => [
+                'active_organisation_id'   => $request->session()->get('active_organisation_id'),
+                'active_organisation_name' => $request->session()->get('active_organisation_name'),
+            ],
+
+            'flash' => [
+                'success' => fn() => $request->session()->get('success'),
+                'error'   => fn() => $request->session()->get('error'),
+            ],
+        ];
     }
-
-    $user = $request->user();
-
-    return [
-        ...parent::share($request),
-
-        'auth' => [
-            'user' => $user,
-            'permissions' => $user
-                ? $user->getAllPermissions()->pluck('name')
-                : [],
-        ],
-
-        'session' => [
-            'active_organisation_id'   => $request->session()->get('active_organisation_id'),
-            'active_organisation_name' => $request->session()->get('active_organisation_name'),
-        ],
-
-        'flash' => [
-            'success' => fn() => $request->session()->get('success'),
-            'error'   => fn() => $request->session()->get('error'),
-        ],
-    ];
-}
-
 }

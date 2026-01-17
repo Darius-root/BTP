@@ -1,15 +1,48 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed,ref } from "vue";
 import { Head, Link, router } from "@inertiajs/vue3";
 import { ArrowLeft, Edit, Trash2, Building2 } from "lucide-vue-next";
 import SidebarProvider from "@/components/layout/SidebarProvider.vue";
 import AdminLayout from "@/components/layout/AdminLayout.vue";
 import PageBreadcrumb from "@/components/common/PageBreadcrumb.vue";
 import { Button } from "@/components/ui/button";
+import {
+    AlertDialog,
+    AlertDialogTrigger,
+    AlertDialogContent,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogCancel,
+    AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import { TrashIcon } from "lucide-vue-next";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
+
+const isOpen = ref(false);
+const openModal = () => {
+    isOpen.value = true;
+};
+const closeModal = () => {
+    isOpen.value = false;
+};
+const confirmDelete = () => {
+    router.delete(
+        route("batiments.devis-estimatif-quantitatif.destroy", {
+            batiment: props.batiment.id,
+            devis_estimatif_quantitatif: props.devis,
+        }),
+        {
+            onFinish: () => {
+                closeModal();
+            },
+        }
+    );
+};
 const props = defineProps<{
     batiment: {
         id: number;
@@ -41,20 +74,6 @@ const totalGeneral = computed(() =>
     )
 );
 
-const confirmDelete = () => {
-    if (
-        confirm(
-            `Êtes-vous sûr de vouloir supprimer le bâtiment "${props.devis.intitule}" ? Cette action est irréversible.`
-        )
-    ) {
-        router.delete(
-            route(
-                "batiments.devis-estimatif-quantitatif.destroy",
-                props.devis.id
-            )
-        );
-    }
-};
 
 
 const valider = () => {
@@ -263,14 +282,30 @@ const brouillon = () => {
                         </Link>
 
                         <!-- Supprimer -->
-                        <button
-                            @click="confirmDelete()"
-                            class="inline-flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                        >
-                            <Trash2 class="w-4 h-4 mr-1" />
-                            Supprimer
-                        </button>
+                       <Button variant="destructive" class="" @click="openModal">
+                    <TrashIcon class="w-4 h-4 mr-1" />
+                    Supprimer
+                </Button>
                     </div>
+
+                      <!-- Modal de suppression -->
+                                <AlertDialog v-model:open="isOpen">
+                                    <AlertDialogTrigger as-child> </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                Voulez-vous vraiment supprimer le ce devis Estimatif
+                                                <strong>{{ devis.intitule }}</strong> ? Cette action
+                                                est irréversible.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction @click.prevent="confirmDelete">Continue</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
                 </CardContent>
             </Card>
         </AdminLayout>

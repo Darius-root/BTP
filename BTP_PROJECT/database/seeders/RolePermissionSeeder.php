@@ -155,6 +155,7 @@ class RolePermissionSeeder extends Seeder
             'ORG_DEVIS_QUANTITATIF_VIEW',
             'ORG_DEVIS_QUANTITATIF_DELETE',
             'ORG_DEVIS_QUANTITATIF_VALIDE',
+            'ORG_DEVIS_QUANTITATIF_NOVALIDE',
            
             //collection
             'ORG_COLLECTION_VIEW',
@@ -230,7 +231,8 @@ class RolePermissionSeeder extends Seeder
             'ORG_DEVIS_QUANTITATIF_EDIT',
             'ORG_DEVIS_QUANTITATIF_VIEW',
             'ORG_DEVIS_QUANTITATIF_DELETE',
-            'ORG_DEVIS_QUANTITATIF_VALIDE',]);
+            'ORG_DEVIS_QUANTITATIF_VALIDE',
+            'ORG_DEVIS_QUANTITATIF_NOVALIDE']);
 
         // ORG_OWNER → toutes les permissions organisationnelles
         $owner = Role::findByName('ORG_ADMIN');

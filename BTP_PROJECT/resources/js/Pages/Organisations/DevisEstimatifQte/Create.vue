@@ -85,12 +85,12 @@ const submit = () => {
                             </div>
 
                             <!-- Template -->
-                            <div class="flex items-center gap-2">
+                            <!-- <div class="flex items-center gap-2">
                                 <Checkbox
                                     v-model:checked="form.is_template"
                                 />
                                 <Label>Enregistrer comme template</Label>
-                            </div>
+                            </div> -->
 
                             <!-- Actions -->
                             <div class="flex justify-end mt-6">

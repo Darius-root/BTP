@@ -35,7 +35,7 @@ class NiveauBatimentController extends Controller
             abort(403, "Vous n'avez pas la permission de créer un niveau.");
         }
 
-        return Inertia::render('Organisations/NiveauxBatiment/Create');
+        return Inertia::render('NiveauxBatiment/Create');
     }
 
     /**
@@ -70,7 +70,7 @@ class NiveauBatimentController extends Controller
             return redirect()->back()->with('error', "Vous n'avez pas la permission de consulter ce niveau de bâtiment.");
         }
 
-        return Inertia::render('Organisations/NiveauxBatiment/Show', [
+        return Inertia::render('NiveauxBatiment/Show', [
             'niveau' => $niveauBatiment,
         ]);
     }

@@ -12,6 +12,7 @@ import {
     AlertDialogCancel,
     AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 
 import { TrashIcon } from "lucide-vue-next";
 
@@ -27,7 +28,6 @@ import {
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
-import { Button } from "@/components/ui/button";
 
 const props = defineProps({
     batiment: Object,

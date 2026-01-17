@@ -23,7 +23,7 @@ class DevisEstimatifQuantitatifController extends Controller
     public function create(Batiment $batiment)
     {
         //  Sécurité métier
-         $this->validateBatimentAccess($batiment, 'ORG_DEVIS_QUANTITATIF_CREATE');
+        $this->validateBatimentAccess($batiment, 'ORG_DEVIS_QUANTITATIF_CREATE');
 
 
         if ($batiment->devisEstimatifQuantitatif()->exists()) {
@@ -69,7 +69,7 @@ class DevisEstimatifQuantitatifController extends Controller
 
         //  Redirection vers l’édition (corps d’état / lots)
         return redirect()
-            ->route('batiments.devis-estimatif-quantitatif.edit', [
+            ->route('batiments.devis-estimatif-quantitatif.show', [
                 'batiment' => $batiment->id,
                 'devis_estimatif_quantitatif' => $devis->id,
             ])
@@ -79,15 +79,26 @@ class DevisEstimatifQuantitatifController extends Controller
 
     public function edit(Batiment $batiment)
     {
-       //  Sécurité d’accès
+        //  Sécurité d’accès
         $this->validateBatimentAccess(
             $batiment,
             'ORG_DEVIS_QUANTITATIF_EDIT'
         );
 
+
         // Le bâtiment n’a qu’un seul devis
         $devis = $batiment->devisEstimatifQuantitatif()->firstOrFail();
+        if (!$devis) {
+            return redirect()
+                ->route('batiments.show', $batiment)
+                ->with('error', 'Aucun devis trouvé pour ce bâtiment.');
+        }
+        if ($devis->statut === 'valide') {
 
+            return back()->with([
+                'error' => 'Un devis validé ne peut pas être supprimé.',
+            ]);
+        }
         return Inertia::render('Organisations/DevisEstimatifQte/Edit', [
             'batiment' => [
                 'id' => $batiment->id,
@@ -110,7 +121,11 @@ class DevisEstimatifQuantitatifController extends Controller
 
         // On récupère le devis existant
         $devis = $batiment->devisEstimatifQuantitatif()->firstOrFail();
-
+        if ($devis->statut === 'valide') {
+            return back()->with([
+                'error' => 'Un devis validé ne peut pas être supprimé.',
+            ]);
+        }
         // Validation
         $data = $request->validate([
             'intitule' => 'required|string|max:255',
@@ -135,6 +150,7 @@ class DevisEstimatifQuantitatifController extends Controller
      */
     public function show(Batiment $batiment)
     {
+
         //  Sécurité d’accès (optionnel)
         $this->validateBatimentAccess(
             $batiment,
@@ -146,8 +162,14 @@ class DevisEstimatifQuantitatifController extends Controller
                 'lots.composants.unite',
                 'lots.corpsEtat',
             ])
-            ->firstOrFail();
+            ->first();
 
+              
+        if (!$devis) {
+            return redirect()
+                ->route('batiments.show', $batiment)
+                ->with('error', 'Aucun devis trouvé pour ce bâtiment.');
+        }
         /**
          * Tous les corps d’état,
          * même ceux sans lots
@@ -201,8 +223,18 @@ class DevisEstimatifQuantitatifController extends Controller
             'ORG_DEVIS_QUANTITATIF_EDIT'
         );
 
-        $devis = DevisEstimatifQuantitatif::find($devis);
+             $devis = DevisEstimatifQuantitatif::find($devis);
 
+        if (!$devis) {
+            return redirect()
+                ->route('batiments.show', $batiment)
+                ->with('error', 'Aucun devis trouvé pour ce bâtiment.');
+        }
+        if ($devis->statut === 'valide') {
+            return back()->with([
+                'error' => 'Un devis validé ne peut pas être supprimé.',
+            ]);
+        }
 
         $devis->load([
             'lots.composants.unite',
@@ -241,9 +273,18 @@ class DevisEstimatifQuantitatifController extends Controller
 
     public function updateCorpsEtat(Request $request, Batiment $batiment, $devis)
     {
+ $this->validateBatimentAccess(
+            $batiment,
+            'ORG_DEVIS_QUANTITATIF_EDIT'
+        );
+
 
         $devis = DevisEstimatifQuantitatif::find($devis);
-
+        if ($devis->statut === 'valide') {
+            return back()->with([
+                'error' => 'Un devis validé ne peut pas être supprimé.',
+            ]);
+        }
         $data = $request->validate(
             [
                 'corps_etat_id' => ['required', 'exists:corps_etat,id'],
@@ -398,9 +439,9 @@ class DevisEstimatifQuantitatifController extends Controller
 
         //  Interdire la suppression si validé
         if ($devis->statut === 'valide') {
-            return redirect()
-                ->route('batiments.devis-quantitatif.show', $batiment)
-                ->with('error', 'Un devis validé ne peut pas être supprimé.');
+            return back()->with([
+                'error' => 'Un devis validé ne peut pas être supprimé.',
+            ]);
         }
 
         DB::transaction(function () use ($devis) {
@@ -426,11 +467,11 @@ class DevisEstimatifQuantitatifController extends Controller
     public function valider(Batiment $batiment,  $devis)
 
     {
-       $this->validateBatimentAccess(
+        $this->validateBatimentAccess(
             $batiment,
             'ORG_DEVIS_QUANTITATIF_VALIDE'
         );
-    
+
         $devis = DevisEstimatifQuantitatif::find($devis);
 
         $this->assertBatimentDevis($batiment, $devis);
@@ -446,10 +487,10 @@ class DevisEstimatifQuantitatifController extends Controller
     public function brouillon(Batiment $batiment,  $devis)
     {
 
-    $this->validateBatimentAccess(
-            $batiment,
-            'ORG_DEVIS_QUANTITATIF_NOVALIDE'
-        );
+        // $this->validateBatimentAccess(
+        //     $batiment,
+        //     'ORG_DEVIS_QUANTITATIF_NOVALIDE'
+        // );
         $devis = DevisEstimatifQuantitatif::find($devis);
 
 
@@ -471,7 +512,7 @@ class DevisEstimatifQuantitatifController extends Controller
     }
 
 
-      protected function validateBatimentAccess(Batiment $batiment, $permission): void
+    protected function validateBatimentAccess(Batiment $batiment, $permission): void
     {
         $activeOrganisationId = getPermissionsTeamId();
 

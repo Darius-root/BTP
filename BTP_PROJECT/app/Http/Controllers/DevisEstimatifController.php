@@ -288,13 +288,17 @@ class DevisEstimatifController extends Controller
         $this->validateBatimentAccess($batiment, 'ORG_DEVIS_ESTIMATIF_EDIT');
 
         $devis = $batiment->devisEstimatif;
-
+      
         if (!$devis) {
             return redirect()
                 ->route('batiments.show', $batiment)
                 ->with('error', 'Aucun devis trouvé pour ce bâtiment.');
         }
-
+  if ($devis->statut === 'valide') {
+           return back()->with([
+                'error' => 'Un devis validé ne peut pas être supprimé.',
+            ]);
+        }
         if ($devis->statut === 'validé') {
             return redirect()
                 ->route('devis-estimatif.show', $batiment)
@@ -351,6 +355,11 @@ class DevisEstimatifController extends Controller
 
 
         $devis = DevisEstimatif::find($devis);
+        if ($devis->statut === 'valide') {
+           return back()->with([
+                'error' => 'Un devis validé ne peut pas être supprimé.',
+            ]);
+        }
         // Sécurité : le devis appartient bien au bâtiment
         if ($devis->batiment_id !== $batiment->id) {
             abort(403, 'Action non autorisée.');
@@ -398,23 +407,23 @@ class DevisEstimatifController extends Controller
                 'niveaux.*.composants.*.piece.max' => 'Le nom de la pièce ne doit pas dépasser :max caractères.',
 
                 'niveaux.*.composants.*.unite_id.required' =>
-                    'Veuillez sélectionner une unité de mesure.',
+                'Veuillez sélectionner une unité de mesure.',
                 'niveaux.*.composants.*.unite_id.exists' =>
-                    'L’unité de mesure sélectionnée est invalide.',
+                'L’unité de mesure sélectionnée est invalide.',
 
                 'niveaux.*.composants.*.qte.required' =>
-                    'La quantité est obligatoire.',
+                'La quantité est obligatoire.',
                 'niveaux.*.composants.*.qte.numeric' =>
-                    'La quantité doit être un nombre.',
+                'La quantité doit être un nombre.',
                 'niveaux.*.composants.*.qte.min' =>
-                    'La quantité doit être supérieure ou égale à :min.',
+                'La quantité doit être supérieure ou égale à :min.',
 
                 'niveaux.*.composants.*.prix_unitaire.required' =>
-                    'Le prix unitaire est obligatoire.',
+                'Le prix unitaire est obligatoire.',
                 'niveaux.*.composants.*.prix_unitaire.numeric' =>
-                    'Le prix unitaire doit être un nombre.',
+                'Le prix unitaire doit être un nombre.',
                 'niveaux.*.composants.*.prix_unitaire.min' =>
-                    'Le prix unitaire doit être supérieur ou égal à :min.',
+                'Le prix unitaire doit être supérieur ou égal à :min.',
             ]
         );
 
@@ -482,13 +491,13 @@ class DevisEstimatifController extends Controller
     public function destroy(Batiment $batiment, $devis)
     {
         $this->validateBatimentAccess($batiment, 'ORG_DEVIS_ESTIMATIF_DELETE');
-         
-        
         if ($devis->statut === 'valide') {
-            return redirect()
-                ->route('batiments.devis-quantitatif.show', $batiment)
-                ->with('error', 'Un devis validé ne peut pas être supprimé.');
+            return back()->with([
+                'error' => 'Un devis validé ne peut pas être supprimé.',
+            ]);
         }
+
+     
 
         $devis = DevisEstimatif::find($devis);
 
@@ -648,7 +657,6 @@ class DevisEstimatifController extends Controller
             }
 
             return back()->with('success', 'Devis envoyé avec succès à ' . $client->nom);
-
         } catch (\Exception $e) {
             Log::error('Erreur lors de l\'envoi automatique du devis au client', [
                 'devis_id' => $devis->id,
@@ -821,7 +829,7 @@ class DevisEstimatifController extends Controller
             return back()->withErrors(['devis_source' => 'Le projet du devis source est introuvable.']);
         }
 
-    
+
 
         return DB::transaction(function () use ($request, $batiment, $devisSource) {
 
@@ -875,7 +883,6 @@ class DevisEstimatifController extends Controller
                     'devisestimatif' => $newDevis,
                 ])
                 ->with('success', "Devis créé avec succès à partir du devis {$devisSource->code}.");
-
         });
     }
 
@@ -897,5 +904,4 @@ class DevisEstimatifController extends Controller
 
         return response()->json($batiments);
     }
-
 }
