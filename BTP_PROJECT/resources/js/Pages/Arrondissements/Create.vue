@@ -7,7 +7,7 @@
 
             <div class="space-y-6">
                 <!-- Card du formulaire -->
-                <div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3 lg:p-6 shadow-sm">
+                <div class="rounded-2xl border  p-5  lg:p-6 shadow-sm">
                     <Card class="border-0 shadow-none">
                         <CardHeader class="px-0 pt-0">
                             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

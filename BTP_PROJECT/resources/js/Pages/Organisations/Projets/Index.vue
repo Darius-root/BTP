@@ -7,7 +7,7 @@
             <PageBreadcrumb :pageTitle="currentPageTitle" />
 
             <div class="space-y-6">
-                <div class="rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 shadow-sm">
+                <div class="rounded-2xl  p-5 lg:p-6 shadow-sm">
                     <Card class="border-0 shadow-none">
                         <CardHeader class="px-0 pt-0">
                             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -69,7 +69,7 @@
                                         <TableBody>
                                             <template v-if="filteredData.length">
                                                 <TableRow v-for="projet in filteredData" :key="projet.id"
-                                                    class="hover:bg-gray-50">
+                                                    class="">
                                                     <TableCell class="font-medium">{{ projet.nom }}</TableCell>
                                                     <TableCell>{{ projet.code_projet }}</TableCell>
                                                     <TableCell>{{ projet.client?.nom ?? '—' }}</TableCell>

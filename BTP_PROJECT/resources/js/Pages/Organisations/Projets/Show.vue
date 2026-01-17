@@ -7,7 +7,7 @@
             <PageBreadcrumb :pageTitle="currentPageTitle" />
 
             <div class="space-y-6">
-                <div class="rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 shadow-sm">
+                <div class="rounded-2xl border  p-5 lg:p-6 shadow-sm">
                     <Card class="border-0 shadow-none">
                         <CardHeader class="px-0 pt-0">
                             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -18,7 +18,7 @@
                                     </CardDescription>
                                 </div>
                                 <Link :href="route('projets.index')"
-                                    class="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors">
+                                    class="inline-flex items-center transition-colors">
                                     <ArrowLeft class="w-4 h-4 mr-2" />
                                     Retour à la liste
                                 </Link>
@@ -27,7 +27,7 @@
 
                         <CardContent class="px-0 space-y-6">
                             <!-- Informations principales -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-700">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm ">
                                 <div>
                                     <p class="font-semibold">Code projet</p>
                                     <p>{{ projet.code_projet }}</p>
@@ -72,7 +72,7 @@
                             <!-- Résumé -->
                             <div class="space-y-2">
                                 <p class="font-semibold">Résumé</p>
-                                <p class="text-gray-700">{{ projet.resume ?? '—' }}</p>
+                                <p class="">{{ projet.resume ?? '—' }}</p>
                             </div>
 
                             <!-- Actions -->

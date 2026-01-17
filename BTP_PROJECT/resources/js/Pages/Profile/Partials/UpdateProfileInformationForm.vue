@@ -18,7 +18,7 @@ const form = useForm({
 })
 </script>
 <template>
-  <section class="max-w-xl mx-auto mt-6">
+  <section class="max-w-xl mx-auto mt-6 dark:bg-gray-900">
     
     <Card>
       <!-- Card Header -->

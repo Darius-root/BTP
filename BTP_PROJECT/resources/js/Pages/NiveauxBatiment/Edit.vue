@@ -6,7 +6,7 @@
       <PageBreadcrumb :pageTitle="currentPageTitle" />
 
       <div class="space-y-6">
-        <div class="rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 shadow-sm">
+        <div class="rounded-2xl border  p-5 lg:p-6 shadow-sm">
           <Card class="border-0 shadow-none">
 
             <CardHeader class="px-0 pt-0">

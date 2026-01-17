@@ -7,7 +7,7 @@
 
             <div class="space-y-6">
                 <!-- En-tête -->
-                <div class="rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 shadow-sm">
+                <div class="rounded-2xl border  p-5 lg:p-6 shadow-sm">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
                         <div class="flex items-center gap-4">
                             <div
@@ -56,7 +56,7 @@
 
                 <!-- Informations générales -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="rounded-2xl border bg-white p-5 shadow-sm">
+                    <div class="rounded-2xl border  p-5 shadow-sm">
                         <h3 class="text-lg font-semibold mb-4">
                             Informations générales
                         </h3>
@@ -93,7 +93,7 @@
                     </div>
 
                     <!-- Statistiques -->
-                    <div class="rounded-2xl border bg-white p-5 shadow-sm">
+                    <div class="rounded-2xl border  p-5 shadow-sm">
                         <h3 class="text-lg font-semibold mb-4">
                             Aperçu
                         </h3>
@@ -121,7 +121,7 @@
                 </div>
 
                 <!-- Clients -->
-                <div class="rounded-2xl border bg-white p-5 shadow-sm">
+                <div class="rounded-2xl border  p-5 shadow-sm">
                     <h3 class="text-lg font-semibold mb-4">
                         Clients
                     </h3>
@@ -149,7 +149,7 @@
                 </div>
 
                 <!-- Projets -->
-                <div class="rounded-2xl border bg-white p-5 shadow-sm">
+                <div class="rounded-2xl border  p-5 shadow-sm">
                     <h3 class="text-lg font-semibold mb-4">
                         Projets
                     </h3>

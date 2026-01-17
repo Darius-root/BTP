@@ -396,7 +396,7 @@ const deleteBordereau = () => {
             <div class="space-y-6">
                 <!-- En-tête avec informations du bordereau -->
                 <div
-                    class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3 lg:p-6 shadow-sm">
+                    class="rounded-2xl border  p-5  lg:p-6 shadow-sm">
                     <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
                         <!-- Informations principales -->
                         <div class="flex-1 space-y-4">
@@ -521,7 +521,7 @@ const deleteBordereau = () => {
 
                 <!-- Tableau des désignations -->
                 <div
-                    class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3 lg:p-6 shadow-sm">
+                    class="rounded-2xl border  p-5  lg:p-6 shadow-sm">
                     <Card class="border-0 shadow-none">
                         <CardHeader class="px-0 pt-0">
                             <CardTitle class="text-2xl">Désignations du bordereau</CardTitle>

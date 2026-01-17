@@ -39,7 +39,7 @@ function onPageChange(page: number) {
         <admin-layout>
             <PageBreadcrumb :pageTitle="currentPageTitle" />
             <div
-                class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-black lg:p-6"
+                class="rounded-2xl border  p-5 dark:border-gray-800 dark:bg-black lg:p-6"
             >
                 <h1 class="text-xl font-bold mb-4">Liste des utilisateurs</h1>
 

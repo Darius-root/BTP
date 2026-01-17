@@ -20,8 +20,10 @@ use App\Http\Controllers\DevisEstimatifController;
 use App\Http\Controllers\DevisEstimatifQuantitatifController;
 use App\Http\Controllers\MateriauController;
 use App\Http\Controllers\OrganisationUserController;
+use App\Http\Controllers\PriceStatisticsController;
 use App\Http\Controllers\ProjetController;
 use App\Http\Controllers\UniteMesureController;
+use App\Models\Commune;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -261,6 +263,12 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
 
     // Resource routes - DOIT être en dernier
     Route::resource('collections-prix', CollectionPrixController::class);
+
+
+    Route::get('/stats/collections-prix', [PriceStatisticsController::class, 'index'])
+    ->name('stats.collections-prix');
+
+    Route::post('/filter', [PriceStatisticsController::class, 'filter'])->name('stats.filter');
 });
 
 require __DIR__ . '/auth.php';

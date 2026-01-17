@@ -71,7 +71,7 @@ const submit = () => {
       <PageBreadcrumb :pageTitle="`Modifier les rôles – ${props.user.name}`" />
 
       <div
-        class="mx-auto max-w-2xl space-y-6 rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-black"
+        class="mx-auto max-w-2xl space-y-6 rounded-2xl border  p-6 dark:border-gray-800 dark:bg-black"
       >
         <!-- Infos utilisateur -->
         <div class="space-y-1">

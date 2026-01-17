@@ -8,7 +8,7 @@
 
             <div class="space-y-6">
                 <div
-                    class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-white/3 lg:p-6">
+                    class="rounded-2xl border  p-5 shadow-sm  lg:p-6">
                     <Card class="border-0 shadow-none">
                         <CardHeader class="px-0 pt-0">
                             <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

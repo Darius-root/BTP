@@ -148,7 +148,7 @@ export default {
 
             <!-- Container principal -->
             <div
-                class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3 lg:p-6 shadow-sm">
+                class="rounded-2xl border  p-5  lg:p-6 shadow-sm">
                 <div class="max-w-4xl mx-auto">
                     <Card>
                         <CardHeader>

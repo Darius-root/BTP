@@ -9,7 +9,7 @@
         :class="isExpanded || isHovered ? 'lg:ml-72.5' : 'lg:ml-22.5'"
       >
         <AppHeader />
-        <div class="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">
+        <div class="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6 dark:bg-gray-900">
           <slot />
           <Toaster position="top-right" />
         </div>
