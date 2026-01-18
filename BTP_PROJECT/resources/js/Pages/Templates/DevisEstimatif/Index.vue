@@ -1,7 +1,8 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { Head, router } from '@inertiajs/vue3'
-import { Plus, Shield, FileText, User, Eye } from 'lucide-vue-next'
+import { Head, router, Link } from '@inertiajs/vue3'
+import { Plus, Shield, FileText, User, Eye, Copy } from 'lucide-vue-next'
+import { usePermissions } from '@/composables/usePermissions'
 
 import AdminLayout from '@/components/layout/AdminLayout.vue'
 import SidebarProvider from '@/components/layout/SidebarProvider.vue'
@@ -38,6 +39,8 @@ const props = defineProps({
         required: true
     }
 })
+
+const { can } = usePermissions()
 
 /* Recherche globale */
 const globalFilter = ref('')
@@ -77,6 +80,12 @@ function viewFullTemplate() {
     }
 }
 
+function reuseTemplate() {
+    if (selectedTemplate.value) {
+        router.visit(route('templates.reuse', selectedTemplate.value.id))
+    }
+}
+
 function toggleSystemOnly() {
     showSystemOnly.value = !showSystemOnly.value
 }
@@ -92,7 +101,6 @@ const columns = createTemplatesColumns(onViewDetails)
 </script>
 
 <template>
-
     <Head title="Templates de Devis" />
 
     <SidebarProvider>
@@ -111,16 +119,10 @@ const columns = createTemplatesColumns(onViewDetails)
                                         Liste des devis templates réutilisables
                                     </CardDescription>
                                 </div>
-
-                                <!-- Filtres rapides -->
-                               
                             </div>
                         </CardHeader>
 
                         <CardContent class="px-0 space-y-6">
-                            <!-- Statistiques rapides -->
-                           
-
                             <!-- DataTable -->
                             <TemplatesDataTable 
                                 :data="filteredTemplates" 
@@ -148,7 +150,7 @@ const columns = createTemplatesColumns(onViewDetails)
                             <div>
                                 <p class="text-sm text-gray-500 dark:text-gray-400">Statut</p>
                                 <Badge :variant="selectedTemplate.statut === 'valide' ? 'default' : 'secondary'">
-                                    {{ selectedTemplate.statut }}
+                                    <strong>{{ selectedTemplate.statut }}</strong>
                                 </Badge>
                             </div>
                             <div>
@@ -187,14 +189,28 @@ const columns = createTemplatesColumns(onViewDetails)
                         </div>
                     </div>
 
-                    <DialogFooter class="mt-6">
+                    <DialogFooter class="mt-6 flex flex-wrap gap-2">
                         <Button variant="outline" @click="detailsOpen = false">
                             Fermer
                         </Button>
-                        <Button @click="viewFullTemplate" class="bg-blue-600 hover:bg-blue-700">
+
+                        <!-- Voir le détail complet -->
+                        <button
+                            v-if="can('ORG_DEVIS_ESTIMATIF_VIEW')"
+                            @click="viewFullTemplate"
+                            class="inline-flex items-center px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-md transition-colors">
                             <Eye class="w-4 h-4 mr-2" />
                             Voir le détail complet
-                        </Button>
+                        </button>
+
+                        <!-- Réutiliser -->
+                        <button
+                            v-if="can('ORG_DEVIS_ESTIMATIF_CREATE')"
+                            @click="reuseTemplate"
+                            class="inline-flex items-center px-4 py-2 text-sm text-green-600 hover:bg-green-50 rounded-md transition-colors">
+                            <Copy class="w-4 h-4 mr-2" />
+                            Réutiliser ce template
+                        </button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

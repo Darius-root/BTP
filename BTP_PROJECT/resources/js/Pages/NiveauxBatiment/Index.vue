@@ -23,14 +23,17 @@ import { createColumns } from '@/components/niveaux-batiment/NiveauxBatimentColu
 
 const currentPageTitle = ref('Niveaux de bâtiment')
 
+/**
+ * ⚠️ niveaux est un objet paginé Laravel
+ */
 const props = defineProps({
     niveaux: {
-        type: Array,
+        type: Object,
         required: true,
     },
 })
 
-// Gestion de la suppression
+// Suppression
 const showDeleteDialog = ref(false)
 const niveauToDelete = ref(null)
 
@@ -40,14 +43,14 @@ const confirmDelete = (niveau) => {
 }
 
 const handleDelete = () => {
-    if (niveauToDelete.value) {
-        router.delete(route('niveaux-batiment.destroy', niveauToDelete.value.id), {
-            onSuccess: () => {
-                showDeleteDialog.value = false
-                niveauToDelete.value = null
-            },
-        })
-    }
+    if (!niveauToDelete.value) return
+
+    router.delete(route('niveaux-batiment.destroy', niveauToDelete.value.id), {
+        onSuccess: () => {
+            showDeleteDialog.value = false
+            niveauToDelete.value = null
+        },
+    })
 }
 
 const columns = createColumns(confirmDelete)
@@ -73,8 +76,10 @@ const columns = createColumns(confirmDelete)
                                     </CardDescription>
                                 </div>
 
-                                <Link :href="route('niveaux-batiment.create')"
-                                    class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm transition-colors">
+                                <Link
+                                    :href="route('niveaux-batiment.create')"
+                                    class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm transition-colors"
+                                >
                                     <Plus class="w-5 h-5 mr-2" />
                                     Nouveau niveau
                                 </Link>
@@ -83,13 +88,17 @@ const columns = createColumns(confirmDelete)
 
                         <!-- Content -->
                         <CardContent class="px-0">
-                            <DataTable :columns="columns" :data="niveaux" />
+                            <!-- ✅ CORRECTION ICI -->
+                            <DataTable
+                                :columns="columns"
+                                :data="niveaux.data"
+                            />
                         </CardContent>
                     </Card>
                 </div>
             </div>
 
-            <!-- Dialog de confirmation de suppression -->
+            <!-- Dialog suppression -->
             <AlertDialog v-model:open="showDeleteDialog">
                 <AlertDialogContent>
                     <AlertDialogHeader>
@@ -102,13 +111,16 @@ const columns = createColumns(confirmDelete)
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Annuler</AlertDialogCancel>
-                        <AlertDialogAction @click="handleDelete"
-                            class="bg-red-600 hover:bg-red-700 focus:ring-red-600">
+                        <AlertDialogAction
+                            class="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                            @click="handleDelete"
+                        >
                             Supprimer
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
         </AdminLayout>
     </SidebarProvider>
 </template>

@@ -60,7 +60,7 @@ class TemplateController extends Controller
                 ];
             });
 
-        return Inertia::render('Templates/Index', [
+        return Inertia::render('Templates/DevisEstimatif/Index', [
             'templates' => $templates,
             'auth' => [
                 'user' => Auth::user(),

@@ -7,8 +7,10 @@ use App\Models\CorpsEtat;
 use App\Models\DevisEstimatifQuantitatif;
 use App\Models\DevisLot;
 use App\Models\LotComposant;
+use App\Models\Projet;
 use App\Models\UniteMesure;
 use App\Services\OrganisationContext;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +25,7 @@ class DevisEstimatifQuantitatifController extends Controller
     public function create(Batiment $batiment)
     {
         //  Sécurité métier
-         $this->validateBatimentAccess($batiment, 'ORG_DEVIS_QUANTITATIF_CREATE');
+        $this->validateBatimentAccess($batiment, 'ORG_DEVIS_QUANTITATIF_CREATE');
 
 
         if ($batiment->devisEstimatifQuantitatif()->exists()) {
@@ -31,8 +33,8 @@ class DevisEstimatifQuantitatifController extends Controller
         }
         return Inertia::render('Organisations/DevisEstimatifQte/Create', [
             'batiment' => [
-                'id'   => $batiment->id,
-                'nom'  => $batiment->nom,
+                'id' => $batiment->id,
+                'nom' => $batiment->nom,
                 'code' => $batiment->code,
             ],
 
@@ -63,7 +65,7 @@ class DevisEstimatifQuantitatifController extends Controller
             'intitule' => $data['intitule'],
             'code' => $data['code'],
             'statut' => 'brouillon',
-            'is_template' => false,
+            'is_template' => $batiment->projet->organisation['is_system'] ? true : false,
             'created_by' => Auth::user()->id,
         ]);
 
@@ -79,27 +81,46 @@ class DevisEstimatifQuantitatifController extends Controller
 
     public function edit(Batiment $batiment)
     {
-       //  Sécurité d’accès
-        $this->validateBatimentAccess(
-            $batiment,
-            'ORG_DEVIS_QUANTITATIF_EDIT'
-        );
+        try {
+            // Sécurité d'accès
+            $this->validateBatimentAccess(
+                $batiment,
+                'ORG_DEVIS_QUANTITATIF_EDIT'
+            );
 
-        // Le bâtiment n’a qu’un seul devis
-        $devis = $batiment->devisEstimatifQuantitatif()->firstOrFail();
+            // Le bâtiment n'a qu'un seul devis
+            $devis = $batiment->devisEstimatifQuantitatif()->first();
 
-        return Inertia::render('Organisations/DevisEstimatifQte/Edit', [
-            'batiment' => [
-                'id' => $batiment->id,
-                'nom' => $batiment->nom,
-            ],
-            'devis' => [
-                'id' => $devis->id,
-                'intitule' => $devis->intitule,
-                'code' => $devis->code,
-                'statut' => $devis->statut,
-            ],
-        ]);
+            // Vérifier si le devis existe
+            if (!$devis) {
+                return redirect()
+                    ->route('batiments.show', $batiment)
+                    ->with('error', 'Aucun devis trouvé pour ce bâtiment.');
+            }
+
+            return Inertia::render('Organisations/DevisEstimatifQte/Edit', [
+                'batiment' => [
+                    'id' => $batiment->id,
+                    'nom' => $batiment->nom,
+                ],
+                'devis' => [
+                    'id' => $devis->id,
+                    'intitule' => $devis->intitule,
+                    'code' => $devis->code,
+                    'statut' => $devis->statut,
+                ],
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Erreur lors de l\'édition du devis', [
+                'message' => $e->getMessage(),
+                'batiment_id' => $batiment->id,
+            ]);
+
+            return redirect()
+                ->route('batiments.show', $batiment)
+                ->with('error', 'Une erreur est survenue lors du chargement du devis.');
+        }
     }
 
     public function update(Request $request, Batiment $batiment)
@@ -194,49 +215,70 @@ class DevisEstimatifQuantitatifController extends Controller
     /**
      * Edition
      */
-    public function editCorpsEtat(Batiment $batiment,  $devis)
+    public function editCorpsEtat(Batiment $batiment, $devis)
     {
-        $this->validateBatimentAccess(
-            $batiment,
-            'ORG_DEVIS_QUANTITATIF_EDIT'
-        );
+        try {
+            $this->validateBatimentAccess(
+                $batiment,
+                'ORG_DEVIS_QUANTITATIF_EDIT'
+            );
 
-        $devis = DevisEstimatifQuantitatif::find($devis);
+            $devis = DevisEstimatifQuantitatif::find($devis);
 
+            // Vérifier si le devis existe
+            if (!$devis) {
+                return redirect()
+                    ->route('batiments.show', $batiment)
+                    ->with('error', 'Devis introuvable.');
+            }
 
-        $devis->load([
-            'lots.composants.unite',
-            'lots.corpsEtat',
-        ]);
-        $corpsEtats = CorpsEtat::orderBy('ordre')
-            ->with([
-                'lots' => function ($q) use ($devis) {
-                    $q->where('devis_id', $devis->id)
-                        ->with('composants');
-                }
-            ])
-            ->get();
+            // Vérifier que le devis appartient bien au bâtiment
+            if ($devis->batiment_id !== $batiment->id) {
+                return redirect()
+                    ->route('batiments.show', $batiment)
+                    ->with('error', 'Ce devis n\'appartient pas à ce bâtiment.');
+            }
 
+            $devis->load([
+                'lots.composants.unite',
+                'lots.corpsEtat',
+            ]);
 
+            $corpsEtats = CorpsEtat::orderBy('ordre')
+                ->with([
+                    'lots' => function ($q) use ($devis) {
+                        $q->where('devis_id', $devis->id)
+                            ->with('composants');
+                    }
+                ])
+                ->get();
 
-        return Inertia::render('Organisations/DevisEstimatifQte/EditCorpsEtat', [
-            'batiment' => [
-                'id' => $batiment->id,
-                'nom' => $batiment->nom,
-            ],
-            'devis' => [
-                'id' => $devis->id,
-                'intitule' => $devis->intitule,
-                'statut' => $devis->statut,
-            ],
-            'corpsEtats' => $corpsEtats,
-            'unites' => UniteMesure::orderBy('libelle')->get(),
-            'lots' => $devis->lots,
-            'devise' => $batiment->projet->devise['libelle'] ?? '__'
+            return Inertia::render('Organisations/DevisEstimatifQte/EditCorpsEtat', [
+                'batiment' => [
+                    'id' => $batiment->id,
+                    'nom' => $batiment->nom,
+                ],
+                'devis' => [
+                    'id' => $devis->id,
+                    'intitule' => $devis->intitule,
+                    'statut' => $devis->statut,
+                ],
+                'corpsEtats' => $corpsEtats,
+                'unites' => UniteMesure::orderBy('libelle')->get(),
+                'lots' => $devis->lots,
+                'devise' => $batiment->projet->devise['libelle'] ?? '__'
+            ]);
 
-        ]);
+        } catch (\Exception $e) {
+            \Log::error('Erreur lors de l\'édition du devis', [
+                'message' => $e->getMessage(),
+            ]);
+
+            return redirect()
+                ->route('batiments.show', $batiment)
+                ->with('error', 'Une erreur est survenue lors du chargement du devis.');
+        }
     }
-
 
 
     public function updateCorpsEtat(Request $request, Batiment $batiment, $devis)
@@ -264,46 +306,46 @@ class DevisEstimatifQuantitatifController extends Controller
             [
                 // Corps d’état
                 'corps_etat_id.required' => 'Veuillez sélectionner un corps d’état',
-                'corps_etat_id.exists'   => 'Corps d’état invalide',
+                'corps_etat_id.exists' => 'Corps d’état invalide',
 
                 // Lots
                 'lots.required' => 'Au moins un lot est requis',
-                'lots.array'    => 'Le format des lots est invalide',
-                'lots.min'      => 'Vous devez ajouter au moins un lot',
+                'lots.array' => 'Le format des lots est invalide',
+                'lots.min' => 'Vous devez ajouter au moins un lot',
 
                 // Code lot
                 'lots.*.code.required' => 'Le code du lot est obligatoire',
-                'lots.*.code.string'   => 'Le code du lot doit être une chaîne',
-                'lots.*.code.max'      => 'Le code du lot ne peut dépasser 50 caractères',
+                'lots.*.code.string' => 'Le code du lot doit être une chaîne',
+                'lots.*.code.max' => 'Le code du lot ne peut dépasser 50 caractères',
 
                 // Intitulé lot
                 'lots.*.intitule.required' => 'L’intitulé du lot est obligatoire',
-                'lots.*.intitule.string'   => 'L’intitulé doit être une chaîne',
-                'lots.*.intitule.max'      => 'L’intitulé ne peut dépasser 255 caractères',
+                'lots.*.intitule.string' => 'L’intitulé doit être une chaîne',
+                'lots.*.intitule.max' => 'L’intitulé ne peut dépasser 255 caractères',
 
                 // Composants
                 'lots.*.composants.required' => 'Chaque lot doit avoir au moins un composant',
-                'lots.*.composants.array'    => 'Le format des composants est invalide',
-                'lots.*.composants.min'      => 'Ajoutez au moins un composant',
+                'lots.*.composants.array' => 'Le format des composants est invalide',
+                'lots.*.composants.min' => 'Ajoutez au moins un composant',
 
                 // Désignation
                 'lots.*.composants.*.designation.required' => 'La désignation est obligatoire',
-                'lots.*.composants.*.designation.string'   => 'La désignation doit être une chaîne',
-                'lots.*.composants.*.designation.max'      => 'La désignation ne peut dépasser 255 caractères',
+                'lots.*.composants.*.designation.string' => 'La désignation doit être une chaîne',
+                'lots.*.composants.*.designation.max' => 'La désignation ne peut dépasser 255 caractères',
 
                 // Unité
                 'lots.*.composants.*.unite_id.required' => 'Veuillez sélectionner une unité',
-                'lots.*.composants.*.unite_id.exists'   => 'Unité invalide',
+                'lots.*.composants.*.unite_id.exists' => 'Unité invalide',
 
                 // Quantité
                 'lots.*.composants.*.quantite.required' => 'La quantité est obligatoire',
-                'lots.*.composants.*.quantite.numeric'  => 'La quantité doit être un nombre',
-                'lots.*.composants.*.quantite.gt'       => 'La quantité doit être supérieure à 0',
+                'lots.*.composants.*.quantite.numeric' => 'La quantité doit être un nombre',
+                'lots.*.composants.*.quantite.gt' => 'La quantité doit être supérieure à 0',
 
                 // Prix unitaire
                 'lots.*.composants.*.prix_unitaire.required' => 'Le prix unitaire est obligatoire',
-                'lots.*.composants.*.prix_unitaire.numeric'  => 'Le prix unitaire doit être un nombre',
-                'lots.*.composants.*.prix_unitaire.min'      => 'Le prix unitaire ne peut pas être négatif',
+                'lots.*.composants.*.prix_unitaire.numeric' => 'Le prix unitaire doit être un nombre',
+                'lots.*.composants.*.prix_unitaire.min' => 'Le prix unitaire ne peut pas être négatif',
             ]
         );
 
@@ -423,30 +465,63 @@ class DevisEstimatifQuantitatifController extends Controller
     /**
      * Validation
      */
-    public function valider(Batiment $batiment,  $devis)
-
+    public function valider(Batiment $batiment, $devis)
     {
-       $this->validateBatimentAccess(
-            $batiment,
-            'ORG_DEVIS_QUANTITATIF_VALIDE'
-        );
-    
-        $devis = DevisEstimatifQuantitatif::find($devis);
+        try {
+            $this->validateBatimentAccess(
+                $batiment,
+                'ORG_DEVIS_QUANTITATIF_VALIDE'
+            );
 
-        $this->assertBatimentDevis($batiment, $devis);
+            $devis = DevisEstimatifQuantitatif::find($devis);
 
-        $devis->update(['statut' => 'valide']);
+            // Vérifier si le devis existe
+            if (!$devis) {
+                return back()->with('error', 'Devis introuvable.');
+            }
 
-        return back()->with('success', 'Devis validé.');
+            // Vérifier que le devis appartient au bâtiment
+            $this->assertBatimentDevis($batiment, $devis);
+
+            // Vérifier que le devis n'est pas déjà validé
+            if ($devis->statut === 'valide') {
+                return back()->with('error', 'Ce devis est déjà validé.');
+            }
+
+            // Vérifier que le devis a au moins un lot
+            if ($devis->lots()->count() === 0) {
+                return back()->with('error', 'Impossible de valider un devis vide. Ajoutez au moins un lot.');
+            }
+
+            $devis->update([
+                'statut' => 'valide',
+                'updated_by' => Auth::id(),
+            ]);
+
+            return back()->with('success', 'Devis validé avec succès.');
+
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            return back()->with('error', 'Vous n\'avez pas la permission de valider ce devis.');
+
+        } catch (\Exception $e) {
+            \Log::error('Erreur lors de la validation du devis', [
+                'message' => $e->getMessage(),
+                'batiment_id' => $batiment->id,
+                'devis_id' => $devis,
+                'user_id' => Auth::id(),
+            ]);
+
+            return back()->with('error', 'La validation du devis a échoué. Veuillez vérifier les données saisies et réessayer. Si l\'erreur persiste, contactez l\'administrateur.');
+        }
     }
 
     /**
      * Retour en brouillon
      */
-    public function brouillon(Batiment $batiment,  $devis)
+    public function brouillon(Batiment $batiment, $devis)
     {
 
-    $this->validateBatimentAccess(
+        $this->validateBatimentAccess(
             $batiment,
             'ORG_DEVIS_QUANTITATIF_NOVALIDE'
         );
@@ -460,10 +535,147 @@ class DevisEstimatifQuantitatifController extends Controller
         return back()->with('success', 'Devis repassé en brouillon.');
     }
 
+
+    /**
+     * Formulaire de sélection du bâtiment cible pour la réutilisation
+     */
+    public function reuseForm(Batiment $batiment)
+    {
+        $devis = $batiment->devisEstimatifQuantitatif()->firstOrFail();
+
+        $activeOrganisationId = getPermissionsTeamId();
+
+        $projets = Projet::where('organisation_id', $activeOrganisationId)
+            ->with([
+                'batiments' => function ($query) {
+                    $query->whereDoesntHave('devisEstimatifQuantitatif');
+                }
+            ])
+            ->get()
+            ->filter(fn($projet) => $projet->batiments->isNotEmpty())
+            ->map(function ($projet) {
+                return [
+                    'id' => $projet->id,
+                    'nom' => $projet->nom,
+                    'code' => $projet->code,
+                    'batiments' => $projet->batiments->map(fn($bat) => [
+                        'id' => $bat->id,
+                        'nom' => $bat->nom,
+                        'code' => $bat->code,
+                    ]),
+                ];
+            });
+
+        return Inertia::render('Organisations/DevisEstimatifQte/Reuse', [
+            'batimentSource' => [
+                'id' => $batiment->id,
+                'nom' => $batiment->nom,
+                'code' => $batiment->code,
+            ],
+            'devisSource' => [
+                'id' => $devis->id,
+                'intitule' => $devis->intitule,
+                'code' => $devis->code,
+                'statut' => $devis->statut,
+            ],
+            'projets' => $projets->values(),
+        ]);
+    }
+
+    /**
+     * Réutilisation du devis sur un autre bâtiment
+     * 
+     */
+    public function reuse(Request $request, Batiment $batiment, DevisEstimatifQuantitatif $devis)
+    {
+        // Vérifier que le devis appartient bien au bâtiment source
+        if ($devis->batiment_id !== $batiment->id) {
+            return back()->with('error', 'Le devis ne correspond pas au bâtiment source.');
+        }
+
+        $data = $request->validate([
+            'batiment_cible_id' => 'required|exists:batiments,id',
+            'nouveau_code' => 'required|string|max:50|unique:devis_estimatif_quantitatif,code',
+            'nouvel_intitule' => 'nullable|string|max:255',
+        ]);
+
+        $batimentCible = Batiment::findOrFail($data['batiment_cible_id']);
+
+        // Vérifier que le bâtiment cible n'a pas déjà de devis
+        if ($batimentCible->devisEstimatifQuantitatif()->exists()) {
+            return back()->with('error', 'Le bâtiment cible possède déjà un devis.');
+        }
+
+        // Charger le devis source avec lots et composants
+        $devis->load('lots.composants');
+
+        DB::beginTransaction();
+
+        try {
+            // Créer le nouveau devis
+            $nouveauDevis = DevisEstimatifQuantitatif::create([
+                'batiment_id' => $batimentCible->id,
+                'intitule' => $data['nouvel_intitule'] ?? $devis->intitule,
+                'code' => $data['nouveau_code'],
+                'statut' => 'brouillon',
+                'is_template' => false,
+                'created_by' => Auth::id(),
+            ]);
+
+            // Dupliquer les lots et composants
+            foreach ($devis->lots as $lotSource) {
+                $nouveauLot = DevisLot::create([
+                    'devis_id' => $nouveauDevis->id,
+                    'corps_etat_id' => $lotSource->corps_etat_id,
+                    'code' => $lotSource->code,
+                    'intitule' => $lotSource->intitule,
+                    'ordre' => $lotSource->ordre,
+                    'sous_total' => $lotSource->sous_total,
+                ]);
+
+                foreach ($lotSource->composants as $composantSource) {
+                    LotComposant::create([
+                        'lot_id' => $nouveauLot->id,
+                        'code' => $composantSource->code,
+                        'designation' => $composantSource->designation,
+                        'unite_id' => $composantSource->unite_id,
+                        'quantite' => $composantSource->quantite,
+                        'prix_unitaire' => $composantSource->prix_unitaire,
+                        'montant' => $composantSource->montant,
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            return redirect()->route(
+                'batiments.devis-estimatif-quantitatif.show',
+                [
+                    'batiment' => $batimentCible->id,
+                    'devis_estimatif_quantitatif' => $nouveauDevis->id,
+                ]
+            )->with('success', 'Devis réutilisé avec succès.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            \Log::error('Erreur réutilisation devis', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'batiment_source' => $batiment->nom,
+                'batiment_cible' => $batimentCible->nom,
+            ]);
+
+            return back()
+                ->withInput()
+                ->with('error', 'Erreur lors de la réutilisation : ' . $e->getMessage());
+        }
+    }
+
     /**
      * Vérification cohérence bâtiment / devisdevis-quantitatif
      */
-    private function assertBatimentDevis(Batiment $batiment,  $devis): void
+    private function assertBatimentDevis(Batiment $batiment, $devis): void
     {
         if ($devis->batiment_id !== $batiment->id) {
             abort(403, 'Accès non autorisé.');
@@ -471,7 +683,7 @@ class DevisEstimatifQuantitatifController extends Controller
     }
 
 
-      protected function validateBatimentAccess(Batiment $batiment, $permission): void
+    protected function validateBatimentAccess(Batiment $batiment, $permission): void
     {
         $activeOrganisationId = getPermissionsTeamId();
 
@@ -495,4 +707,101 @@ class DevisEstimatifQuantitatifController extends Controller
             abort(Response::HTTP_FORBIDDEN, 'Accès refusé à ce bâtiment.');
         }
     }
+
+
+    /**
+     * Télécharger le devis quantitatif en PDF
+     */
+  /**
+ * Télécharger le devis quantitatif en PDF
+ */
+public function downloadPdf($batiment, $devis_estimatif_quantitatif)
+{
+    // Convertir en objets si ce sont des IDs
+    $batiment = Batiment::find($batiment);
+    $devis = DevisEstimatifQuantitatif::find($devis_estimatif_quantitatif);
+    
+    if (!$batiment || !$devis) {
+        abort(404, 'Ressource non trouvée.');
+    }
+    
+    // Vérifier que le devis appartient bien au bâtiment
+    if ($devis->batiment_id !== $batiment->id) {
+        abort(404, 'Ce devis n\'appartient pas à ce bâtiment.');
+    }
+    
+    // Sécurité d’accès
+    $this->validateBatimentAccess(
+        $batiment,
+        'ORG_DEVIS_QUANTITATIF_VIEW'
+    );
+    
+    // Charger toutes les relations nécessaires
+    $devis->load([
+        'batiment.projet.organisation',
+        'lots.composants.unite',
+        'lots.corpsEtat',
+    ]);
+    
+    /**
+     * Préparer les corps d’état avec leurs lots
+     */
+    $corpsEtats = CorpsEtat::orderBy('ordre')
+        ->get()
+        ->map(function ($ce) use ($devis) {
+            
+            $lots = $devis->lots
+                ->where('corps_etat_id', $ce->id)
+                ->values()
+                ->map(function ($lot) {
+                    return [
+                        'code' => $lot->code,
+                        'intitule' => $lot->intitule,
+                        'sous_total' => $lot->sous_total,
+                        'composants' => $lot->composants->map(fn($c) => [
+                            'code' => $c->code,
+                            'designation' => $c->designation,
+                            'quantite' => $c->quantite,
+                            'prix_unitaire' => $c->prix_unitaire,
+                            'montant' => $c->montant,
+                            'unite' => [
+                                'code' => $c->unite->code ?? null,
+                            ],
+                        ]),
+                    ];
+                });
+            
+            return [
+                'id' => $ce->id,
+                'intitule' => $ce->intitule,
+                'lots' => $lots,
+                'total' => $lots->sum('sous_total'),
+            ];
+        })
+        ->filter(fn($ce) => $ce['lots']->isNotEmpty());
+    
+    // Total général
+    $totalGeneral = $corpsEtats->sum('total');
+    
+    $devise = $devis->batiment->projet->devise['libelle'] ?? 'Franc CFA';
+    
+    // Vérifiez que la vue existe
+    $viewPath = 'DevisEstimQte/pdf';
+    
+    // Génération du PDF
+    $pdf = Pdf::loadView($viewPath, [
+        'devis' => $devis,
+        'batiment' => $devis->batiment,
+        'projet' => $devis->batiment->projet,
+        'organisation' => $devis->batiment->projet->organisation,
+        'corpsEtats' => $corpsEtats,
+        'totalGeneral' => $totalGeneral,
+        'devise' => $devise,
+    ]);
+    
+    return $pdf->stream("devis-quantitatif-{$devis->code}.pdf");
+}
+
+
+
 }

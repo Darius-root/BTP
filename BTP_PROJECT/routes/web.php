@@ -8,6 +8,7 @@ use App\Http\Controllers\PermissionCrontroller;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\TemplateController;
+use App\Http\Controllers\TemplateEstimatifQte;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ArrondissementController;
 use App\Http\Controllers\BatimentController;
@@ -202,6 +203,22 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
         ->name('batiments.')
         ->group(function () {
 
+            Route::get(
+                'devis-estimatif-quantitatif/reuse-form',
+                [DevisEstimatifQuantitatifController::class, 'reuseForm']
+            )->name('devis-estimatif-quantitatif.reuse-form');
+
+            Route::post(
+                'devis-estimatif-quantitatif/{devis}/reuse',
+                [DevisEstimatifQuantitatifController::class, 'reuse']
+            )->name('devis-estimatif-quantitatif.reuse');
+
+            Route::get(
+                'devis-estimatif-quantitatif/{devis_estimatif_quantitatif}/pdf',
+                [DevisEstimatifQuantitatifController::class, 'downloadPdf']
+            )->name('devis-estimatif-quantitatif.pdf');
+
+
             // CRUD via resource
             Route::resource('devis-estimatif-quantitatif', DevisEstimatifQuantitatifController::class);
 
@@ -225,6 +242,8 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
                 'devis-estimatif-quantitatif/{devis_estimatif_quantitatif}/brouillon',
                 [DevisEstimatifQuantitatifController::class, 'brouillon']
             )->name('devis-estimatif-quantitatif.brouillon');
+
+
         });
 
 
@@ -295,6 +314,22 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
 
     // Resource routes - DOIT être en dernier
     Route::resource('collections-prix', CollectionPrixController::class);
+
+
+
+
+    Route::prefix('templates-estimatif-qte')
+        ->name('templates-estimatif-qte.')
+        ->group(function () {
+
+            // Liste des templates
+            Route::get('/', [TemplateEstimatifQte::class, 'index'])
+                ->name('index');
+
+            // Afficher un template (utilise la même vue que le show normal)
+            Route::get('/{template}', [TemplateEstimatifQte::class, 'show'])
+                ->name('show');
+        });
 });
 
 require __DIR__ . '/auth.php';

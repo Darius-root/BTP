@@ -78,10 +78,7 @@ const formatDate = (date) => {
                                         <Label class="font-semibold">Description :</Label>
                                         <p>{{ niveau.description ?? '—' }}</p>
                                     </div>
-                                    <div>
-                                        <Label class="font-semibold">Créé par :</Label>
-                                        <p>{{ niveau.user?.name ?? '—' }}</p>
-                                    </div>
+                                   
                                     <div>
                                         <Label class="font-semibold">Date de création :</Label>
                                         <p>{{ formatDate(niveau.created_at) }}</p>

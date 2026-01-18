@@ -50,6 +50,7 @@ const menuGroups = [
                 name: "Templates", icon: ListIcon,
                 subItems: [
                     { name: "Devis Estimatif", path: "/templates-estimatif" },
+                    { name: "Devis Quantitatif", path: "/templates-estimatif-qte" },
 
                 ]
             },
