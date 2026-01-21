@@ -137,6 +137,8 @@ function confirmActivation() {
                     </Button>
                 </div>
             </div>
+
+            {{ $page }}
             <div class="rounded-xl border bg-background">
                 <Table>
                     <!-- ================= SUPER ADMIN ================= -->

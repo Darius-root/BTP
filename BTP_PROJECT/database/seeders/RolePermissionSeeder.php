@@ -85,6 +85,23 @@ class RolePermissionSeeder extends Seeder
             'SYSTEM_NIVEAU_BATIMENT_DELETE',
 
 
+            //template_devis_estimatif
+            'SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_VIEW',
+            'SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_CREATE',
+            'SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_EDIT',
+            'SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_DELETE',
+            'SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_VALIDATE',
+            'SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_NOT_VALIDATE',
+
+
+            //template_devis_estimatif_quantitatif
+            'SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_QUANTITATIF_VIEW',
+            'SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_QUANTITATIF_CREATE',
+            'SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_QUANTITATIF_EDIT',
+            'SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_QUANTITATIF_DELETE',
+            'SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_QUANTITATIF_VALIDATE',
+            'SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_QUANTITATIF_NOT_VALIDATE',
+
 
 
 
@@ -147,6 +164,7 @@ class RolePermissionSeeder extends Seeder
             'ORG_DEVIS_ESTIMATIF_DELETE',
             'ORG_DEVIS_ESTIMATIF_VALIDE',
             'ORG_DEVIS_ESTIMATIF_NOVALIDE',
+
             //collection
             'ORG_COLLECTION_VIEW',
             'ORG_COLLECTION_CREATE',
@@ -161,6 +179,9 @@ class RolePermissionSeeder extends Seeder
             'ORG_DEVIS_QUANTITATIF_VIEW',
             'ORG_DEVIS_QUANTITATIF_DELETE',
             'ORG_DEVIS_QUANTITATIF_VALIDE'
+
+
+            //TEMPLATE DEVIS QTE ESTIMATIF
 
 
         ];
@@ -229,6 +250,9 @@ class RolePermissionSeeder extends Seeder
             'ORG_DEVIS_QUANTITATIF_VIEW',
             'ORG_DEVIS_QUANTITATIF_DELETE',
             'ORG_DEVIS_QUANTITATIF_VALIDE'
+
+
+
         ]);
 
         // ORG_OWNER → toutes les permissions organisationnelles

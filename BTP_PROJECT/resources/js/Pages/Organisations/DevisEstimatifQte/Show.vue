@@ -1,17 +1,14 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { Head, Link, router } from "@inertiajs/vue3";
-import { Edit, Trash2, Copy } from "lucide-vue-next";
+import { Edit, Trash2, Copy, Printer, CheckCircle, ArrowLeftCircle } from "lucide-vue-next";
 import SidebarProvider from "@/components/layout/SidebarProvider.vue";
 import AdminLayout from "@/components/layout/AdminLayout.vue";
 import PageBreadcrumb from "@/components/common/PageBreadcrumb.vue";
 import { Button } from "@/components/ui/button";
-import { usePermissions } from '@/composables/usePermissions';
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Printer } from "lucide-vue-next";
-
 
 const props = defineProps<{
     batiment: {
@@ -25,9 +22,13 @@ const props = defineProps<{
     };
     corpsEtats: any[];
     devise: string;
+    permissions: {
+        canEdit: boolean;
+        canDelete: boolean;
+        canValidate: boolean;
+        canCreate: boolean;
+    };
 }>();
-
-const { can } = usePermissions();
 
 /* ===== CALCULS ===== */
 const totalLot = (lot: any) =>
@@ -88,8 +89,6 @@ const downloadPdf = () => {
         "_blank"
     );
 };
-
-
 </script>
 
 <template>
@@ -114,7 +113,7 @@ const downloadPdf = () => {
 
                         <div class="flex flex-wrap gap-2">
                             <!-- Réutiliser -->
-                            <Link v-if="can('ORG_DEVIS_QUANTITATIF_VIEW')" :href="route(
+                            <Link v-if="permissions.canCreate" :href="route(
                                 'batiments.devis-estimatif-quantitatif.reuse-form',
                                 { batiment: batiment.id }
                             )"
@@ -124,7 +123,7 @@ const downloadPdf = () => {
                             </Link>
 
                             <!-- Modifier -->
-                            <Link v-if="can('ORG_DEVIS_QUANTITATIF_EDIT')" :href="route(
+                            <Link v-if="permissions.canEdit" :href="route(
                                 'batiments.devis-estimatif-quantitatif.edit',
                                 {
                                     batiment: batiment.id,
@@ -137,7 +136,7 @@ const downloadPdf = () => {
                             </Link>
 
                             <!-- Valider -->
-                            <button v-if="devis.statut === 'brouillon' && can('ORG_DEVIS_QUANTITATIF_VALIDE')"
+                            <button v-if="devis.statut === 'brouillon' && permissions.canValidate"
                                 @click="valider"
                                 class="inline-flex items-center px-4 py-2 text-sm text-green-600 hover:bg-green-50 rounded-md transition-colors">
                                 <CheckCircle class="w-4 h-4 mr-1" />
@@ -145,18 +144,19 @@ const downloadPdf = () => {
                             </button>
 
                             <!-- Repasser en brouillon -->
-                            <button v-if="devis.statut === 'valide' && can('ORG_DEVIS_QUANTITATIF_VALIDE')"
+                            <button v-if="devis.statut === 'valide' && permissions.canValidate"
                                 @click="brouillon"
                                 class="inline-flex items-center px-4 py-2 text-sm text-orange-600 hover:bg-orange-50 rounded-md transition-colors">
                                 <ArrowLeftCircle class="w-4 h-4 mr-1" />
                                 Repasser en brouillon
                             </button>
-                            <button v-if="can('ORG_DEVIS_QUANTITATIF_VIEW')" @click="downloadPdf"
+
+                            <!-- Imprimer PDF -->
+                            <button @click="downloadPdf"
                                 class="inline-flex items-center px-4 py-2 text-sm text-purple-600 hover:bg-purple-50 rounded-md transition-colors">
                                 <Printer class="w-4 h-4 mr-1" />
                                 Imprimer PDF
                             </button>
-
                         </div>
                     </div>
                 </CardHeader>
@@ -234,7 +234,7 @@ const downloadPdf = () => {
                     <!-- ACTIONS -->
                     <div class="flex flex-wrap items-center justify-end gap-3 mt-6">
                         <!-- Modifier -->
-                        <Link v-if="can('ORG_DEVIS_QUANTITATIF_EDIT')" :href="route(
+                        <Link v-if="permissions.canEdit" :href="route(
                             'batiments.devis-estimatif-quantitatif.editCorpsEtat',
                             {
                                 batiment: props.batiment.id,
@@ -247,7 +247,7 @@ const downloadPdf = () => {
                         </Link>
 
                         <!-- Supprimer -->
-                        <button v-if="can('ORG_DEVIS_QUANTITATIF_DELETE')" @click="confirmDelete()"
+                        <button v-if="permissions.canDelete" @click="confirmDelete()"
                             class="inline-flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors">
                             <Trash2 class="w-4 h-4 mr-1" />
                             Supprimer

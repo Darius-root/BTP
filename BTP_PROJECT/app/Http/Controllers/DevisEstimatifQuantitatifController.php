@@ -156,11 +156,13 @@ class DevisEstimatifQuantitatifController extends Controller
      */
     public function show(Batiment $batiment)
     {
-        //  Sécurité d’accès (optionnel)
+        //  Sécurité d'accès (optionnel)
         $this->validateBatimentAccess(
             $batiment,
             'ORG_DEVIS_QUANTITATIF_VIEW'
         );
+
+        $user = Auth::user();
 
         $devis = $batiment->devisEstimatifQuantitatif()
             ->with([
@@ -170,7 +172,7 @@ class DevisEstimatifQuantitatifController extends Controller
             ->firstOrFail();
 
         /**
-         * Tous les corps d’état,
+         * Tous les corps d'état,
          * même ceux sans lots
          */
         $corpsEtats = CorpsEtat::orderBy('ordre')->get()->map(function ($ce) use ($devis) {
@@ -197,6 +199,17 @@ class DevisEstimatifQuantitatifController extends Controller
             ];
         });
 
+        $isSystemAdmin = $user->hasRole('SYSTEM_ADMIN_PLATEFORME');
+        $isAuthor = $devis->created_by === $user->id;
+        $canModify = ($isSystemAdmin || $isAuthor) && $devis->statut !== 'valide';
+
+        $permissions = [
+            'canEdit' => $canModify,
+            'canDelete' => $canModify,
+            'canValidate' => $canModify,
+            'canCreate' => $user->can('ORG_DEVIS_QUANTITATIF_CREATE'),
+        ];
+
         return Inertia::render('Organisations/DevisEstimatifQte/Show', [
             'batiment' => [
                 'id' => $batiment->id,
@@ -209,9 +222,9 @@ class DevisEstimatifQuantitatifController extends Controller
             ],
             'corpsEtats' => $corpsEtats,
             'devise' => $batiment->projet->devise['libelle'] ?? '__',
+            'permissions' => $permissions,
         ]);
     }
-
     /**
      * Edition
      */
@@ -424,7 +437,7 @@ class DevisEstimatifQuantitatifController extends Controller
 
     public function destroy(Batiment $batiment)
     {
-        //  Sécurité d’accès 
+        //  Sécurité d’accès
         $this->validateBatimentAccess(
             $batiment,
             'ORG_DEVIS_QUANTITATIF_DELETE'
@@ -584,7 +597,7 @@ class DevisEstimatifQuantitatifController extends Controller
 
     /**
      * Réutilisation du devis sur un autre bâtiment
-     * 
+     *
      */
     public function reuse(Request $request, Batiment $batiment, DevisEstimatifQuantitatif $devis)
     {
@@ -712,95 +725,95 @@ class DevisEstimatifQuantitatifController extends Controller
     /**
      * Télécharger le devis quantitatif en PDF
      */
-  /**
- * Télécharger le devis quantitatif en PDF
- */
-public function downloadPdf($batiment, $devis_estimatif_quantitatif)
-{
-    // Convertir en objets si ce sont des IDs
-    $batiment = Batiment::find($batiment);
-    $devis = DevisEstimatifQuantitatif::find($devis_estimatif_quantitatif);
-    
-    if (!$batiment || !$devis) {
-        abort(404, 'Ressource non trouvée.');
-    }
-    
-    // Vérifier que le devis appartient bien au bâtiment
-    if ($devis->batiment_id !== $batiment->id) {
-        abort(404, 'Ce devis n\'appartient pas à ce bâtiment.');
-    }
-    
-    // Sécurité d’accès
-    $this->validateBatimentAccess(
-        $batiment,
-        'ORG_DEVIS_QUANTITATIF_VIEW'
-    );
-    
-    // Charger toutes les relations nécessaires
-    $devis->load([
-        'batiment.projet.organisation',
-        'lots.composants.unite',
-        'lots.corpsEtat',
-    ]);
-    
     /**
-     * Préparer les corps d’état avec leurs lots
+     * Télécharger le devis quantitatif en PDF
      */
-    $corpsEtats = CorpsEtat::orderBy('ordre')
-        ->get()
-        ->map(function ($ce) use ($devis) {
-            
-            $lots = $devis->lots
-                ->where('corps_etat_id', $ce->id)
-                ->values()
-                ->map(function ($lot) {
-                    return [
-                        'code' => $lot->code,
-                        'intitule' => $lot->intitule,
-                        'sous_total' => $lot->sous_total,
-                        'composants' => $lot->composants->map(fn($c) => [
-                            'code' => $c->code,
-                            'designation' => $c->designation,
-                            'quantite' => $c->quantite,
-                            'prix_unitaire' => $c->prix_unitaire,
-                            'montant' => $c->montant,
-                            'unite' => [
-                                'code' => $c->unite->code ?? null,
-                            ],
-                        ]),
-                    ];
-                });
-            
-            return [
-                'id' => $ce->id,
-                'intitule' => $ce->intitule,
-                'lots' => $lots,
-                'total' => $lots->sum('sous_total'),
-            ];
-        })
-        ->filter(fn($ce) => $ce['lots']->isNotEmpty());
-    
-    // Total général
-    $totalGeneral = $corpsEtats->sum('total');
-    
-    $devise = $devis->batiment->projet->devise['libelle'] ?? 'Franc CFA';
-    
-    // Vérifiez que la vue existe
-    $viewPath = 'DevisEstimQte/pdf';
-    
-    // Génération du PDF
-    $pdf = Pdf::loadView($viewPath, [
-        'devis' => $devis,
-        'batiment' => $devis->batiment,
-        'projet' => $devis->batiment->projet,
-        'organisation' => $devis->batiment->projet->organisation,
-        'corpsEtats' => $corpsEtats,
-        'totalGeneral' => $totalGeneral,
-        'devise' => $devise,
-    ]);
-    
-    return $pdf->stream("devis-quantitatif-{$devis->code}.pdf");
-}
+    public function downloadPdf($batiment, $devis_estimatif_quantitatif)
+    {
+        // Convertir en objets si ce sont des IDs
+        $batiment = Batiment::find($batiment);
+        $devis = DevisEstimatifQuantitatif::find($devis_estimatif_quantitatif);
+
+        if (!$batiment || !$devis) {
+            abort(404, 'Ressource non trouvée.');
+        }
+
+        // Vérifier que le devis appartient bien au bâtiment
+        if ($devis->batiment_id !== $batiment->id) {
+            abort(404, 'Ce devis n\'appartient pas à ce bâtiment.');
+        }
+
+        // Sécurité d’accès
+        $this->validateBatimentAccess(
+            $batiment,
+            'ORG_DEVIS_QUANTITATIF_VIEW'
+        );
+
+        // Charger toutes les relations nécessaires
+        $devis->load([
+            'batiment.projet.organisation',
+            'lots.composants.unite',
+            'lots.corpsEtat',
+        ]);
+
+        /**
+         * Préparer les corps d’état avec leurs lots
+         */
+        $corpsEtats = CorpsEtat::orderBy('ordre')
+            ->get()
+            ->map(function ($ce) use ($devis) {
+
+                $lots = $devis->lots
+                    ->where('corps_etat_id', $ce->id)
+                    ->values()
+                    ->map(function ($lot) {
+                        return [
+                            'code' => $lot->code,
+                            'intitule' => $lot->intitule,
+                            'sous_total' => $lot->sous_total,
+                            'composants' => $lot->composants->map(fn($c) => [
+                                'code' => $c->code,
+                                'designation' => $c->designation,
+                                'quantite' => $c->quantite,
+                                'prix_unitaire' => $c->prix_unitaire,
+                                'montant' => $c->montant,
+                                'unite' => [
+                                    'code' => $c->unite->code ?? null,
+                                ],
+                            ]),
+                        ];
+                    });
+
+                return [
+                    'id' => $ce->id,
+                    'intitule' => $ce->intitule,
+                    'lots' => $lots,
+                    'total' => $lots->sum('sous_total'),
+                ];
+            })
+            ->filter(fn($ce) => $ce['lots']->isNotEmpty());
+
+        // Total général
+        $totalGeneral = $corpsEtats->sum('total');
+
+        $devise = $devis->batiment->projet->devise['libelle'] ?? 'Franc CFA';
+
+        // Vérifiez que la vue existe
+        $viewPath = 'DevisEstimQte/pdf';
+
+        // Génération du PDF
+        $pdf = Pdf::loadView($viewPath, [
+            'devis' => $devis,
+            'batiment' => $devis->batiment,
+            'projet' => $devis->batiment->projet,
+            'organisation' => $devis->batiment->projet->organisation,
+            'corpsEtats' => $corpsEtats,
+            'totalGeneral' => $totalGeneral,
+            'devise' => $devise,
+        ]);
+
+        return $pdf->stream("devis-quantitatif-{$devis->code}.pdf");
+    }
 
 
 

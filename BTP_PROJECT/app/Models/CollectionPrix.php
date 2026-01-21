@@ -16,8 +16,9 @@ class CollectionPrix extends Model
     protected $fillable = [
         'commune_id',
         'arrondissement_id',
-        'quartier_id',
+        'quartier',
         'materiau_id',
+        'unite_id',
         'devise_id',
         'user_id',
         'categorie_id',
@@ -36,7 +37,8 @@ class CollectionPrix extends Model
         'validated_at' => 'datetime',
     ];
 
-    
+
+
     public function commune(): BelongsTo
     {
         return $this->belongsTo(Commune::class);
@@ -50,6 +52,11 @@ class CollectionPrix extends Model
     public function materiau(): BelongsTo
     {
         return $this->belongsTo(Materiau::class);
+    }
+
+    public function unite(): BelongsTo
+    {
+        return $this->belongsTo(UniteMesure::class);
     }
 
     public function devise(): BelongsTo
@@ -75,7 +82,7 @@ class CollectionPrix extends Model
         return $this->belongsTo(User::class, 'validated_by');
     }
 
- 
+
 
     /**
      * Collectes validées (visibles globalement)
@@ -107,4 +114,6 @@ class CollectionPrix extends Model
     {
         return $this->is_validated === true;
     }
+
+
 }

@@ -23,7 +23,7 @@ return new class extends Migration {
                 ->constrained()
                 ->cascadeOnDelete();
 
-            $table->string('quartier_id')->nullable();
+            $table->string('quartier')->nullable();
 
             $table->foreignId('materiau_id')
                 ->constrained('materiaux')
@@ -37,6 +37,10 @@ return new class extends Migration {
                 ->constrained('corps_etat')
                 ->cascadeOnDelete();
 
+            $table->foreignId('unite_id')
+                ->constrained('unites_mesure')
+                ->cascadeOnDelete();
+
             $table->foreignId('user_id')
                 ->constrained()
                 ->cascadeOnDelete();
@@ -46,7 +50,7 @@ return new class extends Migration {
 
             $table->decimal('price', 15, 2);
 
-          
+
             $table->boolean('is_validated')->default(false);
 
             /**
