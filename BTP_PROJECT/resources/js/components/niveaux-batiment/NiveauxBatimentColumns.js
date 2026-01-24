@@ -45,16 +45,7 @@ export const createColumns = (confirmDelete) => [
             }, description || '-')
         },
     },
-    {
-        accessorKey: 'user.name',
-        header: 'Ajouté par',
-        cell: ({ row }) => {
-            const userName = row.original.user?.name
-            return h('div', {
-                class: 'text-sm text-gray-600 dark:text-gray-400'
-            }, userName || '-')
-        },
-    },
+   
     {
         accessorKey: 'created_at',
         header: ({ column }) => {

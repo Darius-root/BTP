@@ -14,13 +14,13 @@ class NiveauBatimentController extends Controller
      */
     public function index()
     {
+        
         if (!Auth::user()->can('SYSTEM_NIVEAU_BATIMENT_VIEW')) {
             return redirect()->back()->with('error', "Vous n'avez pas la permission de consulter les niveaux de bâtiment.");
         }
 
         $niveaux = NiveauBatiment::latest()
             ->paginate(10);
-
         return Inertia::render('NiveauxBatiment/Index', [
             'niveaux' => $niveaux,
         ]);

@@ -117,6 +117,7 @@ const sendDevis = () => {
 }
 
 
+
 const printDevis = () => {
     window.open(route('devisestimatif.pdf', {
         batiment: props.batiment.id,

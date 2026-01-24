@@ -46,9 +46,18 @@ const menuGroups = [
                     { name: "Rôles", path: "/organisations/roles", permission: "ORG_ORGANISATION_ROLE_VIEW" },
                 ],
             },
+            {
+                name: "Templates", icon: ListIcon,
+                subItems: [
+                    { name: "Devis Estimatif", path: "/templates-estimatif" },
+                    { name: "Devis Quantitatif", path: "/templates-estimatif-qte" },
+
+                ]
+            },
             { name: "Clients", icon: UserCircleIcon, path: "/clients", permission: "ORG_CLIENT_VIEW" },
             { name: "Projets", icon: BoxCubeIcon, path: "/projets", permission: "ORG_PROJET_VIEW" },
             { name: "Collections de prix", icon: ListIcon, path: "/collections-prix" },
+
         ],
     },
     {
@@ -58,14 +67,13 @@ const menuGroups = [
                 name: "Configurations",
                 icon: ListIcon,
                 subItems: [
-                    { name: "Niveau Batiment", path: "/niveaux-batiment", permission: "SYSTEM_NIVEAU_BATIMENT_VIEW" },
                     { name: "Corps d'état", path: "/corps-etat", permission: "SYSTEM_CORPS_ETAT_VIEW" },
                     { name: "Devises", path: "/devises", permission: "SYSTEM_DEVISE_VIEW" },
                     { name: "Matériaux", path: "/materiaux", permission: "SYSTEM_MATERIAU_VIEW" },
                     { name: "Unités de mesure", path: "/unites-mesure", permission: "SYSTEM_UNITE_MESURE_VIEW" },
                     { name: "Communes", path: "/communes", permission: "SYSTEM_COMMUNE_VIEW" },
                     { name: "Arrondissements", path: "/arrondissements", permission: "SYSTEM_ARRONDISSEMENT_VIEW" },
-                    {name: "Niveaux Bâtiment", path: "/niveaux-batiment", permission: "SYSTEM_NIVEAU_BATIMENT_VIEW"},
+                    { name: "Niveaux Bâtiment", path: "/niveaux-batiment", permission: "SYSTEM_NIVEAU_BATIMENT_VIEW" },
 
                 ],
             },
@@ -124,101 +132,102 @@ const onItemLeave = (g, i) => {
 </script>
 
 <template>
-<aside
-    :class="[
+    <aside :class="[
         'fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 h-screen transition-all duration-300 ease-in-out z-50 border-r',
         showSidebar ? 'lg:w-72.5' : 'lg:w-22.5',
         isMobileOpen ? 'translate-x-0 w-72.5' : '-translate-x-full',
         'lg:translate-x-0',
         'bg-white dark:bg-gray-900 dark:border-gray-800 border-gray-200 text-gray-900 dark:text-gray-300',
-    ]"
-    @mouseenter="setIsHovered(true)"
-    @mouseleave="setIsHovered(false)"
->
-    <!-- LOGO -->
-    <div class="py-6 shrink-0">
-        <div v-if="showSidebar" class="flex justify-center">
-            <Link href="/" class="flex items-center space-x-3">
-                <div class="w-12 h-12 rounded-xl bg-linear-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" />
-                    </svg>
-                </div>
-                <div class="leading-tight">
-                    <div class="text-xl font-extrabold dark:text-white">
-                        BTP<span class="text-blue-600 dark:text-blue-400"> Bénin</span>
+    ]" @mouseenter="setIsHovered(true)" @mouseleave="setIsHovered(false)">
+        <!-- LOGO -->
+        <div class="py-6 shrink-0">
+            <div v-if="showSidebar" class="flex justify-center">
+                <Link href="/" class="flex items-center space-x-3">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-linear-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-white" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" />
+                        </svg>
                     </div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400">
-                        Gestion des Prix
+                    <div class="leading-tight">
+                        <div class="text-xl font-extrabold dark:text-white">
+                            BTP<span class="text-blue-600 dark:text-blue-400"> Bénin</span>
+                        </div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">
+                            Gestion des Prix
+                        </div>
                     </div>
-                </div>
-            </Link>
+                </Link>
+            </div>
+
+            <div v-else class="flex justify-center">
+                <Link href="/" class="flex items-center justify-center">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-linear-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-white" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" />
+                        </svg>
+                    </div>
+                </Link>
+            </div>
         </div>
 
-        <div v-else class="flex justify-center">
-            <Link href="/" class="flex items-center justify-center">
-                <div class="w-12 h-12 rounded-xl bg-linear-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" />
-                    </svg>
-                </div>
-            </Link>
-        </div>
-    </div>
+        <!-- MENU -->
+        <nav class="flex-1 overflow-y-auto no-scrollbar">
+            <div class="flex flex-col gap-4">
+                <div v-for="(menuGroup, groupIndex) in filteredMenuGroups" :key="groupIndex">
+                    <!-- TITRE SECTION -->
+                    <h2 class="mb-4 text-xs uppercase flex text-gray-400 dark:text-gray-500"
+                        :class="showSidebar ? 'justify-start' : 'justify-center'">
+                        <template v-if="showSidebar">{{ menuGroup.title }}</template>
+                        <HorizontalDots v-else class="w-5 h-5" />
+                    </h2>
 
-    <!-- MENU -->
-    <nav class="flex-1 overflow-y-auto no-scrollbar">
-        <div class="flex flex-col gap-4">
-            <div v-for="(menuGroup, groupIndex) in filteredMenuGroups" :key="groupIndex">
-                <!-- TITRE SECTION -->
-                <h2
-                    class="mb-4 text-xs uppercase flex text-gray-400 dark:text-gray-500"
-                    :class="showSidebar ? 'justify-start' : 'justify-center'"
-                >
-                    <template v-if="showSidebar">{{ menuGroup.title }}</template>
-                    <HorizontalDots v-else class="w-5 h-5" />
-                </h2>
+                    <ul class="flex flex-col gap-4">
+                        <li v-for="(item, index) in menuGroup.items" :key="item.name">
+                            <!-- ITEM AVEC SOUS-MENU -->
+                            <div v-if="item.subItems" class="relative" @mouseenter="onItemHover(groupIndex, index)"
+                                @mouseleave="onItemLeave(groupIndex, index)">
+                                <button @click="toggleSubmenu(submenuKey(groupIndex, index))"
+                                    class="menu-item group w-full flex items-center py-3 px-4 rounded-lg transition-colors duration-200"
+                                    :class="{
+                                        'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400': isSubmenuOpen(groupIndex, index),
+                                        'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300': !isSubmenuOpen(groupIndex, index),
+                                        'justify-start': showSidebar,
+                                        'justify-center': !showSidebar,
+                                    }">
+                                    <component :is="item.icon" class="w-5 h-5 shrink-0" />
+                                    <span v-if="showSidebar" class="ml-3 font-medium">{{ item.name }}</span>
+                                    <ChevronDownIcon v-if="showSidebar" class="ml-auto w-5 h-5 transition-transform"
+                                        :class="{ 'rotate-180': isSubmenuOpen(groupIndex, index) }" />
+                                </button>
 
-                <ul class="flex flex-col gap-4">
-                    <li v-for="(item, index) in menuGroup.items" :key="item.name">
-                        <!-- ITEM AVEC SOUS-MENU -->
-                        <div
-                            v-if="item.subItems"
-                            class="relative"
-                            @mouseenter="onItemHover(groupIndex, index)"
-                            @mouseleave="onItemLeave(groupIndex, index)"
-                        >
-                            <button
-                                @click="toggleSubmenu(submenuKey(groupIndex, index))"
-                                class="menu-item group w-full flex items-center py-3 px-4 rounded-lg transition-colors duration-200"
-                                :class="{
-                                    'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400': isSubmenuOpen(groupIndex, index),
-                                    'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300': !isSubmenuOpen(groupIndex, index),
-                                    'justify-start': showSidebar,
-                                    'justify-center': !showSidebar,
-                                }"
-                            >
-                                <component :is="item.icon" class="w-5 h-5 shrink-0" />
-                                <span v-if="showSidebar" class="ml-3 font-medium">{{ item.name }}</span>
-                                <ChevronDownIcon
-                                    v-if="showSidebar"
-                                    class="ml-auto w-5 h-5 transition-transform"
-                                    :class="{ 'rotate-180': isSubmenuOpen(groupIndex, index) }"
-                                />
-                            </button>
+                                <!-- TOOLTIP SUBMENU -->
+                                <div v-if="isSubmenuOpen(groupIndex, index) && !showSidebar"
+                                    class="fixed left-24.5 z-9999">
+                                    <div
+                                        class="bg-white dark:bg-gray-800 shadow-xl rounded-lg py-2 min-w-50 border border-gray-200 dark:border-gray-700">
+                                        <ul>
+                                            <li v-for="subItem in item.subItems" :key="subItem.name">
+                                                <Link :href="subItem.path"
+                                                    class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                                                    {{ subItem.name }}
+                                                </Link>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
 
-                            <!-- TOOLTIP SUBMENU -->
-                            <div
-                                v-if="isSubmenuOpen(groupIndex, index) && !showSidebar"
-                                class="fixed left-24.5 z-9999"
-                            >
-                                <div class="bg-white dark:bg-gray-800 shadow-xl rounded-lg py-2 min-w-50 border border-gray-200 dark:border-gray-700">
-                                    <ul>
+                                <!-- SUBMENU NORMAL -->
+                                <div v-if="isSubmenuOpen(groupIndex, index) && showSidebar" class="mt-2 ml-9">
+                                    <ul class="space-y-2">
                                         <li v-for="subItem in item.subItems" :key="subItem.name">
-                                            <Link
-                                                :href="subItem.path"
-                                                class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                                            >
+                                            <Link :href="subItem.path"
+                                                class="block py-2 px-4 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                                                 {{ subItem.name }}
                                             </Link>
                                         </li>
@@ -226,40 +235,22 @@ const onItemLeave = (g, i) => {
                                 </div>
                             </div>
 
-                            <!-- SUBMENU NORMAL -->
-                            <div v-if="isSubmenuOpen(groupIndex, index) && showSidebar" class="mt-2 ml-9">
-                                <ul class="space-y-2">
-                                    <li v-for="subItem in item.subItems" :key="subItem.name">
-                                        <Link
-                                            :href="subItem.path"
-                                            class="block py-2 px-4 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                                        >
-                                            {{ subItem.name }}
-                                        </Link>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <!-- ITEM SIMPLE -->
-                        <Link
-                            v-else
-                            :href="item.path"
-                            class="menu-item group flex items-center py-3 px-4 rounded-lg transition-colors duration-200 relative"
-                            :class="{
-                                'justify-start': showSidebar,
-                                'justify-center': !showSidebar,
-                                'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400': page.url === item.path,
-                                'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300': page.url !== item.path,
-                            }"
-                        >
-                            <component :is="item.icon" class="w-5 h-5 shrink-0" />
-                            <span v-if="showSidebar" class="ml-3 font-medium">{{ item.name }}</span>
-                        </Link>
-                    </li>
-                </ul>
+                            <!-- ITEM SIMPLE -->
+                            <Link v-else :href="item.path"
+                                class="menu-item group flex items-center py-3 px-4 rounded-lg transition-colors duration-200 relative"
+                                :class="{
+                                    'justify-start': showSidebar,
+                                    'justify-center': !showSidebar,
+                                    'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400': page.url === item.path,
+                                    'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300': page.url !== item.path,
+                                }">
+                                <component :is="item.icon" class="w-5 h-5 shrink-0" />
+                                <span v-if="showSidebar" class="ml-3 font-medium">{{ item.name }}</span>
+                            </Link>
+                        </li>
+                    </ul>
+                </div>
             </div>
-        </div>
-    </nav>
-</aside>
+        </nav>
+    </aside>
 </template>
