@@ -20,7 +20,7 @@ class TemplateEstimatifQte extends Controller
         $user = Auth::user();
 
         // Contrôle VIEW
-        if (!$user->can('SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_QUANTITATIF_VIEW') && !$user->can('ORG_DEVIS_QUANTITATIF_VIEW')) {
+        if (!$user->can('SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_QUANTITATIF_VIEW') && !$user->can('ORG_TEMPLATE_DEVIS_QUANTITATIF_VIEW')) {
             abort(Response::HTTP_FORBIDDEN, "Vous n'avez pas la permission de voir les templates de devis estimatifs quantitatifs.");
         }
 
@@ -47,7 +47,7 @@ class TemplateEstimatifQte extends Controller
 
                 // Permissions spécifiques à ce template
                 $permissions = [
-                    'canView' => $user->can('SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_QUANTITATIF_VIEW') || $user->can('ORG_DEVIS_QUANTITATIF_VIEW'),
+                    'canView' => $user->can('SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_QUANTITATIF_VIEW') || $user->can('ORG_TEMPLATE_DEVIS_QUANTITATIF_VIEW'),
                 ];
 
                 return [
@@ -99,7 +99,7 @@ class TemplateEstimatifQte extends Controller
              */
             if (
                 !$user->can('SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_QUANTITATIF_VIEW') &&
-                !$user->can('ORG_DEVIS_QUANTITATIF_VIEW')
+                !$user->can('ORG_TEMPLATE_DEVIS_QUANTITATIF_VIEW')
             ) {
                 abort(Response::HTTP_FORBIDDEN, "Vous n'avez pas la permission de voir ce template.");
             }

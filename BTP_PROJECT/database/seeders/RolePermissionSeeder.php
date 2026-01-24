@@ -23,6 +23,13 @@ class RolePermissionSeeder extends Seeder
             'SYSTEM_USER_CREATE',
             'SYSTEM_USER_EDIT',
             'SYSTEM_USER_DELETE',
+
+            //Colectors
+            'SYSTEM_COLLECTOR_VIEW',
+            'SYSTEM_COLLECTOR_CREATE',
+            'SYSTEM_COLLECTOR_EDIT',
+            'SYSTEM_COLLECTOR_DELETE',
+
             // Rôles
             'SYSTEM_ROLE_VIEW',
             'SYSTEM_ROLE_CREATE',
@@ -127,10 +134,10 @@ class RolePermissionSeeder extends Seeder
             'ORG_ORGANISATION_DEACTIVATE',
 
             //organisation user
-            'ORG_ORGANISATIONUSER_VIEW',
-            'ORG_ORGANISATIONUSER_CREATE',
-            'ORG_ORGANISATIONUSER_EDIT',
-            'ORG_ORGANISATIONUSER_DELETE',
+            'ORG_ORGANISATION_USER_VIEW',
+            'ORG_ORGANISATION_USER_CREATE',
+            'ORG_ORGANISATION_USER_EDIT',
+            'ORG_ORGANISATION_USER_DELETE',
 
             //organisation role
             'ORG_ORGANISATION_USER_ROLE_ASSIGN',
@@ -178,10 +185,14 @@ class RolePermissionSeeder extends Seeder
             'ORG_DEVIS_QUANTITATIF_EDIT',
             'ORG_DEVIS_QUANTITATIF_VIEW',
             'ORG_DEVIS_QUANTITATIF_DELETE',
-            'ORG_DEVIS_QUANTITATIF_VALIDE'
+            'ORG_DEVIS_QUANTITATIF_VALIDE',
 
 
             //TEMPLATE DEVIS QTE ESTIMATIF
+            'ORG_TEMPLATE_DEVIS_QUANTITATIF_VIEW',
+            
+            //TEMPLATE DEVIS ESTIMATIF
+            'ORG_TEMPLATE_DEVIS_ESTIMATIF_VIEW',
 
 
         ];
@@ -189,6 +200,8 @@ class RolePermissionSeeder extends Seeder
         foreach ($orgPermissions as $perm) {
             Permission::firstOrCreate(['name' => $perm, 'guard_name' => 'web']);
         }
+
+
 
         // =========================
         // ROLES SYSTEME
@@ -220,6 +233,15 @@ class RolePermissionSeeder extends Seeder
         // SYSTEM_ADMIN_PLATEFORME → toutes les permissions système
         $adminPlateforme = Role::findByName('SYSTEM_ADMIN_PLATEFORME');
         $adminPlateforme->givePermissionTo($systemPermissions);
+
+
+        // SYSTEM_COLLECTEUR → toutes les permissions\systeme
+        $collecteur = Role::findByName('SYSTEM_COLLECTEUR');
+        $collecteur->givePermissionTo([
+            'SYSTEM_COLLECTION_VIEW',
+            'SYSTEM_COLLECTION_CREATE',
+            'SYSTEM_COLLECTION_EDIT',
+        ]);
 
 
         //Permissions org pour admin

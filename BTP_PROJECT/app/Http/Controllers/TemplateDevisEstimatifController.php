@@ -26,7 +26,7 @@ class TemplateDevisEstimatifController extends Controller
         $user = Auth::user();
 
         // Contrôle VIEW
-        if (!$user->can('SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_VIEW') && !$user->can('ORG_DEVIS_ESTIMATIF_VIEW')) {
+        if (!$user->can('SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_VIEW') && !$user->can('ORG_TEMPLATE_DEVIS_ESTIMATIF_VIEW')) {
             abort(Response::HTTP_FORBIDDEN, "Vous n'avez pas la permission de voir les templates de devis estimatifs.");
         }
 
@@ -45,7 +45,7 @@ class TemplateDevisEstimatifController extends Controller
 
                 // Permissions spécifiques à ce template
                 $permissions = [
-                    'canView' => $user->can('SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_VIEW') || $user->can('ORG_DEVIS_ESTIMATIF_VIEW'),
+                    'canView' => $user->can('SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_VIEW') || $user->can('ORG_TEMPLATE_DEVIS_ESTIMATIF_VIEW'),
 
                 ];
 

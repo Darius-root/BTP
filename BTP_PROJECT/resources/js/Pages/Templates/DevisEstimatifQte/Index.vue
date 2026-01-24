@@ -106,7 +106,6 @@ function viewTemplate(template) {
                                             <th class="px-4 py-3 text-right font-semibold">Actions</th>
                                         </tr>
                                     </thead>
-
                                     <tbody>
                                         <tr v-if="filteredTemplates.length === 0">
                                             <td

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CollectorController;
 use App\Http\Controllers\DevisEstimatifReUseController;
 use App\Http\Controllers\NiveauBatimentController;
 use App\Http\Controllers\OrganisationController;
@@ -189,17 +190,20 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
             Route::get('/{template}/reuse', [TemplateDevisEstimatifController::class, 'reuse'])->name('reuse');
             Route::post('/{template}/reuse', [TemplateDevisEstimatifController::class, 'storeReuse'])->name('reuse.store');
 
-                Route::post('/{template}/validate', [TemplateDevisEstimatifController::class, 'validateTemplate'])
-        ->name('validate');
+            Route::post('/{template}/validate', [TemplateDevisEstimatifController::class, 'validateTemplate'])
+                ->name('validate');
 
-    Route::post('/{template}/unvalidate', [TemplateDevisEstimatifController::class, 'unvalidateTemplate'])
-        ->name('unvalidate');
+            Route::post('/{template}/unvalidate', [TemplateDevisEstimatifController::class, 'unvalidateTemplate'])
+                ->name('unvalidate');
         });
 
         Route::prefix('api')->name('api.')->group(function () {
             Route::get('/projets/{projet}/batiments-disponibles', [DevisEstimatifController::class, 'getBatimentsDisponibles'])
                 ->name('projets.batiments-disponibles');
         });
+
+        Route::resource('collectors', CollectorController::class)
+            ->only(['index', 'create', 'store', 'destroy']);
     });
 
 

@@ -17,7 +17,7 @@ class PermissionCrontroller extends Controller
 
         
         // Vérifier que l'utilisateur a au moins une des permissions
-        if (!$user->canAny(['SYSTEM_PERMISSION_VIEW', 'ORG_ORGANISATIONUSER_VIEW'])) {
+        if (!$user->canAny(['SYSTEM_PERMISSION_VIEW', 'ORG_ORGANISATION_USER_VIEW'])) {
             abort(403, "Vous n'avez pas la permission de consulter les permissions.");
         }
 

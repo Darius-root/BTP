@@ -42,21 +42,21 @@ const menuGroups = [
                 icon: ListIcon,
                 subItems: [
                     { name: "Mes organisations", path: "/organisations" },
-                    { name: "Utilisateurs", path: "/organisations/users", permission: "ORG_ORGANISATIONUSER_VIEW" },
+                    { name: "Utilisateurs", path: "/organisations/users", permission: "ORG_ORGANISATION_USER_VIEW" },
                     { name: "Rôles", path: "/organisations/roles", permission: "ORG_ORGANISATION_ROLE_VIEW" },
                 ],
             },
             {
                 name: "Templates", icon: ListIcon,
                 subItems: [
-                    { name: "Devis Estimatif", path: "/templates-estimatif" },
-                    { name: "Devis Quantitatif", path: "/templates-estimatif-qte" },
+                    { name: "Devis Estimatif", path: "/templates-estimatif",permission: "ORG_TEMPLATE_DEVIS_ESTIMATIF_VIEW" },
+                    { name: "Devis Quantitatif", path: "/templates-estimatif-qte", permission: "ORG_TEMPLATE_DEVIS_QUANTITATIF_VIEW"        },
 
                 ]
             },
             { name: "Clients", icon: UserCircleIcon, path: "/clients", permission: "ORG_CLIENT_VIEW" },
             { name: "Projets", icon: BoxCubeIcon, path: "/projets", permission: "ORG_PROJET_VIEW" },
-            { name: "Collections de prix", icon: ListIcon, path: "/collections-prix" },
+            { name: "Collections de prix", icon: ListIcon, path: "/collections-prix" , permission: "SYSTEM_COLLECTION_VIEW" },
 
         ],
     },
@@ -86,7 +86,9 @@ const menuGroups = [
                 name: "Utilisateurs",
                 icon: ListIcon,
                 subItems: [
+
                     { name: "Utilisateurs", path: "/users", permission: "SYSTEM_USER_VIEW" },
+                    { name: "Collecteurs", path: "/collectors", permission: "SYSTEM_COLLECTOR_VIEW" },
                     { name: "Permissions", path: "/permissions", permission: "SYSTEM_PERMISSION_VIEW" },
                     { name: "Rôles", path: "/roles", permission: "SYSTEM_ROLE_VIEW" },
                 ],
