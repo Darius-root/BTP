@@ -17,4 +17,9 @@ class UniteMesure extends Model
     {
         return $this->hasMany(Materiau::class, 'unite_id');
     }
+
+    public function collections(): HasMany
+    {
+        return $this->hasMany(CollectionPrix::class, 'unite_id');
+    }
 }

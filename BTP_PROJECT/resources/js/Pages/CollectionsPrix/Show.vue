@@ -1,4 +1,5 @@
 <template>
+
     <Head title="Détails du Prix" />
     <SidebarProvider>
         <AdminLayout>
@@ -23,22 +24,21 @@
                                         <ArrowLeft class="w-4 h-4 mr-2" /> Retour à la liste
                                     </Link>
 
-                                    <template v-if="!collection.is_validated || isAdmin">
-                                        <Link v-if="canEdit()" :href="route('collections-prix.edit', collection.id)"
-                                            class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
-                                            <Edit class="w-4 h-4 mr-2" /> Modifier
-                                        </Link>
+                                    <Link v-if="permissions.canEdit"
+                                        :href="route('collections-prix.edit', collection.id)"
+                                        class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                                        <Edit class="w-4 h-4 mr-2" /> Modifier
+                                    </Link>
 
-                                        <button v-if="canDelete()" @click="openDeleteDialog()"
-                                            class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors">
-                                            <Trash2 class="w-4 h-4 mr-2" /> Supprimer
-                                        </button>
+                                    <button v-if="permissions.canDelete" @click="openDeleteDialog()"
+                                        class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors">
+                                        <Trash2 class="w-4 h-4 mr-2" /> Supprimer
+                                    </button>
 
-                                        <button v-if="canValidate()" @click="openValidateDialog(collection)"
-                                            class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors">
-                                            <CheckCircle class="w-4 h-4 mr-2" /> Valider la collecte
-                                        </button>
-                                    </template>
+                                    <button v-if="permissions.canValidate" @click="openValidateDialog(collection)"
+                                        class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors">
+                                        <CheckCircle class="w-4 h-4 mr-2" /> Valider la collecte
+                                    </button>
                                 </div>
                             </div>
                         </CardHeader>
@@ -52,27 +52,33 @@
 
                                     <div>
                                         <Label>Commune</Label>
-                                        <p class="font-medium text-gray-900 dark:text-white">{{
-                                            collection.commune?.libelle || '-' }}</p>
+                                        <p class="font-medium text-gray-900 dark:text-white">
+                                            {{ collection.commune?.libelle || '-' }}
+                                        </p>
                                     </div>
                                     <div>
                                         <Label>Arrondissement</Label>
-                                        <p class="font-medium text-gray-900 dark:text-white">{{
-                                            collection.arrondissement?.libelle || '-' }}</p>
+                                        <p class="font-medium text-gray-900 dark:text-white">
+                                            {{ collection.arrondissement?.libelle || '-' }}
+                                        </p>
                                     </div>
                                     <div>
                                         <Label>Quartier / Zone</Label>
-                                        <p class="font-medium text-gray-900 dark:text-white">{{ collection.quartier_id
-                                            || '-' }}</p>
+                                        <p class="font-medium text-gray-900 dark:text-white">
+                                            {{ collection.quartier || '-' }}
+                                        </p>
                                     </div>
                                     <div>
                                         <Label>Point de vente</Label>
-                                        <p class="font-medium text-gray-900 dark:text-white">{{ collection.point_vente
-                                            || '-' }}</p>
+                                        <p class="font-medium text-gray-900 dark:text-white">
+                                            {{ collection.point_vente || '-' }}
+                                        </p>
                                     </div>
                                     <div>
                                         <Label>Détails supplémentaires</Label>
-                                        <p class="text-gray-900 dark:text-white">{{ collection.detail || '-' }}</p>
+                                        <p class="text-gray-900 dark:text-white">
+                                            {{ collection.detail || '-' }}
+                                        </p>
                                     </div>
                                 </div>
 
@@ -83,38 +89,43 @@
 
                                     <div>
                                         <Label>Corps d'état</Label>
-                                        <p class="font-medium text-gray-900 dark:text-white">{{
-                                            collection.categorie?.intitule || '-' }}</p>
+                                        <p class="font-medium text-gray-900 dark:text-white">
+                                            {{ collection.categorie?.intitule || '-' }}
+                                        </p>
                                     </div>
                                     <div>
                                         <Label>Matériel</Label>
                                         <p class="font-medium text-gray-900 dark:text-white">
                                             {{ collection.materiau?.nom || '-' }}
-                                            <span v-if="collection.materiau?.unite"
-                                                class="text-sm text-gray-600 dark:text-gray-400 ml-1">
-                                                ({{ collection.materiau.unite.libelle || collection.materiau.unite.nom
-                                                || '-' }})
-                                            </span>
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <Label>Unité de mesure</Label>
+                                        <p class="font-medium text-gray-900 dark:text-white">
+                                            {{ collection.unite?.libelle || '-' }}
                                         </p>
                                     </div>
                                     <div>
                                         <Label>Description</Label>
-                                        <p class="text-gray-900 dark:text-white">{{ collection.description_materiaux ||
-                                            '-' }}</p>
+                                        <p class="text-gray-900 dark:text-white">
+                                            {{ collection.description_materiaux || '-' }}
+                                        </p>
                                     </div>
                                     <div class="grid grid-cols-2 gap-4">
                                         <div>
                                             <Label>Prix</Label>
                                             <p class="text-2xl font-bold text-gray-900 dark:text-white">
                                                 {{ formatNumber(collection.price) }}
-                                                <span class="text-lg">{{ collection.devise?.symbole ||
-                                                    collection.devise?.code || '' }}</span>
+                                                <span class="text-lg">
+                                                    {{ collection.devise?.symbole || collection.devise?.code || '' }}
+                                                </span>
                                             </p>
                                         </div>
                                         <div>
                                             <Label>Devise</Label>
-                                            <p class="font-medium text-gray-900 dark:text-white">{{
-                                                collection.devise?.libelle || '-' }}</p>
+                                            <p class="font-medium text-gray-900 dark:text-white">
+                                                {{ collection.devise?.libelle || '-' }}
+                                            </p>
                                         </div>
                                     </div>
 
@@ -131,9 +142,11 @@
                                         </span>
                                     </div>
 
-                                    <div v-if="isAdmin">
+                                    <div>
                                         <Label>Collecteur</Label>
-                                        <p class="text-gray-900 dark:text-white">{{ collection.user?.name || '-' }}</p>
+                                        <p class="text-gray-900 dark:text-white">
+                                            {{ collection.user?.name || '-' }}
+                                        </p>
                                         <div v-if="collection.is_validated && collection.validator"
                                             class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                             Validé par: {{ collection.validator.name }}
@@ -148,6 +161,7 @@
 
             <DeleteDialog v-model:open="showDeleteDialog" :item="collection" resource="collections-prix"
                 label="collecte de prix" />
+
             <ValidateDialog v-model:open="showValidateDialog" :item="collectionToValidate" resource="collections-prix"
                 label="collecte de prix" @validated="handleValidated" />
         </AdminLayout>
@@ -156,7 +170,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Head, Link, router, usePage } from '@inertiajs/vue3'
+import { Head, Link, router } from '@inertiajs/vue3'
 import { ArrowLeft, Edit, Trash2, Package, MapPin, CheckCircle, Clock } from 'lucide-vue-next'
 import AdminLayout from '@/components/layout/AdminLayout.vue'
 import SidebarProvider from '@/components/layout/SidebarProvider.vue'
@@ -170,35 +184,47 @@ interface CollectionPrix {
     id: number
     price: number
     description_materiaux?: string
-    quartier_id?: string
+    quartier?: string
     point_vente?: string
     detail?: string
     is_validated: boolean
     commune?: { libelle: string }
     arrondissement?: { libelle: string }
     categorie?: { intitule: string }
-    materiau?: { nom: string; unite?: { libelle?: string; nom?: string } }
+    materiau?: { nom: string }
+    unite?: { libelle?: string }
     devise?: { symbole?: string; code?: string; libelle?: string }
     user?: { name?: string }
     validator?: { name?: string }
-    user_id?: number
+}
+
+interface Permissions {
+    canEdit: boolean
+    canDelete: boolean
+    canValidate: boolean
 }
 
 const currentPageTitle = ref('Détails du Prix')
-const page = usePage()
-const collection = page.props.collection as CollectionPrix
-const isAdmin = page.props.isAdmin as boolean
+
+const props = defineProps<{
+    collection: CollectionPrix
+    permissions: Permissions
+}>()
+
 const showDeleteDialog = ref(false)
 const showValidateDialog = ref(false)
 const collectionToValidate = ref<CollectionPrix | null>(null)
 
-const formatNumber = (value: number) => new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value || 0)
+const formatNumber = (value: number) =>
+    new Intl.NumberFormat('fr-FR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(value || 0)
 
-const canEdit = () => !collection.is_validated && (isAdmin || collection.user_id === page.props.auth?.user?.id)
-const canDelete = () => isAdmin && !collection.is_validated
-const canValidate = () => isAdmin && !collection.is_validated
+const openDeleteDialog = () => {
+    showDeleteDialog.value = true
+}
 
-const openDeleteDialog = () => showDeleteDialog.value = true
 const openValidateDialog = (col: CollectionPrix) => {
     collectionToValidate.value = col
     showValidateDialog.value = true
@@ -207,25 +233,25 @@ const openValidateDialog = (col: CollectionPrix) => {
 const handleValidated = async () => {
     if (!collectionToValidate.value) return
 
-    // SUPPRIMÉ: la confirmation car elle est déjà faite dans le ValidateDialog
-    // if (!confirm('Êtes-vous sûr de vouloir valider cette collecte ?')) return
-    
     try {
-        await router.post(route('collections-prix.validate', collectionToValidate.value.id), {}, {
-            preserveScroll: true,
-            preserveState: true,
-            onSuccess: () => {
-                // Mettre à jour localement l'état de validation
-                collection.is_validated = true
-                showValidateDialog.value = false
-            },
-            onError: (errors) => {
-                console.error('Erreur lors de la validation:', errors)
-                alert('Une erreur est survenue lors de la validation.')
-                showValidateDialog.value = false
+        await router.post(
+            route('collections-prix.validate', collectionToValidate.value.id),
+            {},
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => {
+                    props.collection.is_validated = true
+                    showValidateDialog.value = false
+                },
+                onError: (errors) => {
+                    console.error('Erreur lors de la validation:', errors)
+                    alert('Une erreur est survenue lors de la validation.')
+                    showValidateDialog.value = false
+                }
             }
-        })
-    } catch (err) { 
+        )
+    } catch (err) {
         console.error('Erreur:', err)
         showValidateDialog.value = false
     }

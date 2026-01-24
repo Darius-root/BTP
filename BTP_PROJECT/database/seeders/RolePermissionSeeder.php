@@ -23,6 +23,13 @@ class RolePermissionSeeder extends Seeder
             'SYSTEM_USER_CREATE',
             'SYSTEM_USER_EDIT',
             'SYSTEM_USER_DELETE',
+
+            //Colectors
+            'SYSTEM_COLLECTOR_VIEW',
+            'SYSTEM_COLLECTOR_CREATE',
+            'SYSTEM_COLLECTOR_EDIT',
+            'SYSTEM_COLLECTOR_DELETE',
+
             // Rôles
             'SYSTEM_ROLE_VIEW',
             'SYSTEM_ROLE_CREATE',
@@ -85,6 +92,23 @@ class RolePermissionSeeder extends Seeder
             'SYSTEM_NIVEAU_BATIMENT_DELETE',
 
 
+            //template_devis_estimatif
+            'SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_VIEW',
+            'SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_CREATE',
+            'SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_EDIT',
+            'SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_DELETE',
+            'SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_VALIDATE',
+            'SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_NOT_VALIDATE',
+
+
+            //template_devis_estimatif_quantitatif
+            'SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_QUANTITATIF_VIEW',
+            'SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_QUANTITATIF_CREATE',
+            'SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_QUANTITATIF_EDIT',
+            'SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_QUANTITATIF_DELETE',
+            'SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_QUANTITATIF_VALIDATE',
+            'SYSTEM_TEMPLATE_DEVIS_ESTIMATIF_QUANTITATIF_NOT_VALIDATE',
+
 
 
 
@@ -110,10 +134,10 @@ class RolePermissionSeeder extends Seeder
             'ORG_ORGANISATION_DEACTIVATE',
 
             //organisation user
-            'ORG_ORGANISATIONUSER_VIEW',
-            'ORG_ORGANISATIONUSER_CREATE',
-            'ORG_ORGANISATIONUSER_EDIT',
-            'ORG_ORGANISATIONUSER_DELETE',
+            'ORG_ORGANISATION_USER_VIEW',
+            'ORG_ORGANISATION_USER_CREATE',
+            'ORG_ORGANISATION_USER_EDIT',
+            'ORG_ORGANISATION_USER_DELETE',
 
             //organisation role
             'ORG_ORGANISATION_USER_ROLE_ASSIGN',
@@ -147,6 +171,16 @@ class RolePermissionSeeder extends Seeder
             'ORG_DEVIS_ESTIMATIF_DELETE',
             'ORG_DEVIS_ESTIMATIF_VALIDE',
             'ORG_DEVIS_ESTIMATIF_NOVALIDE',
+<<<<<<< HEAD
+=======
+
+            //collection
+            'ORG_COLLECTION_VIEW',
+            'ORG_COLLECTION_CREATE',
+            'ORG_COLLECTION_EDIT',
+
+
+>>>>>>> dev_emmanuel
 
             //DEVIS QTE ESTIMATIF
 
@@ -155,6 +189,7 @@ class RolePermissionSeeder extends Seeder
             'ORG_DEVIS_QUANTITATIF_VIEW',
             'ORG_DEVIS_QUANTITATIF_DELETE',
             'ORG_DEVIS_QUANTITATIF_VALIDE',
+<<<<<<< HEAD
             'ORG_DEVIS_QUANTITATIF_NOVALIDE',
            
             //collection
@@ -162,6 +197,15 @@ class RolePermissionSeeder extends Seeder
             'ORG_COLLECTION_CREATE',
             'ORG_COLLECTION_EDIT',
         
+=======
+
+
+            //TEMPLATE DEVIS QTE ESTIMATIF
+            'ORG_TEMPLATE_DEVIS_QUANTITATIF_VIEW',
+            
+            //TEMPLATE DEVIS ESTIMATIF
+            'ORG_TEMPLATE_DEVIS_ESTIMATIF_VIEW',
+>>>>>>> dev_emmanuel
 
 
         ];
@@ -169,6 +213,8 @@ class RolePermissionSeeder extends Seeder
         foreach ($orgPermissions as $perm) {
             Permission::firstOrCreate(['name' => $perm, 'guard_name' => 'web']);
         }
+
+
 
         // =========================
         // ROLES SYSTEME
@@ -202,6 +248,15 @@ class RolePermissionSeeder extends Seeder
         $adminPlateforme->givePermissionTo($systemPermissions);
 
 
+        // SYSTEM_COLLECTEUR → toutes les permissions\systeme
+        $collecteur = Role::findByName('SYSTEM_COLLECTEUR');
+        $collecteur->givePermissionTo([
+            'SYSTEM_COLLECTION_VIEW',
+            'SYSTEM_COLLECTION_CREATE',
+            'SYSTEM_COLLECTION_EDIT',
+        ]);
+
+
         //Permissions org pour admin
         $adminPlateforme->givePermissionTo([
             //projet
@@ -231,9 +286,17 @@ class RolePermissionSeeder extends Seeder
             'ORG_DEVIS_QUANTITATIF_EDIT',
             'ORG_DEVIS_QUANTITATIF_VIEW',
             'ORG_DEVIS_QUANTITATIF_DELETE',
+<<<<<<< HEAD
             'ORG_DEVIS_QUANTITATIF_VALIDE',
             'ORG_DEVIS_QUANTITATIF_NOVALIDE'
             ]);
+=======
+            'ORG_DEVIS_QUANTITATIF_VALIDE'
+
+
+
+        ]);
+>>>>>>> dev_emmanuel
 
         // ORG_OWNER → toutes les permissions organisationnelles
         $owner = Role::findByName('ORG_ADMIN');

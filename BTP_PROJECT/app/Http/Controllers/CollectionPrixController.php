@@ -8,7 +8,7 @@ use App\Models\Arrondissement;
 use App\Models\Materiau;
 use App\Models\Devise;
 use App\Models\CorpsEtat;
-use App\Services\OrganisationContext;
+use App\Models\UniteMesure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -23,11 +23,17 @@ class CollectionPrixController extends Controller
     {
         try {
             $user = Auth::user();
-            $isAdmin = $user->hasRole('SYSTEM_ADMIN_PLATEFORME');
-            $activeOrg = getPermissionsTeamId();
 
-            // Vérification des permissions
-            if (!$isAdmin && !OrganisationContext::hasPermission($user, $activeOrg, 'ORG_COLLECTION_VIEW')) {
+            // Contrôle des permissions
+            $permissions = [
+                'canView' => $user->can('SYSTEM_COLLECTION_VIEW'),
+                'canCreate' => $user->can('SYSTEM_COLLECTION_CREATE'),
+                'canEdit' => $user->can('SYSTEM_COLLECTION_EDIT'),
+                'canDelete' => $user->can('SYSTEM_COLLECTION_DELETE'),
+                'canValidate' => $user->can('SYSTEM_COLLECTION_VALIDATE'),
+            ];
+
+            if (!$permissions['canView']) {
                 return back()->with('error', "Vous n'avez pas la permission de voir les collections de prix.");
             }
 
@@ -46,7 +52,9 @@ class CollectionPrixController extends Controller
                 'validator',
             ]);
 
-            if (!$isAdmin) {
+            // Les non-admins ne voient que leurs propres collectes
+            $isSystemAdmin = $user->hasRole('SYSTEM_ADMIN_PLATEFORME');
+            if (!$isSystemAdmin) {
                 $query->where('user_id', $user->id);
             }
 
@@ -74,10 +82,24 @@ class CollectionPrixController extends Controller
             // Pagination
             $collections = $query->latest()->paginate(5)->withQueryString();
 
+            // Ajouter les permissions spécifiques à chaque collecte
+            $collectionsData = $collections->items();
+            foreach ($collectionsData as $collection) {
+                $collection->can_edit = $permissions['canEdit']
+                    && !$collection->is_validated
+                    && $collection->user_id === $user->id;
+
+                $collection->can_delete = $permissions['canDelete']
+                    && !$collection->is_validated;
+
+                $collection->can_validate = $permissions['canValidate']
+                    && !$collection->is_validated;
+            }
+
             return Inertia::render('CollectionsPrix/Index', [
                 'collections' => [
-                    'data' => $collections->items(),
-                    'links' => $collections->links()->elements[0] ?? [], // Liens de pagination
+                    'data' => $collectionsData,
+                    'links' => $collections->links()->elements[0] ?? [],
                     'current_page' => $collections->currentPage(),
                     'last_page' => $collections->lastPage(),
                     'per_page' => $collections->perPage(),
@@ -88,14 +110,13 @@ class CollectionPrixController extends Controller
                 'communes' => Commune::orderBy('libelle')->get(),
                 'categories' => CorpsEtat::orderBy('intitule')->get(),
                 'filters' => $request->only(['commune_id', 'categorie_id']),
-                'activeOrganisation' => $activeOrg,
-                'isAdmin' => $isAdmin,
+                'permissions' => $permissions,
+                'showCollectorColumn' => $isSystemAdmin,
             ]);
         } catch (Throwable $e) {
             return back()->with('error', $e->getMessage());
         }
     }
-
 
     /**
      * Formulaire de création
@@ -104,19 +125,18 @@ class CollectionPrixController extends Controller
     {
         try {
             $user = Auth::user();
-            $activeOrg = getPermissionsTeamId();
-            $isAdmin = $user->hasRole('SYSTEM_ADMIN_PLATEFORME');
 
-            if (!$isAdmin && !OrganisationContext::hasPermission($user, $activeOrg, 'ORG_COLLECTION_CREATE')) {
+            // Contrôle de permission
+            if (!$user->can('SYSTEM_COLLECTION_CREATE')) {
                 return back()->with('error', "Vous n'avez pas la permission de créer une collecte.");
             }
 
             return Inertia::render('CollectionsPrix/Create', [
                 'communes' => Commune::orderBy('libelle')->get(),
                 'materiaux' => Materiau::with('unite')->orderBy('nom')->get(),
+                'unites' => UniteMesure::orderBy('libelle')->get(),
                 'devises' => Devise::orderBy('libelle')->get(),
                 'categories' => CorpsEtat::orderBy('intitule')->get(),
-                'activeOrganisation' => $activeOrg,
             ]);
 
         } catch (Throwable $e) {
@@ -125,14 +145,17 @@ class CollectionPrixController extends Controller
     }
 
     /**
-     * Détails d’une collecte
+     * Détails d'une collecte
      */
     public function show($id)
     {
         try {
             $user = Auth::user();
-            $isAdmin = $user->hasRole('SYSTEM_ADMIN_PLATEFORME');
-            $activeOrg = getPermissionsTeamId();
+
+            // Contrôle de permission VIEW
+            if (!$user->can('SYSTEM_COLLECTION_VIEW')) {
+                return back()->with('error', "Vous n'avez pas la permission de voir les collections de prix.");
+            }
 
             $collection = CollectionPrix::with([
                 'commune',
@@ -142,19 +165,29 @@ class CollectionPrixController extends Controller
                 'categorie',
                 'user',
                 'validator',
+                'unite',
             ])->findOrFail($id);
 
-            if (
-                !$isAdmin && !OrganisationContext::hasPermission($user, $activeOrg, 'ORG_COLLECTION_VIEW') &&
-                $collection->user_id !== $user->id
-            ) {
+            // Vérifier que l'utilisateur est admin OU propriétaire
+            $isSystemAdmin = $user->hasRole('SYSTEM_ADMIN_PLATEFORME');
+            if (!$isSystemAdmin && $collection->user_id !== $user->id) {
                 return back()->with('error', "Vous n'avez pas la permission de voir cette collecte.");
             }
 
+            // Calcul des permissions pour cette collecte spécifique
+            $permissions = [
+                'canEdit' => $user->can('SYSTEM_COLLECTION_EDIT')
+                    && !$collection->is_validated
+                    && $collection->user_id === $user->id,
+                'canDelete' => $user->can('SYSTEM_COLLECTION_DELETE')
+                    && !$collection->is_validated,
+                'canValidate' => $user->can('SYSTEM_COLLECTION_VALIDATE')
+                    && !$collection->is_validated,
+            ];
+
             return Inertia::render('CollectionsPrix/Show', [
                 'collection' => $collection,
-                'activeOrganisation' => $activeOrg,
-                'isAdmin' => $isAdmin,
+                'permissions' => $permissions,
             ]);
 
         } catch (Throwable $e) {
@@ -163,26 +196,26 @@ class CollectionPrixController extends Controller
     }
 
     /**
-     * Enregistrement d’une collecte (toujours NON validée)
+     * Enregistrement d'une collecte (toujours NON validée)
      */
     public function store(Request $request)
     {
         try {
             $user = Auth::user();
-            $activeOrg = getPermissionsTeamId();
-            $isAdmin = $user->hasRole('SYSTEM_ADMIN_PLATEFORME');
 
-            if (!$isAdmin && !OrganisationContext::hasPermission($user, $activeOrg, 'ORG_COLLECTION_CREATE')) {
+            // Contrôle de permission
+            if (!$user->can('SYSTEM_COLLECTION_CREATE')) {
                 return back()->with('error', "Vous n'avez pas la permission de créer une collecte.");
             }
 
             $validated = $request->validate([
                 'commune_id' => 'required|exists:communes,id',
                 'arrondissement_id' => 'nullable|exists:arrondissements,id',
-                'quartier_id' => 'nullable|string|max:255',
+                'quartier' => 'nullable|string|max:255',
                 'materiau_id' => 'required|exists:materiaux,id',
                 'devise_id' => 'required|exists:devises,id',
                 'categorie_id' => 'required|exists:corps_etat,id',
+                'unite_id' => 'required|exists:unites_mesure,id',
                 'description_materiaux' => 'required|string',
                 'detail' => 'nullable|string',
                 'price' => 'required|numeric|min:0',
@@ -192,7 +225,6 @@ class CollectionPrixController extends Controller
             CollectionPrix::create([
                 ...$validated,
                 'user_id' => $user->id,
-                'organisation_id' => $activeOrg,
                 'is_validated' => false,
             ]);
 
@@ -205,22 +237,27 @@ class CollectionPrixController extends Controller
     }
 
     /**
-     * Formulaire d’édition
+     * Formulaire d'édition
      */
     public function edit($id)
     {
         try {
             $user = Auth::user();
-            $activeOrg = getPermissionsTeamId();
-            $isAdmin = $user->hasRole('SYSTEM_ADMIN_PLATEFORME');
+
+            // Contrôle de permission EDIT
+            if (!$user->can('SYSTEM_COLLECTION_EDIT')) {
+                return back()->with('error', "Vous n'avez pas la permission de modifier les collectes.");
+            }
 
             $collection = CollectionPrix::findOrFail($id);
 
-            if (
-                !$isAdmin && (!OrganisationContext::hasPermission($user, $activeOrg, 'ORG_COLLECTION_EDIT') ||
-                    $collection->user_id !== $user->id || $collection->is_validated)
-            ) {
-                return back()->with('error', "Vous n'avez pas la permission de modifier cette collecte.");
+            // Vérifier propriétaire + non validée
+            if ($collection->user_id !== $user->id) {
+                return back()->with('error', "Vous ne pouvez modifier que vos propres collectes.");
+            }
+
+            if ($collection->is_validated) {
+                return back()->with('error', "Une collecte validée ne peut pas être modifiée.");
             }
 
             return Inertia::render('CollectionsPrix/Edit', [
@@ -233,9 +270,9 @@ class CollectionPrixController extends Controller
                 ]),
                 'communes' => Commune::orderBy('libelle')->get(),
                 'materiaux' => Materiau::with('unite')->orderBy('nom')->get(),
+                'unites' => UniteMesure::orderBy('libelle')->get(),
                 'devises' => Devise::orderBy('libelle')->get(),
                 'categories' => CorpsEtat::orderBy('intitule')->get(),
-                'activeOrganisation' => $activeOrg,
             ]);
 
         } catch (Throwable $e) {
@@ -250,25 +287,31 @@ class CollectionPrixController extends Controller
     {
         try {
             $user = Auth::user();
-            $activeOrg = getPermissionsTeamId();
-            $isAdmin = $user->hasRole('SYSTEM_ADMIN_PLATEFORME');
+
+            // Contrôle de permission EDIT
+            if (!$user->can('SYSTEM_COLLECTION_EDIT')) {
+                return back()->with('error', "Vous n'avez pas la permission de modifier les collectes.");
+            }
 
             $collection = CollectionPrix::findOrFail($id);
 
-            if (
-                !$isAdmin && (!OrganisationContext::hasPermission($user, $activeOrg, 'ORG_COLLECTION_EDIT') ||
-                    $collection->user_id !== $user->id || $collection->is_validated)
-            ) {
-                return back()->with('error', "Vous n'avez pas la permission de modifier cette collecte.");
+            // Vérifier propriétaire + non validée
+            if ($collection->user_id !== $user->id) {
+                return back()->with('error', "Vous ne pouvez modifier que vos propres collectes.");
+            }
+
+            if ($collection->is_validated) {
+                return back()->with('error', "Une collecte validée ne peut pas être modifiée.");
             }
 
             $validated = $request->validate([
                 'commune_id' => 'required|exists:communes,id',
                 'arrondissement_id' => 'nullable|exists:arrondissements,id',
-                'quartier_id' => 'nullable|string|max:255',
+                'quartier' => 'nullable|string|max:255',
                 'materiau_id' => 'required|exists:materiaux,id',
                 'devise_id' => 'required|exists:devises,id',
                 'categorie_id' => 'required|exists:corps_etat,id',
+                'unite_id' => 'required|exists:unites_mesure,id',
                 'description_materiaux' => 'required|string',
                 'detail' => 'nullable|string',
                 'price' => 'required|numeric|min:0',
@@ -286,19 +329,24 @@ class CollectionPrixController extends Controller
     }
 
     /**
-     * Validation d’une collecte — ADMIN uniquement
+     * Validation d'une collecte
      */
     public function validateCollection($id)
     {
         try {
             $user = Auth::user();
-            $isAdmin = $user->hasRole('SYSTEM_ADMIN_PLATEFORME');
 
-            if (!$isAdmin) {
-                return back()->with('error', "Vous n'avez pas la permission de valider cette collecte.");
+            // Contrôle de permission VALIDATE
+            if (!$user->can('SYSTEM_COLLECTION_VALIDATE')) {
+                return back()->with('error', "Vous n'avez pas la permission de valider les collectes.");
             }
 
             $collection = CollectionPrix::findOrFail($id);
+
+            // Vérifier si déjà validée
+            if ($collection->is_validated) {
+                return back()->with('error', "Cette collecte est déjà validée.");
+            }
 
             $collection->update([
                 'is_validated' => true,
@@ -314,25 +362,21 @@ class CollectionPrixController extends Controller
     }
 
     /**
-     * Suppression d’une collecte
+     * Suppression d'une collecte
      */
     public function destroy($id)
     {
         try {
             $user = Auth::user();
-            $activeOrg = getPermissionsTeamId();
-            $isAdmin = $user->hasRole('SYSTEM_ADMIN_PLATEFORME');
+
+            // Contrôle de permission DELETE
+            if (!$user->can('SYSTEM_COLLECTION_DELETE')) {
+                return back()->with('error', "Vous n'avez pas la permission de supprimer les collectes.");
+            }
 
             $collection = CollectionPrix::findOrFail($id);
 
-            if (!$isAdmin && !OrganisationContext::hasPermission($user, $activeOrg, 'ORG_COLLECTION_DELETE')) {
-                return back()->with('error', "Vous n'avez pas la permission de supprimer cette collecte.");
-            }
-
-            if ($collection->is_validated) {
-                return back()->with('error', "Une collecte validée ne peut pas être supprimée.");
-            }
-
+          
             $collection->delete();
 
             return redirect()->route('collections-prix.index')

@@ -21,6 +21,7 @@ const currentPageTitle = ref("Nouvelle Collecte de Prix")
 const props = defineProps({
     communes: { type: Array, required: true },
     materiaux: { type: Array, required: true },
+    unites: { type: Array, required: true },
     devises: { type: Array, required: true },
     categories: { type: Array, required: true }
 })
@@ -28,8 +29,9 @@ const props = defineProps({
 const form = useForm({
     commune_id: '',
     arrondissement_id: '',
-    quartier_id: '',
+    quartier: '',
     materiau_id: '',
+    unite_id: '',
     devise_id: '',
     categorie_id: '',
     description_materiaux: '',
@@ -42,7 +44,7 @@ const arrondissements = ref([])
 
 const loadArrondissements = async () => {
     form.arrondissement_id = ''
-    
+
     if (!form.commune_id) {
         arrondissements.value = []
         return
@@ -71,8 +73,8 @@ const getDeviseSymbol = (deviseId) => {
 }
 
 const getSelectedMaterialUnit = () => {
-    const materiau = props.materiaux.find(m => m.id == form.materiau_id)
-    return materiau ? materiau.unite.libelle : 'unité'
+    const unite = props.unites.find(u => u.id == form.unite_id)
+    return unite ? unite.libelle : 'unité'
 }
 </script>
 
@@ -160,14 +162,14 @@ const getSelectedMaterialUnit = () => {
 
                                         <!-- Quartier -->
                                         <div class="space-y-2">
-                                            <Label for="quartier_id" class="text-sm font-medium">
+                                            <Label for="quartier" class="text-sm font-medium">
                                                 Quartier / Zone
                                             </Label>
-                                            <Input id="quartier_id" type="text" v-model="form.quartier_id"
+                                            <Input id="quartier" type="text" v-model="form.quartier"
                                                 placeholder="Ex: Quartier Gbégamey, Zone Industrielle..." class="w-full"
-                                                :class="{ 'border-red-300': form.errors.quartier_id }" />
-                                            <p v-if="form.errors.quartier_id" class="text-sm text-red-600">
-                                                {{ form.errors.quartier_id }}
+                                                :class="{ 'border-red-300': form.errors.quartier }" />
+                                            <p v-if="form.errors.quartier" class="text-sm text-red-600">
+                                                {{ form.errors.quartier }}
                                             </p>
                                         </div>
 
@@ -240,11 +242,30 @@ const getSelectedMaterialUnit = () => {
                                                 <option value="">Sélectionnez un matériau</option>
                                                 <option v-for="materiau in materiaux" :key="materiau.id"
                                                     :value="materiau.id">
-                                                    {{ materiau.nom }} - {{ materiau.unite.libelle }}
+                                                    {{ materiau.nom }}
                                                 </option>
                                             </select>
                                             <p v-if="form.errors.materiau_id" class="text-sm text-red-600">
                                                 {{ form.errors.materiau_id }}
+                                            </p>
+                                        </div>
+
+                                        <!-- Unité de mesure -->
+                                        <div class="space-y-2">
+                                            <Label for="unite_id" class="text-sm font-medium">
+                                                Unité de mesure <span class="text-red-500">*</span>
+                                            </Label>
+                                            <select id="unite_id" v-model="form.unite_id" required
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
+                                                :class="{ 'border-red-300': form.errors.unite_id }">
+                                                <option value="">Sélectionnez une unité</option>
+                                                <option v-for="unite in unites" :key="unite.id"
+                                                    :value="unite.id">
+                                                    {{ unite.libelle }}
+                                                </option>
+                                            </select>
+                                            <p v-if="form.errors.unite_id" class="text-sm text-red-600">
+                                                {{ form.errors.unite_id }}
                                             </p>
                                         </div>
 
@@ -254,7 +275,7 @@ const getSelectedMaterialUnit = () => {
                                                 Description du matériau <span class="text-red-500">*</span>
                                             </Label>
                                             <textarea id="description_materiaux" v-model="form.description_materiaux"
-                                                placeholder="Décrivez le matériau, ses caractéristiques, qualité, marque..." 
+                                                placeholder="Décrivez le matériau, ses caractéristiques, qualité, marque..."
                                                 required rows="4"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
                                                 :class="{ 'border-red-300': form.errors.description_materiaux }"></textarea>
@@ -272,7 +293,7 @@ const getSelectedMaterialUnit = () => {
                                                 <Label for="price" class="text-sm font-medium">
                                                     Prix <span class="text-red-500">*</span>
                                                 </Label>
-                                                <Input id="price" type="number" v-model="form.price" 
+                                                <Input id="price" type="number" v-model="form.price"
                                                     placeholder="0.00" required min="0" step="0.01" class="w-full"
                                                     :class="{ 'border-red-300': form.errors.price }" />
                                                 <p v-if="form.errors.price" class="text-sm text-red-600">

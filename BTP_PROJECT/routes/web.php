@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CollectorController;
 use App\Http\Controllers\DevisEstimatifReUseController;
 use App\Http\Controllers\NiveauBatimentController;
 use App\Http\Controllers\OrganisationController;
@@ -7,7 +8,11 @@ use App\Http\Controllers\OrganisationRoleController;
 use App\Http\Controllers\PermissionCrontroller;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
+<<<<<<< HEAD
 use App\Http\Controllers\TemplateEstimatifController;
+=======
+use App\Http\Controllers\TemplateDevisEstimatifController;
+>>>>>>> dev_emmanuel
 use App\Http\Controllers\TemplateEstimatifQte;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ArrondissementController;
@@ -163,6 +168,7 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
 
 
 
+<<<<<<< HEAD
         Route::get('/templates-estimatif', [TemplateEstimatifController::class, 'index'])
             ->name('templates.index');
 
@@ -177,6 +183,22 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
             ->name('templates.reuse');
 
         Route::post('/templates/{template}/reuse', [TemplateEstimatifController::class, 'storeReuse'])
+=======
+        Route::get('/templates-estimatif', [TemplateDevisEstimatifController::class, 'index'])
+            ->name('templates.index');
+
+        Route::get('/templates/search', [TemplateDevisEstimatifController::class, 'search'])
+            ->name('templates.search');
+
+        // 2. Routes avec paramètres {template}
+        Route::get('/templates/{template}', [TemplateDevisEstimatifController::class, 'show'])
+            ->name('templates.show');
+
+        Route::get('/templates/{template}/reuse', [TemplateDevisEstimatifController::class, 'reuse'])
+            ->name('templates.reuse');
+
+        Route::post('/templates/{template}/reuse', [TemplateDevisEstimatifController::class, 'storeReuse'])
+>>>>>>> dev_emmanuel
             ->name('templates.reuse.store');
 
         // 3. API pour charger les bâtiments
@@ -185,21 +207,38 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
 
         // OU mieux encore, groupez les routes:
         Route::prefix('templates')->name('templates.')->group(function () {
+<<<<<<< HEAD
             Route::get('/', [TemplateEstimatifController::class, 'index'])->name('index');
             Route::get('/search', [TemplateEstimatifController::class, 'search'])->name('search');
             Route::get('/{template}', [TemplateEstimatifController::class, 'show'])->name('show');
             Route::get('/{template}/reuse', [TemplateEstimatifController::class, 'reuse'])->name('reuse');
             Route::post('/{template}/reuse', [TemplateEstimatifController::class, 'storeReuse'])->name('reuse.store');
+=======
+            Route::get('/', [TemplateDevisEstimatifController::class, 'index'])->name('index');
+            Route::get('/search', [TemplateDevisEstimatifController::class, 'search'])->name('search');
+            Route::get('/{template}', [TemplateDevisEstimatifController::class, 'show'])->name('show');
+            Route::get('/{template}/reuse', [TemplateDevisEstimatifController::class, 'reuse'])->name('reuse');
+            Route::post('/{template}/reuse', [TemplateDevisEstimatifController::class, 'storeReuse'])->name('reuse.store');
+
+            Route::post('/{template}/validate', [TemplateDevisEstimatifController::class, 'validateTemplate'])
+                ->name('validate');
+
+            Route::post('/{template}/unvalidate', [TemplateDevisEstimatifController::class, 'unvalidateTemplate'])
+                ->name('unvalidate');
+>>>>>>> dev_emmanuel
         });
 
         Route::prefix('api')->name('api.')->group(function () {
             Route::get('/projets/{projet}/batiments-disponibles', [DevisEstimatifController::class, 'getBatimentsDisponibles'])
                 ->name('projets.batiments-disponibles');
         });
+
+        Route::resource('collectors', CollectorController::class)
+            ->only(['index', 'create', 'store', 'destroy']);
     });
 
 
-    //devis estimatif quantitatif  
+    //devis estimatif quantitatif
 
     Route::prefix('batiments/{batiment}')
         ->name('batiments.')

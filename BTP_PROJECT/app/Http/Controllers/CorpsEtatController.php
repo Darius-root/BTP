@@ -15,13 +15,12 @@ class CorpsEtatController extends Controller
      */
     public function index()
     {
+
         if (!Auth::user()->can('SYSTEM_CORPS_ETAT_VIEW')) {
             return redirect()->back()->with('error', 'Vous n’avez pas la permission de consulter les corps d’état.');
         }
 
-        $corpsEtats = CorpsEtat::where('user_id', Auth::id())
-            ->orderBy('ordre')
-            ->get();
+        $corpsEtats = CorpsEtat::orderBy('ordre')->get();
 
         return Inertia::render('CorpsEtat/Index', [
             'corpsEtats' => $corpsEtats,
@@ -56,7 +55,7 @@ class CorpsEtatController extends Controller
      */
     public function store(Request $request)
     {
-        
+
         if (!Auth::user()->can('SYSTEM_CORPS_ETAT_CREATE')) {
             return redirect()->back()->with('error', 'Vous n’avez pas la permission de créer un corps d’état.');
         }
@@ -127,12 +126,12 @@ class CorpsEtatController extends Controller
      */
     public function update(Request $request, CorpsEtat $corpsEtat)
     {
-        
+
         if (!Auth::user()->can('SYSTEM_CORPS_ETAT_EDIT')) {
             return redirect()->back()->with('error', 'Vous n’avez pas la permission de modifier ce corps d’état.');
         }
 
-        
+
         $validated = $request->validate([
             'intitule'   => 'required|string|max:255|unique:corps_etat,intitule,' . $corpsEtat->id,
             'ordre'      => 'required|integer',

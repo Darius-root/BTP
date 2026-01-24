@@ -159,12 +159,18 @@ class DevisEstimatifQuantitatifController extends Controller
      */
     public function show(Batiment $batiment)
     {
+<<<<<<< HEAD
 
         //  Sécurité d’accès (optionnel)
+=======
+        //  Sécurité d'accès (optionnel)
+>>>>>>> dev_emmanuel
         $this->validateBatimentAccess(
             $batiment,
             'ORG_DEVIS_QUANTITATIF_VIEW'
         );
+
+        $user = Auth::user();
 
         $devis = $batiment->devisEstimatifQuantitatif()
             ->with([
@@ -180,7 +186,7 @@ class DevisEstimatifQuantitatifController extends Controller
                 ->with('error', 'Aucun devis trouvé pour ce bâtiment.');
         }
         /**
-         * Tous les corps d’état,
+         * Tous les corps d'état,
          * même ceux sans lots
          */
         $corpsEtats = CorpsEtat::orderBy('ordre')->get()->map(function ($ce) use ($devis) {
@@ -207,6 +213,17 @@ class DevisEstimatifQuantitatifController extends Controller
             ];
         });
 
+        $isSystemAdmin = $user->hasRole('SYSTEM_ADMIN_PLATEFORME');
+        $isAuthor = $devis->created_by === $user->id;
+        $canModify = ($isSystemAdmin || $isAuthor) && $devis->statut !== 'valide';
+
+        $permissions = [
+            'canEdit' => $canModify,
+            'canDelete' => $canModify,
+            'canValidate' => $canModify,
+            'canCreate' => $user->can('ORG_DEVIS_QUANTITATIF_CREATE'),
+        ];
+
         return Inertia::render('Organisations/DevisEstimatifQte/Show', [
             'batiment' => [
                 'id' => $batiment->id,
@@ -219,9 +236,9 @@ class DevisEstimatifQuantitatifController extends Controller
             ],
             'corpsEtats' => $corpsEtats,
             'devise' => $batiment->projet->devise['libelle'] ?? '__',
+            'permissions' => $permissions,
         ]);
     }
-
     /**
      * Edition
      */
@@ -446,7 +463,7 @@ class DevisEstimatifQuantitatifController extends Controller
 
     public function destroy(Batiment $batiment)
     {
-        //  Sécurité d’accès 
+        //  Sécurité d’accès
         $this->validateBatimentAccess(
             $batiment,
             'ORG_DEVIS_QUANTITATIF_DELETE'
@@ -604,7 +621,7 @@ class DevisEstimatifQuantitatifController extends Controller
 
     /**
      * Réutilisation du devis sur un autre bâtiment
-     * 
+     *
      */
     public function reuse(Request $request, Batiment $batiment, DevisEstimatifQuantitatif $devis)
     {
@@ -820,4 +837,10 @@ class DevisEstimatifQuantitatifController extends Controller
 
         return $pdf->stream("devis-quantitatif-{$devis->code}.pdf");
     }
+<<<<<<< HEAD
+=======
+
+
+
+>>>>>>> dev_emmanuel
 }

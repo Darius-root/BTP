@@ -32,7 +32,7 @@ class OrganisationUserController extends Controller
         setPermissionsTeamId($organisationId);
 
         // Permission de lecture des utilisateurs
-        if (!$user->can('ORG_ORGANISATIONUSER_VIEW')) {
+        if (!$user->can('ORG_ORGANISATION_USER_VIEW')) {
             abort(403, 'Vous ne disposez pas des autorisations nécessaires pour consulter les utilisateurs.');
         }
 
@@ -79,7 +79,7 @@ class OrganisationUserController extends Controller
     public function create()
     {
 
-        if (OrganisationContext::hasPermission(Auth::user(), getPermissionsTeamId(), 'ORG_ADD_USER_TO_ORGANISATION') === false) {
+        if (OrganisationContext::hasPermission(Auth::user(), getPermissionsTeamId(), 'ORG_ORGANISATION_USER_CREATE') === false) {
             return back()->with('error', "Vous n'avez pas la permission d'ajouter un utilisateur à cette organisation.");
         }
 
@@ -131,13 +131,13 @@ class OrganisationUserController extends Controller
             return back()->with('error', "L’utilisateur est déjà membre de cette organisation.");
         }
 
-        // 🔹 Créer le lien organisation <-> user
+        // Créer le lien organisation <-> user
         OrganisationUser::create([
             'user_id' => $user->id,
             'organisation_id' => $organisationId,
         ]);
 
-        // 🔹 Assigner plusieurs rôles dans le contexte de l’organisation
+        // Assigner plusieurs rôles dans le contexte de l’organisation
         foreach ($request->roles as $roleId) {
             $role = Role::find($roleId);
             if ($role) {

@@ -150,7 +150,6 @@ function confirmActivation() {
                                 <TableHead class="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
-
                         <TableBody>
                             <TableRow v-for="org in organisations" :key="org.id">
                                 <TableCell class="font-medium">{{ org.nom }}</TableCell>

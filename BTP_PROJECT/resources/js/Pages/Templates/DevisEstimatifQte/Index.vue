@@ -58,7 +58,14 @@ const customTemplatesCount = computed(
 
 /* Navigation vers la page détail */
 function viewTemplate(template) {
+<<<<<<< HEAD
     router.visit(route("templates-estimatif-qte.show", template.id));
+=======
+    // Vérifier la permission avant de naviguer
+    if (template.permissions?.canView) {
+        router.visit(route('templates-estimatif-qte.show', template.id))
+    }
+>>>>>>> dev_emmanuel
 }
 </script>
 
@@ -124,7 +131,6 @@ function viewTemplate(template) {
                                             </th>
                                         </tr>
                                     </thead>
-
                                     <tbody>
                                         <tr
                                             v-if="
@@ -158,6 +164,7 @@ function viewTemplate(template) {
 
                                             <td class="px-4 py-3 text-right">
                                                 <Button
+                                                    v-if="template.permissions?.canView"
                                                     size="sm"
                                                     variant="outline"
                                                     @click="
