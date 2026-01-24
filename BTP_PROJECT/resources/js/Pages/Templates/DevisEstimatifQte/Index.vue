@@ -74,7 +74,7 @@ function viewTemplate(template) {
 
             <div class="space-y-6">
                 <div
-                    class="rounded-2xl border border-gray-200 bg-white p-5 lg:p-6 shadow-sm"
+                    class="rounded-2xl border p-5 lg:p-6 shadow-sm"
                 >
                     <Card class="border-0 shadow-none">
                         <CardHeader class="px-0 pt-0">
@@ -103,11 +103,11 @@ function viewTemplate(template) {
 
                             <!-- Table des templates -->
                             <div
-                                class="rounded-lg border border-gray-200 overflow-x-auto"
+                                class="rounded-lg border  overflow-x-auto"
                             >
                                 <table class="w-full text-sm">
                                     <thead
-                                        class="bg-gray-50 border-b border-gray-200"
+                                        class="0 border-b "
                                     >
                                         <tr>
                                             <th
@@ -144,11 +144,11 @@ function viewTemplate(template) {
                                         <tr
                                             v-for="template in filteredTemplates"
                                             :key="template.id"
-                                            class="border-b border-gray-200 hover:bg-gray-50 transition-colors"
+                                            class="border-b   transition-colors"
                                         >
                                             <td class="px-4 py-3">
                                                 <span
-                                                    class="font-mono text-xs bg-gray-100 px-2 py-1 rounded"
+                                                    class="font-mono text-xs  px-2 py-1 rounded"
                                                 >
                                                     {{ template.code }}
                                                 </span>
