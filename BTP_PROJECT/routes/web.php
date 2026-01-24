@@ -7,7 +7,7 @@ use App\Http\Controllers\OrganisationRoleController;
 use App\Http\Controllers\PermissionCrontroller;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
-use App\Http\Controllers\TemplateController;
+use App\Http\Controllers\TemplateEstimatifController;
 use App\Http\Controllers\TemplateEstimatifQte;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ArrondissementController;
@@ -163,20 +163,20 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
 
 
 
-        Route::get('/templates-estimatif', [TemplateController::class, 'index'])
+        Route::get('/templates-estimatif', [TemplateEstimatifController::class, 'index'])
             ->name('templates.index');
 
-        Route::get('/templates/search', [TemplateController::class, 'search'])
+        Route::get('/templates/search', [TemplateEstimatifController::class, 'search'])
             ->name('templates.search');
 
         // 2. Routes avec paramètres {template}
-        Route::get('/templates/{template}', [TemplateController::class, 'show'])
+        Route::get('/templates/{template}', [TemplateEstimatifController::class, 'show'])
             ->name('templates.show');
 
-        Route::get('/templates/{template}/reuse', [TemplateController::class, 'reuse'])
+        Route::get('/templates/{template}/reuse', [TemplateEstimatifController::class, 'reuse'])
             ->name('templates.reuse');
 
-        Route::post('/templates/{template}/reuse', [TemplateController::class, 'storeReuse'])
+        Route::post('/templates/{template}/reuse', [TemplateEstimatifController::class, 'storeReuse'])
             ->name('templates.reuse.store');
 
         // 3. API pour charger les bâtiments
@@ -185,11 +185,11 @@ Route::middleware(['auth', 'verified', 'organisation.profil'])->group(function (
 
         // OU mieux encore, groupez les routes:
         Route::prefix('templates')->name('templates.')->group(function () {
-            Route::get('/', [TemplateController::class, 'index'])->name('index');
-            Route::get('/search', [TemplateController::class, 'search'])->name('search');
-            Route::get('/{template}', [TemplateController::class, 'show'])->name('show');
-            Route::get('/{template}/reuse', [TemplateController::class, 'reuse'])->name('reuse');
-            Route::post('/{template}/reuse', [TemplateController::class, 'storeReuse'])->name('reuse.store');
+            Route::get('/', [TemplateEstimatifController::class, 'index'])->name('index');
+            Route::get('/search', [TemplateEstimatifController::class, 'search'])->name('search');
+            Route::get('/{template}', [TemplateEstimatifController::class, 'show'])->name('show');
+            Route::get('/{template}/reuse', [TemplateEstimatifController::class, 'reuse'])->name('reuse');
+            Route::post('/{template}/reuse', [TemplateEstimatifController::class, 'storeReuse'])->name('reuse.store');
         });
 
         Route::prefix('api')->name('api.')->group(function () {

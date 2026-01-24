@@ -15,7 +15,7 @@ use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Response;
 
-class TemplateController extends Controller
+class TemplateEstimatifController extends Controller
 {
     /**
      * Afficher la liste des devis templates (is_template = true)
@@ -103,7 +103,7 @@ class TemplateController extends Controller
 
         $devise = $template->batiment->projet->devise['libelle'] ?? 'MAD';
 
-        return Inertia::render('Templates/Show', [
+        return Inertia::render('Templates/DevisEstimatif/Show', [
             'template' => [
                 'id' => $template->id,
                 'code' => $template->code,
@@ -275,7 +275,7 @@ class TemplateController extends Controller
             ->values()
             ->all();
 
-        return Inertia::render('Templates/Reuse', [
+        return Inertia::render('Templates/DevisEstimatif/Reuse', [
             'template' => [
                 'id' => $template->id,
                 'code' => $template->code,
