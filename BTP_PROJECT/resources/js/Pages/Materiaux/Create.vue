@@ -30,7 +30,7 @@
                         <CardContent class="px-0">
                             <form @submit.prevent="form.post(route('materiaux.store'))" class="space-y-6">
 
-                                
+
 
                                 <!-- Nom -->
                                 <div class="space-y-2">
@@ -100,7 +100,7 @@
                                             </span>
                                             <span v-else class="flex items-center">
                                                 <Plus class="w-4 h-4 mr-2" />
-                                                Créer le matériau
+                                                Créer le matériel
                                             </span>
                                         </Button>
                                     </div>

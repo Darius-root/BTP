@@ -13,7 +13,7 @@ import {
     AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 
-import { TrashIcon } from "lucide-vue-next";
+import { TrashIcon, Copy } from "lucide-vue-next";
 
 import SidebarProvider from "@/components/layout/SidebarProvider.vue";
 import AdminLayout from "@/components/layout/AdminLayout.vue";
@@ -26,7 +26,6 @@ import {
 } from "@/components/ui/accordion";
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-
 import { Button } from "@/components/ui/button";
 
 const props = defineProps({
@@ -36,6 +35,12 @@ const props = defineProps({
     totalGeneral: Number,
     devise: String,
 });
+
+// État local pour le statut du devis
+const statutDevis = ref(props.devis.statut);
+
+// Computed pour vérifier si le devis est validé
+const isDevisValide = computed(() => statutDevis.value === 'valide');
 
 /**
  * Regrouper les composants par niveau
@@ -65,6 +70,7 @@ const editDevis = () => {
         })
     );
 };
+
 const isOpen = ref(false);
 const openModal = () => {
     isOpen.value = true;
@@ -72,6 +78,7 @@ const openModal = () => {
 const closeModal = () => {
     isOpen.value = false;
 };
+
 const confirmDelete = () => {
     router.delete(
         route("batiments.devisestimatif.destroy", {
@@ -85,12 +92,22 @@ const confirmDelete = () => {
         }
     );
 };
+
+// Validation dynamique sans rechargement
 const valider = () => {
     router.post(
         route("devisestimatif.valider", {
             batiment: props.batiment.id,
             devis: props.devis,
-        })
+        }),
+        {},
+        {
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: () => {
+                statutDevis.value = 'valide';
+            },
+        }
     );
 };
 
@@ -99,11 +116,19 @@ const brouillon = () => {
         route("devisestimatif.brouillon", {
             batiment: props.batiment.id,
             devis: props.devis,
-        })
+        }),
+        {},
+        {
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: () => {
+                statutDevis.value = 'brouillon';
+            },
+        }
     );
 };
 
-const { batiment, devis } = props
+const { batiment, devis } = props;
 
 const sendDevis = () => {
     router.post(
@@ -113,78 +138,96 @@ const sendDevis = () => {
             onSuccess: () => toast.success('Devis envoyé au client avec succès'),
             onError: () => toast.error('Erreur lors de l\'envoi du devis')
         }
-    )
-}
-
-
+    );
+};
 
 const printDevis = () => {
     window.open(route('devisestimatif.pdf', {
         batiment: props.batiment.id,
         devis: props.devis.id
-    }), '_blank')
-}
-
+    }), '_blank');
+};
 
 const reuseDevis = () => {
     router.post(route('devisestimatif.reuse', {
         batiment: props.batiment.id,
         devis: props.devis.id
-    }))
-}
-
-
-
+    }));
+};
 </script>
+
 <template>
     <SidebarProvider>
         <AdminLayout>
-
             <Head :title="`Devis estimatif – ${devis.intitule}`" />
 
             <PageBreadcrumb :pageTitle="'Détail du devis estimatif'" />
+
             <!-- ACTIONS -->
             <div class="mt-6 flex justify-end gap-3 my-4">
-                <Button @click.prevent="editDevis()" :v-if="devis.statut !== 'valide'" variant="secondary">Modifier
+                <!-- Modifier - désactivé si validé -->
+                <Button
+                    @click.prevent="editDevis()"
+                    v-if="!isDevisValide"
+                    variant="secondary"
+                >
+                    Modifier
                 </Button>
-                <Button variant="outline" @click="sendDevis">
+
+                <!-- Envoyer au client - désactivé si validé -->
+                <Button
+                    variant="outline"
+                    @click="sendDevis"
+                    :disabled="isDevisValide"
+                    :class="{ 'opacity-50 cursor-not-allowed': isDevisValide }"
+                >
                     <PaperAirplaneIcon class="w-4 h-4 mr-1 text-blue-600" />
                     Envoyer au client
                 </Button>
 
-
-                <!-- Imprimer (sans logique) -->
+                <!-- Imprimer - toujours disponible -->
                 <Button variant="outline" @click="printDevis">
                     Imprimer
                 </Button>
 
-
-                <Button variant="outline" class="" @click="openModal">
+                <!-- Supprimer - désactivé si validé -->
+                <Button
+                    variant="outline"
+                    @click="openModal"
+                    :disabled="isDevisValide"
+                    :class="{ 'opacity-50 cursor-not-allowed': isDevisValide }"
+                >
                     <TrashIcon class="w-4 h-4 mr-1 text-red-600" />
                     Supprimer
                 </Button>
 
                 <div class="flex gap-2">
                     <!-- Bouton VALIDER -->
-                    <Button v-if="devis.statut === 'brouillon'" class="bg-green-600 hover:bg-green-700"
-                        @click="valider">
+                    <Button
+                        v-if="!isDevisValide"
+                        class="bg-green-600 hover:bg-green-700"
+                        @click="valider"
+                    >
                         Valider le devis
                     </Button>
 
                     <!-- Bouton BROUILLON -->
-                    <Button v-if="devis.statut === 'valide'" variant="destructive" @click="brouillon">
+                    <Button
+                        v-if="isDevisValide"
+                        variant="destructive"
+                        @click="brouillon"
+                    >
                         Repasser en brouillon
                     </Button>
 
-
-                    <!-- Dans la section ACTIONS de Show.vue -->
-                    <Button variant="outline"
-                        @click="$inertia.visit(route('batiments.devisestimatif.reuse', devis.id))">
+                    <!-- Réutiliser ce devis - toujours disponible -->
+                    <Button
+                        variant="outline"
+                        @click="$inertia.visit(route('batiments.devisestimatif.reuse', devis.id))"
+                    >
                         <Copy class="w-4 h-4 mr-2" />
                         Réutiliser ce devis
                     </Button>
-
-
                 </div>
             </div>
 
@@ -209,11 +252,11 @@ const reuseDevis = () => {
                         <strong>Statut</strong><br />
                         <span :class="[
                             'px-2 py-1 rounded text-xs font-semibold',
-                            devis.statut === 'valide'
+                            statutDevis === 'valide'
                                 ? 'bg-green-100 text-green-700'
                                 : 'bg-yellow-100 text-yellow-700',
                         ]">
-                            {{ devis.statut }}
+                            {{ statutDevis }}
                         </span>
                     </div>
                 </CardContent>
@@ -221,8 +264,11 @@ const reuseDevis = () => {
 
             <!-- NIVEAUX -->
             <Accordion type="multiple" class="space-y-4">
-                <AccordionItem v-for="bloc in composantsParNiveau" :key="bloc.niveau.id"
-                    :value="`niveau-${bloc.niveau.id}`">
+                <AccordionItem
+                    v-for="bloc in composantsParNiveau"
+                    :key="bloc.niveau.id"
+                    :value="`niveau-${bloc.niveau.id}`"
+                >
                     <!-- HEADER -->
                     <AccordionTrigger class="px-4 py-3 bg-gray-50 rounded-xl">
                         <div class="flex justify-between w-full items-center">
@@ -233,10 +279,7 @@ const reuseDevis = () => {
                                 Total :
                                 {{
                                     totauxParNiveau
-                                        .find(
-                                            (t) =>
-                                                t.niveau_id === bloc.niveau.id
-                                        )
+                                        .find((t) => t.niveau_id === bloc.niveau.id)
                                         ?.total.toLocaleString()
                                 }}
                                 {{ devise }}
@@ -254,41 +297,27 @@ const reuseDevis = () => {
                                             <th class="border p-2">Code</th>
                                             <th class="border p-2">Pièce</th>
                                             <th class="border p-2">Unité</th>
-                                            <th class="border p-2 text-right">
-                                                Qté
-                                            </th>
-                                            <th class="border p-2 text-right">
-                                                Prix unitaire
-                                            </th>
-                                            <th class="border p-2 text-right">
-                                                Montant
-                                            </th>
+                                            <th class="border p-2 text-right">Qté</th>
+                                            <th class="border p-2 text-right">Prix unitaire</th>
+                                            <th class="border p-2 text-right">Montant</th>
                                         </tr>
                                     </thead>
 
                                     <tbody>
-                                        <tr v-for="comp in bloc.composants" :key="comp.id" class="hover:bg-gray-50">
-                                            <td class="border p-2">
-                                                {{ comp.code }}
-                                            </td>
-                                            <td class="border p-2">
-                                                {{ comp.piece }}
-                                            </td>
-                                            <td class="border p-2">
-                                                {{ comp.unite.nom }}
-                                            </td>
+                                        <tr
+                                            v-for="comp in bloc.composants"
+                                            :key="comp.id"
+                                            class="hover:bg-gray-50"
+                                        >
+                                            <td class="border p-2">{{ comp.code }}</td>
+                                            <td class="border p-2">{{ comp.piece }}</td>
+                                            <td class="border p-2">{{ comp.unite.nom }}</td>
+                                            <td class="border p-2 text-right">{{ comp.qte }}</td>
                                             <td class="border p-2 text-right">
-                                                {{ comp.qte }}
-                                            </td>
-                                            <td class="border p-2 text-right">
-                                                {{
-                                                    comp.prix_unitaire.toLocaleString()
-                                                }}
+                                                {{ comp.prix_unitaire.toLocaleString() }}
                                             </td>
                                             <td class="border p-2 text-right font-semibold">
-                                                {{
-                                                    comp.montant.toLocaleString()
-                                                }}
+                                                {{ comp.montant.toLocaleString() }}
                                             </td>
                                         </tr>
                                     </tbody>
@@ -301,11 +330,7 @@ const reuseDevis = () => {
                                             <td class="border p-2 text-right">
                                                 {{
                                                     totauxParNiveau
-                                                        .find(
-                                                            (t) =>
-                                                                t.niveau_id ===
-                                                                bloc.niveau.id
-                                                        )
+                                                        .find((t) => t.niveau_id === bloc.niveau.id)
                                                         ?.total.toLocaleString()
                                                 }}
                                             </td>
@@ -325,9 +350,10 @@ const reuseDevis = () => {
                     <span>{{ totalGeneral.toLocaleString() }} {{ devise }}</span>
                 </CardContent>
             </Card>
+
             <!-- Modal de suppression -->
             <AlertDialog v-model:open="isOpen">
-                <AlertDialogTrigger as-child> </AlertDialogTrigger>
+                <AlertDialogTrigger as-child></AlertDialogTrigger>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
@@ -338,8 +364,10 @@ const reuseDevis = () => {
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction @click.prevent="confirmDelete">Continue</AlertDialogAction>
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogAction @click.prevent="confirmDelete">
+                            Continuer
+                        </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

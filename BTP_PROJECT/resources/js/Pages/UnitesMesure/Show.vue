@@ -117,7 +117,7 @@ const formatDate = (date?: string) =>
                                 </div>
 
                                 <p v-else class="text-sm text-gray-500">
-                                    Aucun matériau lié à cette unité.
+                                    Aucun matériel lié à cette unité.
                                 </p>
                             </div>
 

@@ -93,7 +93,7 @@ const getSelectedMaterialUnit = () => {
                                 <div>
                                     <CardTitle class="text-3xl">Nouvelle collecte de prix</CardTitle>
                                     <CardDescription class="mt-1">
-                                        Enregistrez un nouveau prix de matériau dans une localité spécifique
+                                        Enregistrez un nouveau prix de matériel dans une localité spécifique
                                     </CardDescription>
                                 </div>
                                 <Link :href="route('collections-prix.index')"
@@ -209,7 +209,7 @@ const getSelectedMaterialUnit = () => {
                                     <div class="space-y-6">
                                         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 border-b pb-2">
                                             <Package class="w-5 h-5 inline-block mr-2" />
-                                            Matériau et Prix
+                                        Matériel et Prix
                                         </h3>
 
                                         <!-- Corps d'état -->
@@ -234,12 +234,12 @@ const getSelectedMaterialUnit = () => {
                                         <!-- Matériau -->
                                         <div class="space-y-2">
                                             <Label for="materiau_id" class="text-sm font-medium">
-                                                Matériau <span class="text-red-500">*</span>
+                                                Matériel <span class="text-red-500">*</span>
                                             </Label>
                                             <select id="materiau_id" v-model="form.materiau_id" required
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
                                                 :class="{ 'border-red-300': form.errors.materiau_id }">
-                                                <option value="">Sélectionnez un matériau</option>
+                                                <option value="">Sélectionnez un matériel</option>
                                                 <option v-for="materiau in materiaux" :key="materiau.id"
                                                     :value="materiau.id">
                                                     {{ materiau.nom }}
@@ -272,10 +272,10 @@ const getSelectedMaterialUnit = () => {
                                         <!-- Description -->
                                         <div class="space-y-2">
                                             <Label for="description_materiaux" class="text-sm font-medium">
-                                                Description du matériau <span class="text-red-500">*</span>
+                                                Description du matériel <span class="text-red-500">*</span>
                                             </Label>
                                             <textarea id="description_materiaux" v-model="form.description_materiaux"
-                                                placeholder="Décrivez le matériau, ses caractéristiques, qualité, marque..."
+                                                placeholder="Décrivez le matériel, ses caractéristiques, qualité, marque..."
                                                 required rows="4"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
                                                 :class="{ 'border-red-300': form.errors.description_materiaux }"></textarea>

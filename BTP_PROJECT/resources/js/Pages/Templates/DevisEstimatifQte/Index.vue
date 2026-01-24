@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 
-const currentPageTitle = ref('Templates de Devis Quantitatifs')
+const currentPageTitle = ref('Templates de Devis Quantitatifs & Estimatifs')
 
 const props = defineProps({
     templates: {
@@ -65,7 +65,7 @@ function viewTemplate(template) {
 </script>
 
 <template>
-    <Head title="Templates de Devis Quantitatifs" />
+    <Head title="Templates de Devis Quantitatifs & Estimatifs" />
 
     <SidebarProvider>
         <AdminLayout>
@@ -79,7 +79,7 @@ function viewTemplate(template) {
                             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                 <div>
                                     <CardTitle class="text-3xl">
-                                        Templates de Devis Quantitatifs
+                                        Templates de Devis Quantitatifs & Estimatifs
                                     </CardTitle>
                                     <CardDescription class="mt-1">
                                         Liste des devis templates réutilisables

@@ -35,17 +35,8 @@ export const createColumns = (confirmDelete) => [
             ])
         },
     },
-    {
-        accessorKey: 'description',
-        header: 'Description',
-        cell: ({ row }) => {
-            const description = row.getValue('description')
-            return h('div', {
-                class: 'text-sm text-gray-600 dark:text-gray-400 max-w-md truncate'
-            }, description || '-')
-        },
-    },
    
+
     {
         accessorKey: 'created_at',
         header: ({ column }) => {

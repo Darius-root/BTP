@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Label } from '@/components/ui/label'
 import DeleteDialog from '@/components/DeleteDialog.vue'
 
-const currentPageTitle = ref("Détails du matériau")
+const currentPageTitle = ref("Détails du matériel")
 
 const props = defineProps<{
     materiau: {
@@ -38,7 +38,7 @@ const formatDate = (date: string) => {
 
 <template>
 
-    <Head title="Détails du matériau" />
+    <Head title="Détails du matériel" />
 
     <SidebarProvider>
         <AdminLayout>
@@ -119,7 +119,7 @@ const formatDate = (date: string) => {
 
             <!-- ✅ Dialog suppression -->
             <DeleteDialog :open="deleteOpen" :item="materiau" resource="materiaux"
-                :label="`le matériau ${materiau.nom} (${materiau.code})`" @update:open="deleteOpen = $event" />
+                :label="`le matériel ${materiau.nom} (${materiau.code})`" @update:open="deleteOpen = $event" />
         </AdminLayout>
     </SidebarProvider>
 </template>

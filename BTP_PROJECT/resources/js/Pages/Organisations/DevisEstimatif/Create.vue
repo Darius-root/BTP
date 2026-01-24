@@ -146,7 +146,7 @@ const submit = () => {
             />
             <div class="p-6 space-y-6">
                      <form @submit.prevent="submit" >
-                      
+
                 <Card>
                     <CardHeader>
                         <CardTitle class="flex items-center gap-2">
@@ -242,10 +242,10 @@ const submit = () => {
                                     </span>
                                 </div>
                                 <div class="col-span-2">
-                                    <Label>Pièce</Label>
+                                    <Label>Désignation</Label>
                                     <Input
                                         v-model="comp.piece"
-                                        placeholder="Nom de la pièce"
+                                        placeholder="Barre de fixation"
                                     />
                                     <span
                                         v-if="
@@ -401,7 +401,7 @@ const submit = () => {
 
                         <div class="mt-4 flex justify-end">
                             <Button  :disabled="form.processing"
-                                
+
                                 class="bg-blue-600 text-white hover:bg-blue-700"
                             >
                                 <CheckCircle class="w-4 h-4 mr-1" /> Créer Devis
