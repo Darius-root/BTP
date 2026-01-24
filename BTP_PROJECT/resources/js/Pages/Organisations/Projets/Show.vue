@@ -76,19 +76,19 @@
                             </div>
 
                             <!-- Actions -->
-                            <div class="flex items-center gap-3 pt-4 border-t border-gray-100">
+                            <div class="flex items-center gap-3 pt-4 border-t">
                                 <Link :href="route('projets.edit', projet.id)"
-                                    class="inline-flex items-center px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors">
+                                    class="inline-flex items-center px-4 py-2 text-sm  border border-amber-600  rounded-md transition-colors">
                                     <Edit class="w-4 h-4 mr-1" /> Modifier
                                 </Link>
                                 <button @click="confirmDelete"
-                                    class="inline-flex items-center px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors">
+                                    class="inline-flex items-center border border-red-600 px-4 py-2 text-sm  hover:bg-red-700  rounded-md transition-colors">
                                     <Trash2 class="w-4 h-4 mr-1" /> Supprimer
                                 </button>
 
                                 <Link :href="route('projets.batiments.index', projet.id)"
-                                    class="inline-flex items-center px-4 py-2 text-sm bg-gray-700 hover:bg-gray-800 text-white rounded-md transition-colors">
-                                    <Building2 class="w-4 h-4 mr-1" />
+                                    class="inline-flex items-center border border-green-600 px-4 py-2 text-sm  rounded-md transition-colors">
+                                    <Eye class="w-4 h-4 mr-1" />
                                     Voir les bâtiments
                                 </Link>
 
@@ -104,7 +104,7 @@
 <script setup>
 import { ref } from 'vue'
 import { Head, Link, router } from '@inertiajs/vue3'
-import { ArrowLeft, Edit, Trash2 } from 'lucide-vue-next'
+import { ArrowLeft, Edit, Trash2, Eye } from 'lucide-vue-next'
 
 import AdminLayout from '@/components/layout/AdminLayout.vue'
 import SidebarProvider from '@/components/layout/SidebarProvider.vue'

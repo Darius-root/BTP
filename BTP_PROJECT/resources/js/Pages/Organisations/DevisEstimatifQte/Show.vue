@@ -6,7 +6,6 @@ import SidebarProvider from "@/components/layout/SidebarProvider.vue";
 import AdminLayout from "@/components/layout/AdminLayout.vue";
 import PageBreadcrumb from "@/components/common/PageBreadcrumb.vue";
 import { Button } from "@/components/ui/button";
-<<<<<<< HEAD
 import {
     AlertDialog,
     AlertDialogTrigger,
@@ -20,8 +19,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { TrashIcon } from "lucide-vue-next";
 import { usePermissions } from '@/composables/usePermissions';
-=======
->>>>>>> dev_emmanuel
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -270,18 +267,11 @@ const downloadPdf = () => {
                         </Link>
 
                         <!-- Supprimer -->
-<<<<<<< HEAD
-                       <Button variant="destructive" class="" @click="openModal">
-                    <TrashIcon class="w-4 h-4 mr-1" />
-                    Supprimer
-                </Button>
-=======
                         <button v-if="permissions.canDelete" @click="confirmDelete()"
                             class="inline-flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors">
                             <Trash2 class="w-4 h-4 mr-1" />
                             Supprimer
                         </button>
->>>>>>> dev_emmanuel
                     </div>
 
                       <!-- Modal de suppression -->

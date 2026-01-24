@@ -159,12 +159,7 @@ class DevisEstimatifQuantitatifController extends Controller
      */
     public function show(Batiment $batiment)
     {
-<<<<<<< HEAD
-
-        //  Sécurité d’accès (optionnel)
-=======
         //  Sécurité d'accès (optionnel)
->>>>>>> dev_emmanuel
         $this->validateBatimentAccess(
             $batiment,
             'ORG_DEVIS_QUANTITATIF_VIEW'
@@ -837,10 +832,7 @@ class DevisEstimatifQuantitatifController extends Controller
 
         return $pdf->stream("devis-quantitatif-{$devis->code}.pdf");
     }
-<<<<<<< HEAD
-=======
 
 
 
->>>>>>> dev_emmanuel
 }

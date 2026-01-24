@@ -171,16 +171,6 @@ class RolePermissionSeeder extends Seeder
             'ORG_DEVIS_ESTIMATIF_DELETE',
             'ORG_DEVIS_ESTIMATIF_VALIDE',
             'ORG_DEVIS_ESTIMATIF_NOVALIDE',
-<<<<<<< HEAD
-=======
-
-            //collection
-            'ORG_COLLECTION_VIEW',
-            'ORG_COLLECTION_CREATE',
-            'ORG_COLLECTION_EDIT',
-
-
->>>>>>> dev_emmanuel
 
             //DEVIS QTE ESTIMATIF
 
@@ -189,15 +179,6 @@ class RolePermissionSeeder extends Seeder
             'ORG_DEVIS_QUANTITATIF_VIEW',
             'ORG_DEVIS_QUANTITATIF_DELETE',
             'ORG_DEVIS_QUANTITATIF_VALIDE',
-<<<<<<< HEAD
-            'ORG_DEVIS_QUANTITATIF_NOVALIDE',
-           
-            //collection
-            'ORG_COLLECTION_VIEW',
-            'ORG_COLLECTION_CREATE',
-            'ORG_COLLECTION_EDIT',
-        
-=======
 
 
             //TEMPLATE DEVIS QTE ESTIMATIF
@@ -205,7 +186,6 @@ class RolePermissionSeeder extends Seeder
             
             //TEMPLATE DEVIS ESTIMATIF
             'ORG_TEMPLATE_DEVIS_ESTIMATIF_VIEW',
->>>>>>> dev_emmanuel
 
 
         ];
@@ -286,17 +266,11 @@ class RolePermissionSeeder extends Seeder
             'ORG_DEVIS_QUANTITATIF_EDIT',
             'ORG_DEVIS_QUANTITATIF_VIEW',
             'ORG_DEVIS_QUANTITATIF_DELETE',
-<<<<<<< HEAD
-            'ORG_DEVIS_QUANTITATIF_VALIDE',
-            'ORG_DEVIS_QUANTITATIF_NOVALIDE'
-            ]);
-=======
             'ORG_DEVIS_QUANTITATIF_VALIDE'
 
 
 
         ]);
->>>>>>> dev_emmanuel
 
         // ORG_OWNER → toutes les permissions organisationnelles
         $owner = Role::findByName('ORG_ADMIN');

@@ -56,6 +56,7 @@ const menuGroups = [
             },
             { name: "Clients", icon: UserCircleIcon, path: "/clients", permission: "ORG_CLIENT_VIEW" },
             { name: "Projets", icon: BoxCubeIcon, path: "/projets", permission: "ORG_PROJET_VIEW" },
+            { name: "Borderaux", icon: BoxCubeIcon, path: "/bordereaux", permission: "ORG_PROJET_VIEW" },
             { name: "Collections de prix", icon: ListIcon, path: "/collections-prix" , permission: "SYSTEM_COLLECTION_VIEW" },
 
         ],

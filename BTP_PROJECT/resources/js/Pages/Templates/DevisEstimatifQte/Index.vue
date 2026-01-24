@@ -58,14 +58,10 @@ const customTemplatesCount = computed(
 
 /* Navigation vers la page détail */
 function viewTemplate(template) {
-<<<<<<< HEAD
-    router.visit(route("templates-estimatif-qte.show", template.id));
-=======
     // Vérifier la permission avant de naviguer
     if (template.permissions?.canView) {
         router.visit(route('templates-estimatif-qte.show', template.id))
     }
->>>>>>> dev_emmanuel
 }
 </script>
 

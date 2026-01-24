@@ -185,12 +185,8 @@ const tableColspan = computed(() => {
             <PageBreadcrumb :pageTitle="currentPageTitle" />
 
             <div class="space-y-6">
-<<<<<<< HEAD
                 <div
                     class="rounded-2xl border  p-5  lg:p-6 shadow-sm">
-=======
-                <div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3 lg:p-6 shadow-sm">
->>>>>>> dev_emmanuel
                     <Card class="border-0 shadow-none">
 
                         <!-- Header -->
